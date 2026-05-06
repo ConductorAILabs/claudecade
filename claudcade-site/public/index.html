@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claudecade — Terminal Arcade</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="#">CLAUDE<span>CADE</span></a>
+  <div class="nav-links">
+    <a href="#games">GAMES</a>
+    <a href="#leaderboard">SCORES</a>
+    <a href="#setup">SETUP</a>
+    <a href="engine.html">ENGINE</a>
+  </div>
+</nav>
+
+<!-- ── HERO ──────────────────────────────────────────────────────────────────── -->
+<section id="hero">
+  <div class="hero-ascii-wrap">
+<pre class="hero-ascii"> ██████╗██╗      █████╗ ██╗   ██╗██████╗ ███████╗
+██╔════╝██║     ██╔══██╗██║   ██║██╔══██╗██╔════╝
+██║     ██║     ███████║██║   ██║██║  ██║█████╗
+██║     ██║     ██╔══██║██║   ██║██║  ██║██╔══╝
+╚██████╗███████╗██║  ██║╚██████╔╝██████╔╝███████╗
+ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝</pre><pre class="hero-ascii accent"> ██████╗ █████╗ ██████╗ ███████╗
+██╔════╝██╔══██╗██╔══██╗██╔════╝
+██║     ███████║██║  ██║█████╗
+██║     ██╔══██║██║  ██║██╔══╝
+╚██████╗██║  ██║██████╔╝███████╗
+ ╚═════╝╚═╝  ╚═╝╚═════╝ ╚══════╝</pre>
+  </div>
+  <p class="hero-sub">TERMINAL ARCADE &nbsp;&#xB7;&nbsp; 7 GAMES &nbsp;&#xB7;&nbsp; GLOBAL SCORES</p>
+  <p class="hero-coin">&#9670; INSERT COIN &#9670;</p>
+  <div class="hero-cta">
+    <a href="#setup" class="btn btn-primary">[ &#9654; PLAY NOW ]</a>
+    <a href="#leaderboard" class="btn btn-secondary">[ &#9733; SCORES ]</a>
+  </div>
+</section>
+
+<!-- ── GAMES ──────────────────────────────────────────────────────────────────── -->
+<div class="ascii-rule"><span>&#9472;&#9472;&#9472; THE GAMES &#9472;&#9472;&#9472;</span></div>
+
+<section id="games">
+  <div class="cover-grid">
+
+    <!-- 01 · C-TYPE -->
+    <div class="game-cover" tabindex="0" role="article">
+      <div class="cover-art-panel">
+        <div class="cover-publisher"><span class="pub-name">CONDUCTOR AI LABS</span><span>&copy; 2025</span></div>
+        <div class="cover-band">
+          <span class="num">01</span>
+          <span class="name">C-TYPE</span>
+          <span class="gtag">SHMUP</span>
+        </div>
+        <pre class="cover-art-pre" id="art-ctype"> &#xB7;  &#9733;   &#xB7;    *   &#xB7;   &#9733;  &#xB7;
+    &#9665;&#9552;&#9552;&#9665;   &#xB7;   &#9665;&#9552;&#9552;&#9665;
+ &#xB7;    &#xB7;  &#xB7;   &#xB7;    &#xB7;  &#xB7;
+         &#9665;&#9552;&#9552;&#9665;   &#9665;&#9552;&#9552;&#9665;
+&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
+&#9655;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9679;&#9679;&#9679;&#9679;&#9679;
+&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
+ &#xB7;   &#xB7;    &#xB7;   &#xB7;    &#xB7;   &#xB7;
+    &#9665;&#9552;&#9552;&#9665;   &#xB7;   &#9665;&#9552;&#9552;&#9665;
+ &#xB7;  &#9733;   &#xB7;    *   &#xB7;   &#9733;  &#xB7;</pre>
+        <div class="art-glow-line"></div>
+      </div>
+      <div class="cover-info">
+        <p class="cover-tagline">Space shooter. 5 enemy types, parallax starfields, charge beam, boss waves every 6 rounds.</p>
+        <ul class="cover-controls">
+          <li><strong>WASD</strong><span>Move</span></li>
+          <li><strong>J / Click</strong><span>Fire / charge beam</span></li>
+          <li><strong>ESC</strong><span>Pause</span></li>
+        </ul>
+      </div>
+      <div class="cover-strip"><span>&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;</span><span>1 PLAYER</span></div>
+    </div>
+
+    <!-- 02 · CLAUDTRA -->
+    <div class="game-cover" tabindex="0" role="article">
+      <div class="cover-art-panel">
+        <div class="cover-publisher"><span class="pub-name">CONDUCTOR AI LABS</span><span>&copy; 2025</span></div>
+        <div class="cover-band">
+          <span class="num">02</span>
+          <span class="name">CLAUDTRA</span>
+          <span class="gtag">RUN &amp; GUN</span>
+        </div>
+        <pre class="cover-art-pre" id="art-claudtra">  &#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;
+        &#215;          &#215;
+  &#9655;@&#9472;&#9472;&#9655;     &#215;
+  &#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;&#9600;
+          &#9608;&#9608;&#9608;&#9608; &#9608;&#9608;&#9608;&#9608;
+  &#9604;&#9604;&#9604;&#9604;&#9604;&#9604;&#9604;&#9604;&#9604;&#9604;&#9604;&#9604;&#9604;&#9604;&#9604;&#9604;&#9604;&#9604;&#9604;&#9604;&#9604;
+  &#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;
+  &#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;</pre>
+        <div class="art-glow-line"></div>
+      </div>
+      <div class="cover-info">
+        <p class="cover-tagline">Side-scrolling action. Jump, shoot, survive grunt and heavy waves. How far can you run?</p>
+        <ul class="cover-controls">
+          <li><strong>A / D</strong><span>Move</span></li>
+          <li><strong>SPACE</strong><span>Jump</span></li>
+          <li><strong>J</strong><span>Shoot</span></li>
+          <li><strong>S</strong><span>Crouch</span></li>
+        </ul>
+      </div>
+      <div class="cover-strip"><span>&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;</span><span>1 PLAYER</span></div>
+    </div>
+
+    <!-- 03 · CLAUDE FIGHTER -->
+    <div class="game-cover" tabindex="0" role="article">
+      <div class="cover-art-panel">
+        <div class="cover-publisher"><span class="pub-name">CONDUCTOR AI LABS</span><span>&copy; 2025</span></div>
+        <div class="cover-band">
+          <span class="num">03</span>
+          <span class="name">CLAUDE FIGHTER</span>
+          <span class="gtag">FIGHTING</span>
+        </div>
+        <pre class="cover-art-pre" id="art-fight">  HP &#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9617;&#9617;  P1
+  HP &#9617;&#9617;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;  P2
+  &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;
+  &#9556;&#9552;&#9552;&#9552;&#9552;&#9552;&#9557;     &#9556;&#9552;&#9552;&#9552;&#9552;&#9552;&#9557;
+  &#9553; &#9650; &#9650; &#9553;     &#9553; &#9679; &#9679; &#9553;
+  &#9553;  &#9661;  &#9553; &#215;&#9472;&#9472;&#9472; &#9553;  &#9675;  &#9553;
+  &#9562;&#9552;&#9552;&#9564;&#9552;&#9552;&#9565;     &#9562;&#9552;&#9552;&#9564;&#9552;&#9552;&#9565;
+      &#9553;             &#9553;
+  &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;
+  &#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;</pre>
+        <div class="art-glow-line"></div>
+      </div>
+      <div class="cover-info">
+        <p class="cover-tagline">1v1 ASCII brawler. 5 fighters — Warrior, Ninja, Samurai, Monk, Rogue. Best of 3 rounds vs AI.</p>
+        <ul class="cover-controls">
+          <li><strong>A / D</strong><span>Move</span></li>
+          <li><strong>J</strong><span>Punch</span></li>
+          <li><strong>K</strong><span>Kick</span></li>
+          <li><strong>L</strong><span>Block</span></li>
+        </ul>
+      </div>
+      <div class="cover-strip"><span>&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;</span><span>1-2 PLAYERS</span></div>
+    </div>
+
+    <!-- 04 · SUPER CLAUDIO -->
+    <div class="game-cover" tabindex="0" role="article">
+      <div class="cover-art-panel">
+        <div class="cover-publisher"><span class="pub-name">CONDUCTOR AI LABS</span><span>&copy; 2025</span></div>
+        <div class="cover-band">
+          <span class="num">04</span>
+          <span class="name">SUPER CLAUDIO</span>
+          <span class="gtag">PLATFORM</span>
+        </div>
+        <pre class="cover-art-pre" id="art-superclaudio">       [?]        [?]
+  &#9670;               &#9670;
+      &#9608;&#9608;&#9608;&#9608;
+  (&#9791;)       [C]
+  &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
+  &#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;    &#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;
+  &#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;    &#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;</pre>
+        <div class="art-glow-line"></div>
+      </div>
+      <div class="cover-info">
+        <p class="cover-tagline">Save Princess Anthropia. 3 worlds, stomp Glitchies, hit ? blocks, grab mushrooms and fire flowers.</p>
+        <ul class="cover-controls">
+          <li><strong>A / D</strong><span>Move</span></li>
+          <li><strong>W / SPC</strong><span>Jump</span></li>
+          <li><strong>J</strong><span>Fire (fire form)</span></li>
+          <li><strong>ESC</strong><span>Pause</span></li>
+        </ul>
+      </div>
+      <div class="cover-strip"><span>&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;</span><span>1 PLAYER</span></div>
+    </div>
+
+    <!-- 05 · CLAUDE TURISMO -->
+    <div class="game-cover" tabindex="0" role="article">
+      <div class="cover-art-panel">
+        <div class="cover-publisher"><span class="pub-name">CONDUCTOR AI LABS</span><span>&copy; 2025</span></div>
+        <div class="cover-band">
+          <span class="num">05</span>
+          <span class="name">CLAUDE TURISMO</span>
+          <span class="gtag">RACING</span>
+        </div>
+        <pre class="cover-art-pre" id="art-claudturismo">  &#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;&#9619;
+   &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;
+    &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
+      &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
+        &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
+          &#9552;&#9552;&#9552;&#9552;&#9552;
+           &#9552;&#9655;&#9552;&#9655;
+             &#9655;
+  &#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;</pre>
+        <div class="art-glow-line"></div>
+      </div>
+      <div class="cover-info">
+        <p class="cover-tagline">Pseudo-3D terminal racing. 3 laps, real curves, AI opponents. Brake before corners or spin wide.</p>
+        <ul class="cover-controls">
+          <li><strong>W / &#8593;</strong><span>Accelerate</span></li>
+          <li><strong>S / &#8595;</strong><span>Brake</span></li>
+          <li><strong>A / D</strong><span>Steer</span></li>
+          <li><strong>ESC</strong><span>Pause</span></li>
+        </ul>
+      </div>
+      <div class="cover-strip"><span>&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;</span><span>1 PLAYER</span></div>
+    </div>
+
+    <!-- 06 · CLAUDÉMON -->
+    <div class="game-cover" tabindex="0" role="article">
+      <div class="cover-art-panel">
+        <div class="cover-publisher"><span class="pub-name">CONDUCTOR AI LABS</span><span>&copy; 2025</span></div>
+        <div class="cover-band">
+          <span class="num">06</span>
+          <span class="name">CLAUD&#201;MON</span>
+          <span class="gtag">RPG</span>
+        </div>
+        <pre class="cover-art-pre" id="art-claudemon">  WILD   LV 8      AQUUX
+  .&#xB7;*&#xB7;.  HP &#9608;&#9608;&#9608;&#9608;&#9617;&#9617;&#9617;&#9617;
+  (&#9678;&#9678;)
+  /&#9616;W&#9616;\
+  &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;
+  CLAUDPYRE   LV 12
+  HP &#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9617;&#9617;
+  .&#xB7;*&#xB7;.   &gt; BATTLE
+  (&#9679;&#9679;)
+  /&#9616;C&#9616;\</pre>
+        <div class="art-glow-line"></div>
+      </div>
+      <div class="cover-info">
+        <p class="cover-tagline">Catch all 20 Claud&#233;mon. 3 starters, 6 types, turn-based battles. Catch them all.</p>
+        <ul class="cover-controls">
+          <li><strong>WASD</strong><span>Move / navigate</span></li>
+          <li><strong>SPACE</strong><span>Confirm</span></li>
+          <li><strong>M</strong><span>Party menu</span></li>
+          <li><strong>ESC</strong><span>Back</span></li>
+        </ul>
+      </div>
+      <div class="cover-strip"><span>&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;</span><span>1 PLAYER</span></div>
+    </div>
+
+    <!-- 07 · FINAL CLAUDESY -->
+    <div class="game-cover" tabindex="0" role="article">
+      <div class="cover-art-panel">
+        <div class="cover-publisher"><span class="pub-name">CONDUCTOR AI LABS</span><span>&copy; 2025</span></div>
+        <div class="cover-band">
+          <span class="num">07</span>
+          <span class="name">FINAL CLAUDESY</span>
+          <span class="gtag">JRPG</span>
+        </div>
+        <pre class="cover-art-pre" id="art-finalclaudesy">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
+&#9474; CLAUDE  HP &#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9617;&#9617; &#9474;
+&#9474; HAIKU   HP &#9608;&#9608;&#9608;&#9617;&#9617;&#9617;&#9617;&#9617; &#9474;
+&#9474; OPUS    HP &#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9617; &#9474;
+&#9500;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9508;
+&#9474; &#9658; Attack    Magic    &#9474;
+&#9474;   Item      Defend   &#9474;
+&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</pre>
+        <div class="art-glow-line"></div>
+      </div>
+      <div class="cover-info">
+        <p class="cover-tagline">Full terminal JRPG. 3 heroes, 3 regions, 20+ spells, towns, dungeons, bosses, and a story. ~3 hrs.</p>
+        <ul class="cover-controls">
+          <li><strong>WASD</strong><span>Move</span></li>
+          <li><strong>SPACE</strong><span>Confirm</span></li>
+          <li><strong>M</strong><span>Party menu</span></li>
+          <li><strong>ESC</strong><span>Back</span></li>
+        </ul>
+      </div>
+      <div class="cover-strip"><span>&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;&#9612;</span><span>1 PLAYER</span></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── LEADERBOARD ────────────────────────────────────────────────────────────── -->
+<div class="ascii-rule"><span>&#9472;&#9472;&#9472; GLOBAL SCORES &#9472;&#9472;&#9472;</span></div>
+
+<section id="leaderboard">
+  <div class="section-eyebrow">LIVE</div>
+  <h2 class="section-title">LEADERBOARD</h2>
+  <p class="lb-prompt">&gt; <span id="lb-prompt-text">claudcade scores --all --limit 20</span></p>
+  <div class="lb-tabs" id="lb-tabs">
+    <button class="tab active" data-game="">ALL</button>
+    <button class="tab" data-game="ctype">C-TYPE</button>
+    <button class="tab" data-game="claudtra">CLAUDTRA</button>
+    <button class="tab" data-game="fight">FIGHTER</button>
+    <button class="tab" data-game="superclaudio">CLAUDIO</button>
+    <button class="tab" data-game="claudturismo">TURISMO</button>
+    <button class="tab" data-game="claudemon">CLAUD&#201;MON</button>
+    <button class="tab" data-game="finalclaudesy">CLAUDESY</button>
+  </div>
+  <div id="lb-main" class="lb-table-wrap">
+    <p class="loading">FETCHING SCORES...</p>
+  </div>
+  <div class="lb-meta">
+    <span id="lb-total"></span>
+    <span>[auto-refresh: 30s]</span>
+  </div>
+</section>
+
+<!-- ── SETUP ──────────────────────────────────────────────────────────────────── -->
+<div class="ascii-rule"><span>&#9472;&#9472;&#9472; GET PLAYING &#9472;&#9472;&#9472;</span></div>
+
+<section id="setup">
+  <div class="section-eyebrow">INSTALL</div>
+  <h2 class="section-title">SETUP GUIDE</h2>
+  <div class="setup-steps">
+
+    <div class="setup-step">
+      <div class="step-num">01</div>
+      <div class="step-body">
+        <div class="step-title">Add the MCP to Claude Code</div>
+        <p class="step-desc">Open <code>~/.claude/settings.json</code> and add the Claudecade entry inside <code>mcpServers</code>:</p>
+        <div class="term">
+          <div class="term-bar"><div class="term-dots"><div class="term-dot"></div><div class="term-dot"></div><div class="term-dot"></div></div>~/.claude/settings.json</div>
+          <div class="term-body">
+            <div class="t-ln"><span class="c">"mcpServers": {</span></div>
+            <div class="t-ln"><span class="c">&nbsp;&nbsp;"claudcade": {</span></div>
+            <div class="t-ln"><span class="c">&nbsp;&nbsp;&nbsp;&nbsp;"type": "http",</span></div>
+            <div class="t-ln"><span class="c">&nbsp;&nbsp;&nbsp;&nbsp;"url": "https://starlit-macaron-113a83.netlify.app/api/mcp"</span></div>
+            <div class="t-ln"><span class="c">&nbsp;&nbsp;}</span></div>
+            <div class="t-ln"><span class="c">}</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="setup-step">
+      <div class="step-num">02</div>
+      <div class="step-body">
+        <div class="step-title">Start a tmux session</div>
+        <p class="step-desc">tmux lets Claude Code and games run side by side. Open your terminal:</p>
+        <div class="term">
+          <div class="term-bar"><div class="term-dots"><div class="term-dot"></div><div class="term-dot"></div><div class="term-dot"></div></div>terminal</div>
+          <div class="term-body">
+            <div class="t-ln"><span class="p">$</span><span class="c">tmux</span></div>
+          </div>
+        </div>
+        <p class="step-desc">No tmux? <code>brew install tmux</code> on macOS &nbsp;&#xB7;&nbsp; <code>sudo apt install tmux</code> on Linux</p>
+      </div>
+    </div>
+
+    <div class="setup-step">
+      <div class="step-num">03</div>
+      <div class="step-body">
+        <div class="step-title">Let Claude install everything</div>
+        <p class="step-desc">Inside tmux, launch Claude Code and say the magic words. Claude runs every command &mdash; no git, no manual steps.</p>
+        <div class="term">
+          <div class="term-bar"><div class="term-dots"><div class="term-dot"></div><div class="term-dot"></div><div class="term-dot"></div></div>tmux &rarr; Claude Code</div>
+          <div class="term-body">
+            <div class="t-ln"><span class="p">$</span><span class="c">claude</span></div>
+            <div class="t-ln" style="margin-top:.6rem"><span class="p">&gt;</span><span class="c">set me up with Claudecade</span></div>
+            <div class="t-ln" style="margin-top:.4rem"><span class="o">&#8627; downloads games, installs /claudcade command</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="setup-step">
+      <div class="step-num">04</div>
+      <div class="step-body">
+        <div class="step-title">Play &mdash; any time</div>
+        <p class="step-desc">Whenever you want to play &mdash; tmux open, Claude Code running:</p>
+        <div class="term">
+          <div class="term-bar"><div class="term-dots"><div class="term-dot"></div><div class="term-dot"></div><div class="term-dot"></div></div>Claude Code</div>
+          <div class="term-body">
+            <div class="t-ln"><span class="p">&gt;</span><span class="c pink">/claudcade</span></div>
+            <div class="t-ln" style="margin-top:.4rem"><span class="o">&#8627; arcade opens full-screen &nbsp;&#xB7;&nbsp; arrows to pick &nbsp;&#xB7;&nbsp; enter to launch</span></div>
+          </div>
+        </div>
+        <p class="step-desc">Your first game-over registers you on the global leaderboard. No account needed.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── ENGINE ──────────────────────────────────────────────────────────────────── -->
+<div class="ascii-rule"><span>&#9472;&#9472;&#9472; BUILD YOUR OWN &#9472;&#9472;&#9472;</span></div>
+
+<section id="engine-section">
+  <div class="engine-inner">
+    <pre class="engine-pre">claudcade_engine.py &#9472;&#9472; copy into any project &#9472;&#9472; zero deps</pre>
+    <p>
+      All games are built on the open-source
+      <a href="https://github.com/ConductorAILabs/claudecade">Claudecade Engine</a>.
+      Copy <code>claudcade_engine.py</code> into your project, import it, and start building.
+      Tag <strong>@ConductorAILabs</strong> when you ship &#9472;&#9472; we share everything.
+    </p>
+  </div>
+</section>
+
+<div class="site-footer-rule"></div>
+<footer>
+  <span>CLAUDECADE <span class="footer-pink">&#xB7;</span> MIT LICENSE</span>
+  <span>
+    <a href="leaderboard.html">LEADERBOARD</a>
+    &nbsp;&#xB7;&nbsp;
+    <a href="engine.html">ENGINE DOCS</a>
+    &nbsp;&#xB7;&nbsp;
+    <a href="https://github.com/ConductorAILabs/claudecade">GITHUB</a>
+  </span>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.87.0/dist/phaser.min.js"></script>
+<script src="phaser-rain.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

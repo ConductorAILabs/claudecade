@@ -1,0 +1,67 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "claudegames-mcp"
+version = "1.0.0"
+description = "ASCII games for Claude Code — space shooter, fighter, and platformer in a tmux split pane"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+keywords = ["claude", "mcp", "games", "ascii", "curses", "tmux"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console :: Curses",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Games/Entertainment",
+]
+dependencies = [
+    "mcp>=1.0.0",
+]
+
+[project.scripts]
+claudegames-mcp = "claudegames.server:main"
+# Game launchers — `pip install .` exposes these as terminal commands.
+claudcade       = "claudcade:run"
+ctype           = "ctype:main"
+claudtra        = "claudtra:main"
+fight           = "fight:main"
+finalclaudesy   = "finalclaudesy.main:run"
+
+[project.urls]
+Homepage = "https://github.com/ConductorAILabs/claudecade"
+Issues   = "https://github.com/ConductorAILabs/claudecade/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["claudegames", "finalclaudesy"]
+include = [
+    "claudcade.py",
+    "claudcade_engine.py",
+    "claudcade_mcp.py",
+    "claudcade_scores.py",
+    "ctype.py",
+    "claudtra.py",
+    "fight.py",
+    "finalclaudesy.py",
+]
+
+[tool.ruff]
+line-length = 110
+target-version = "py39"
+extend-exclude = ["claudcade-engine", "claudcade-site", "finalclaudesy"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = [
+    "E501",  # line-too-long — game art and HUD code is intentionally wide
+    "E701",  # multiple-statements-on-one-line — common in this curses style
+    "E702",  # statement-ends-with-semicolon — same
+    "E741",  # ambiguous-variable-name — single-letter vars are conventional here
+    "B007",  # unused loop variable — game code uses _ widely
+    "F401",  # unused imports — see-also re-exports
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["F401"]

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leaderboard — Claudecade</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <nav>
+    <a class="nav-logo" href="index.html">CLAUDE<span>CADE</span></a>
+    <div class="nav-links">
+      <a href="index.html">HOME</a>
+      <a href="leaderboard.html" style="color:var(--fg)">SCORES</a>
+      <a href="index.html#setup">SETUP</a>
+    </div>
+  </nav>
+
+  <section id="leaderboard" style="padding-top:7rem;max-width:900px;margin:0 auto;padding-left:2rem;padding-right:2rem">
+    <div class="section-eyebrow">LIVE</div>
+    <h2 class="section-title">LEADERBOARD</h2>
+
+    <p class="lb-prompt">&gt; <span id="lb-prompt-text">claudecade scores --all --limit 50</span></p>
+
+    <div class="lb-tabs" id="lb-tabs">
+      <button class="tab active" data-game="">ALL</button>
+      <button class="tab" data-game="ctype">C-TYPE</button>
+      <button class="tab" data-game="claudtra">CLAUDTRA</button>
+      <button class="tab" data-game="fight">FIGHTER</button>
+      <button class="tab" data-game="finalclaudesy">CLAUDESY</button>
+    </div>
+
+    <div class="lb-controls">
+      <div class="lb-ranges">
+        <button class="range active" data-range="all">ALL TIME</button>
+        <button class="range" data-range="month">MONTH</button>
+        <button class="range" data-range="week">WEEK</button>
+        <button class="range" data-range="today">TODAY</button>
+      </div>
+      <input id="lb-search" type="search" placeholder="search player..." maxlength="24" />
+    </div>
+
+    <div id="lb-main" class="lb-table-wrap">
+      <p class="loading">FETCHING SCORES...</p>
+    </div>
+
+    <div class="lb-meta">
+      <span id="lb-total"></span>
+      <span>[auto-refresh: 30s]</span>
+    </div>
+  </section>
+
+  <div class="site-footer-rule" style="margin-top:4rem"></div>
+  <footer>
+    <span>CLAUDECADE <span class="footer-pink">&#xB7;</span> MIT LICENSE</span>
+    <span><a href="index.html">HOME</a> &nbsp;&#xB7;&nbsp; <a href="https://github.com/ConductorAILabs/claudecade">GITHUB</a></span>
+  </footer>
+
+  <script src="leaderboard.js"></script>
+</body>
+</html>

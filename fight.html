@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ASCII BRAWLER</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #0a0a0a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+canvas {
+  display: block;
+  box-shadow: 0 0 60px rgba(0,200,255,0.12), 0 0 20px rgba(0,200,255,0.06);
+  border: 1px solid #1a2a3a;
+}
+#sub {
+  color: #2a3a4a;
+  font: 11px "Courier New", monospace;
+  letter-spacing: 2px;
+  margin-top: 10px;
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="sub">ASCII BRAWLER v1.0 — CLICK CANVAS TO FOCUS</div>
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  SETUP
+// ═══════════════════════════════════════════════════════════════
+const COLS=80, ROWS=26, CW=10, CH=18;
+const canvas = document.getElementById('c');
+canvas.width  = COLS * CW;
+canvas.height = ROWS * CH;
+const ctx = canvas.getContext('2d');
+
+const C = {
+  bg:       '#0d0d0f',
+  border:   '#1e3a4a',
+  white:    '#c8c8c8',
+  cyan:     '#00ccdd',
+  red:      '#dd3333',
+  green:    '#33cc55',
+  yellow:   '#ddcc00',
+  magenta:  '#cc44cc',
+  dim:      '#3a3a4a',
+  orange:   '#dd8833',
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  GAME CONSTANTS
+// ═══════════════════════════════════════════════════════════════
+const FPS=60, ARENA_W=68, SW=9, SH=6;
+
+// Player feels faster, snappier
+const P_WALK=2.6, AI_WALK=1.7;
+const JV0=10.5, GRAV=1.6, MINSEP=SW+1;
+
+// Player hits harder, recovers faster; AI hits softer
+const PR=13, KR=16;
+const P_PD=10, P_KD=14;    // player punch/kick damage
+const AI_PD=6,  AI_KD=9;   // AI punch/kick damage (tuned down)
+const BM=0.1, MHP=100;
+
+// Player stun is shorter so they feel less stuck; AI stun is longer
+const P_STUN=10;   // frames player is stunned when hit
+const AI_STUN=26;  // frames AI is stunned when hit (satisfying)
+
+const NEED=2;
+const ARENA_TOP=4, GROUND_ROW=ROWS-5;   // rows 4 and 21
+const ARENA_H = GROUND_ROW - ARENA_TOP; // 17
+
+// Player animation is snappier (smaller numbers = faster frames)
+const ADUR = {
+  idle:10, walk:4, punch:2, kick:2,
+  block:1, hurt:4, crouch:1, jump:1, ko:1, victory:8,
+};
+// AI uses slower animation timings — gives player a window
+const ADUR_AI = {
+  idle:10, walk:6, punch:5, kick:5,
+  block:1, hurt:6, crouch:1, jump:1, ko:1, victory:8,
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  SPRITES  (9 chars wide × 6 rows, P1 faces right)
+// ═══════════════════════════════════════════════════════════════
+function frm(...rows) {
+  const out = rows.map(r => (r + '         ').slice(0, SW));
+  while (out.length < SH) out.push(' '.repeat(SW));
+  return out.slice(0, SH);
+}
+
+const SP1 = {
+  idle: [
+    frm('   O   ','  /|\\  ','   |   ','  /|\\  ','  / \\  ','       '),
+    frm('   O   ','  \\|/  ','   |   ','  /|\\  ','  / \\  ','       '),
+  ],
+  walk: [
+    frm('   O   ','  /|\\  ','  _|   ','   /\\  ',' /     ','       '),
+    frm('   O   ','  \\|/  ','   |_  ','   /\\  ','     \\ ','       '),
+  ],
+  punch: [
+    frm('   O   ',' -(|   ','   |   ','  /|\\  ','  / \\  ','       '),   // windup
+    frm('   O   ','  (|->>','   |   ','  /|\\  ','  / \\  ','       '),   // ACTIVE
+    frm('   O   ','  \\|/  ','   |   ','  /|\\  ','  / \\  ','       '),   // recover
+  ],
+  kick: [
+    frm('   O   ','  /|\\  ','   |   ','  /|   ','  /\\   ','       '),   // windup
+    frm('   O   ','  \\|   ','   |   ','   |->>','  /    ','       '),   // ACTIVE
+    frm('   O   ','  /|\\  ','   |   ','  /|\\  ','  / \\  ','       '),   // recover
+  ],
+  block:  [ frm('   O   ',' [/|\\] ',' [_|_] ','  / \\  ','  / \\  ','       ') ],
+  hurt:   [
+    frm('  >O<  ','  /|\\  ','   |   ','  /|\\  ','  \\ /  ','       '),
+    frm('  *O*  ',' ~/|\\ ~','   |   ','  /|\\  ','  / \\  ','       '),
+  ],
+  crouch: [ frm('       ','   O   ','  /|\\  ',' /(_)\\ ','       ','       ') ],
+  jump:   [ frm(' \\\\O// ','   |   ','  /|\\  ','  | |  ','       ','       ') ],
+  ko:     [ frm('       ','       ',' (x.x) ','~~-O-~~',' \\___/ ','       ') ],
+  victory:[
+    frm('  \\O/  ','   |   ','  /|   ','  / \\  ','       ','       '),
+    frm('   O/  ','  /|   ','  /|   ','  / \\  ','       ','       '),
+  ],
+};
+
+function mirrorFrames(frames) {
+  const flip = {'(':')',')':'(','/':'\\','\\':'/','<':'>','>':'<','[':']',']':'['};
+  return frames.map(fr => fr.map(row =>
+    row.split('').reverse().map(c => flip[c]||c).join('')
+  ));
+}
+const SP2 = Object.fromEntries(Object.entries(SP1).map(([k,v]) => [k, mirrorFrames(v)]));
+
+// ═══════════════════════════════════════════════════════════════
+//  FIGHTER CLASS
+// ═══════════════════════════════════════════════════════════════
+class Fighter {
+  constructor(name, x, color, { isP2=false, isAI=false }={}) {
+    this.name     = name;
+    this.x        = x;
+    this.y        = 0;        // 0 = ground; positive = in air
+    this.vy       = 0;
+    this.color    = color;
+    this.isP2     = isP2;
+    this.isAI     = isAI;
+    this.sp       = isP2 ? SP2 : SP1;
+    this.dur      = isAI ? ADUR_AI : ADUR;  // AI uses slower timings
+    this.walk     = isAI ? AI_WALK : P_WALK;
+    this.stunMax  = isAI ? AI_STUN : P_STUN;
+    this.hp       = MHP;
+    this.velX     = 0;
+    this.grounded = true;
+    this.state    = 'idle';
+    this.aframe   = 0;
+    this.atick    = 0;
+    this.stun     = 0;
+    this.hitDealt = false;
+    this.aiCD     = 0;
+    this.aiMistakeCD = 0;  // cooldown for forced AI mistakes
+    this.prevState = '';
+  }
+
+  get alive() { return this.hp > 0; }
+
+  setState(s) {
+    if (this.state === s) return;
+    this.prevState = this.state;
+    this.state = s; this.aframe = 0; this.atick = 0; this.hitDealt = false;
+  }
+
+  advanceAnim() {
+    const spd = this.dur[this.state] || 5;
+    if (++this.atick >= spd) {
+      this.atick = 0;
+      const frames = this.sp[this.state] || this.sp.idle;
+      this.aframe = (this.aframe + 1) % frames.length;
+      if ((this.state==='punch'||this.state==='kick') && this.aframe===0)
+        return true;
+    }
+    return false;
+  }
+
+  getFrame() {
+    const frames = this.sp[this.state] || this.sp.idle;
+    return frames[this.aframe % frames.length];
+  }
+
+  isHitActive() {
+    return (this.state==='punch'||this.state==='kick') && this.aframe===1;
+  }
+
+  takeHit(dmg) {
+    if (!this.alive || this.state==='ko') return;
+    const mult = this.state==='block' ? BM : 1.0;
+    this.hp = Math.max(0, this.hp - Math.floor(dmg * mult));
+    if (this.hp===0)              { this.setState('ko');   this.stun = 9999; }
+    else if (this.state!=='block'){ this.setState('hurt'); this.stun = this.stunMax; }
+  }
+
+  _physics(other) {
+    if (!this.grounded) {
+      this.vy -= GRAV;
+      this.y  += this.vy;
+      if (this.y <= 0) {
+        this.y = 0; this.vy = 0; this.grounded = true;
+        if (this.state==='jump') this.setState('idle');
+      }
+    }
+    this.x += this.velX;
+    this.x = Math.max(0, Math.min(ARENA_W, this.x));
+    const dx = other.x - this.x;
+    if (Math.abs(dx) < MINSEP) {
+      const push = (MINSEP - Math.abs(dx)) / 2;
+      if (dx >= 0) { this.x -= push; other.x += push; }
+      else         { this.x += push; other.x -= push; }
+      this.x  = Math.max(0, Math.min(ARENA_W, this.x));
+      other.x = Math.max(0, Math.min(ARENA_W, other.x));
+    }
+  }
+
+  _playerInput(keys) {
+    if (this.state==='punch'||this.state==='kick') return;
+    this.velX = 0;
+    let moving = false;
+    if (keys.has('a')) { this.velX = -this.walk; moving = true; }
+    if (keys.has('d')) { this.velX =  this.walk; moving = true; }
+    if (keys.has('w') && this.grounded) {
+      this.vy = JV0; this.grounded = false; this.setState('jump');
+    }
+    if (keys.has('s') && this.grounded && !keys.has('j') && !keys.has('k'))
+      { this.setState('crouch'); moving = true; }
+    if      (keys.has('j')) this.setState('punch');
+    else if (keys.has('k')) this.setState('kick');
+    else if (keys.has('l')) this.setState('block');
+    else if (moving && this.grounded && this.state!=='crouch') this.setState('walk');
+    else if (!moving && this.grounded && !['punch','kick','block','jump','crouch','hurt','ko'].includes(this.state))
+      this.setState('idle');
+  }
+
+  _aiInput(opp) {
+    this.aiCD--;
+    this.aiMistakeCD--;
+    const dx = opp.x - this.x, dist = Math.abs(dx);
+    this.velX = 0;
+
+    // Forced mistake: AI occasionally steps back or idles when it should attack
+    // This creates an opening window for the player
+    const inMistake = this.aiMistakeCD > 0;
+
+    // continuous movement — AI is slower and less decisive than player
+    if (!['punch','kick','block'].includes(this.state)) {
+      if (inMistake) {
+        // During mistake window: AI drifts backward, giving player an opening
+        this.velX = -this.walk * 0.5 * (dx>0?1:-1);
+        if (this.grounded && dist < KR + 6) this.setState('idle');
+      } else if (dist > KR + 3) {
+        this.velX = this.walk * 0.8 * (dx>0?1:-1);
+        if (this.grounded) this.setState('walk');
+      } else if (dist > PR + 2) {
+        this.velX = this.walk * 0.35 * (dx>0?1:-1);
+      }
+    }
+
+    // periodic decision — longer cooldown = slower reaction time
+    if (this.aiCD <= 0) {
+      // AI reaction delay: 8-18 frames (vs player's instant response)
+      this.aiCD = 8 + Math.floor(Math.random() * 11);
+
+      // Trigger an occasional mistake: ~22% chance when not already in one
+      if (this.aiMistakeCD <= 0 && Math.random() < 0.22) {
+        this.aiMistakeCD = 18 + Math.floor(Math.random() * 20);
+        return; // skip this decision cycle
+      }
+
+      if (this.state==='punch'||this.state==='kick') return;
+      const r = Math.random();
+
+      if (dist <= PR) {
+        // In punch range: AI attacks less reliably than it could
+        if      (r < 0.32) { this.setState('punch'); this.velX=0; }
+        else if (r < 0.52) { this.setState('kick');  this.velX=0; }
+        else if (r < 0.66)   this.setState('block');
+        else                 this.setState('idle');  // AI whiffs — just stands there
+      } else if (dist <= KR + 2) {
+        if      (r < 0.28) { this.setState('kick'); this.velX=0; }
+        else if (r < 0.38 && this.grounded)
+          { this.vy=JV0; this.grounded=false; this.setState('jump'); }
+        // Otherwise AI hesitates — no action
+      }
+    }
+  }
+
+  update(other, keys) {
+    if (this.stun > 0) {
+      this.stun--;
+      if (this.stun===0 && this.state==='hurt') this.setState('idle');
+    }
+    this.velX = 0;
+    const frozen = ['ko','hurt'].includes(this.state) && this.stun > 0;
+    if (!frozen) {
+      if (this.isAI)        this._aiInput(other);
+      else if (keys)        this._playerInput(keys);
+    }
+    if (this.state==='punch'||this.state==='kick') {
+      if (this.advanceAnim()) this.setState('idle');
+    } else {
+      this.advanceAnim();
+    }
+    this._physics(other);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  GAME STATE
+// ═══════════════════════════════════════════════════════════════
+class Game {
+  constructor() {
+    this.p1Wins=0; this.p2Wins=0; this.round=1;
+    this.msg=''; this.msgDur=0; this.flash=0; this.over=false;
+    this.shake=0;       // screen shake frames
+    this.hitLabel='';   // impact text shown briefly
+    this.hitLabelDur=0;
+    this.hitLabelCol=C.yellow;
+    this.comboCount=0;     // consecutive player hits
+    this.comboWindow=0;    // frames before combo resets
+    this.particles=[];
+    this._newRound();
+  }
+  _newRound() {
+    this.p1 = new Fighter('WARRIOR', 14, C.cyan,  {isP2:false, isAI:false});
+    this.p2 = new Fighter('NINJA',   54, C.red,   {isP2:true,  isAI:true });
+    this.over=false; this.particles=[];
+  }
+  show(msg, dur=90) { this.msg=msg; this.msgDur=dur; }
+  _spawnParticles(x, big=false) {
+    const chars = big ? '*✦★◆×+!!' : '*·×+';
+    const count = big ? 14 : 5;
+    const speed = big ? 3.0 : 1.5;
+    const life  = big ? 14  : 7;
+    const cols  = big ? [C.yellow, C.orange, C.cyan, C.white] : [C.yellow, C.orange];
+    for (let i=0; i<count; i++) this.particles.push({
+      x: x + (Math.random()-0.5)*10,
+      y: GROUND_ROW - SH/2 + (Math.random()-0.5)*3,
+      vx: (Math.random()-0.5)*speed,
+      vy: -(Math.random()*(big?3:1.5)),
+      life: life + Math.random()*life*0.5,
+      ch: chars[Math.floor(Math.random()*chars.length)],
+      col: cols[Math.floor(Math.random()*cols.length)],
+    });
+  }
+  _checkHits() {
+    for (const [atk,dfn] of [[this.p1,this.p2],[this.p2,this.p1]]) {
+      if (atk.isHitActive() && !atk.hitDealt) {
+        const rng = atk.state==='kick' ? KR : PR;
+        if (Math.abs(dfn.x - atk.x) <= rng) {
+          // Player deals more damage, AI deals less
+          let dmg;
+          if (!atk.isAI) {
+            dmg = atk.state==='kick' ? P_KD : P_PD;
+          } else {
+            dmg = atk.state==='kick' ? AI_KD : AI_PD;
+          }
+          dfn.takeHit(dmg);
+          atk.hitDealt = true;
+          // Player hits flash brighter and longer; AI hits are subtler
+          this.flash = atk.isAI ? 4 : 8;
+          if (!atk.isAI) {
+            this.shake = 5;  // screen shake only for player hits
+            // Combo tracking
+            this.comboCount++;
+            this.comboWindow = 80;  // reset window
+            // Impact label — escalates with combo
+            let labels;
+            if (this.comboCount >= 3) {
+              labels = ['COMBO!!','UNSTOPPABLE!','ON FIRE!','DOMINATING!'];
+            } else {
+              labels = atk.state==='kick'
+                ? ['CRACK!','POW!','BOOT!','SLAM!']
+                : ['POW!','SMASH!','HIT!','CRACK!'];
+            }
+            this.hitLabel = labels[Math.floor(Math.random()*labels.length)];
+            this.hitLabelDur = this.comboCount >= 3 ? 22 : 14;
+            this.hitLabelCol = this.comboCount >= 3 ? C.magenta :
+              (atk.state==='kick' ? C.orange : C.cyan);
+          }
+          // More particles for player hits — feels more impactful
+          const col = 1 + Math.round(dfn.x / ARENA_W * (COLS-2-SW));
+          this._spawnParticles(col + SW/2, !atk.isAI);
+        }
+      }
+    }
+  }
+  _updateParticles() {
+    this.particles = this.particles.filter(p => p.life > 0);
+    for (const p of this.particles) {
+      p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life--;
+    }
+  }
+  update(keys) {
+    if (this.over) return;
+    this.p1.update(this.p2, keys);
+    this.p2.update(this.p1, null);
+    this._checkHits();
+    this._updateParticles();
+    if (this.msgDur > 0) this.msgDur--;
+    if (this.flash      > 0) this.flash--;
+    if (this.shake      > 0) this.shake--;
+    if (this.hitLabelDur> 0) this.hitLabelDur--;
+    if (this.comboWindow> 0) { this.comboWindow--; }
+    else if (this.comboCount > 0) { this.comboCount = 0; }
+    if (!this.p1.alive && !this.over) {
+      this.over=true; this.p2Wins++;
+      this.p2.setState('victory');
+      this.show('   NINJA WINS!   ');
+    } else if (!this.p2.alive && !this.over) {
+      this.over=true; this.p1Wins++;
+      this.p1.setState('victory');
+      this.show('   WARRIOR WINS!   ');
+    }
+  }
+  nextRound() {
+    if (this.p1Wins>=NEED || this.p2Wins>=NEED) return false;
+    this.round++;
+    this._newRound();
+    this.show(`   ROUND  ${this.round}   `, 70);
+    return true;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  TEXT GRID RENDERER
+// ═══════════════════════════════════════════════════════════════
+let grid = [];
+
+function clearGrid() {
+  grid = Array.from({length:ROWS}, (_,r) =>
+    Array.from({length:COLS}, (_,c) => ({ch:' ', fg:C.white, bg:C.bg, bold:false}))
+  );
+}
+
+function put(r, c, ch, fg=C.white, bold=false, bg=null) {
+  if (r>=0&&r<ROWS&&c>=0&&c<COLS) grid[r][c]={ch,fg,bg:bg||C.bg,bold};
+}
+
+function putStr(r, c, s, fg=C.white, bold=false, bg=null) {
+  for (let i=0; i<s.length && c+i<COLS; i++)
+    put(r, c+i, s[i], fg, bold, bg);
+}
+
+function putCenter(r, s, fg=C.white, bold=false, bg=null) {
+  putStr(r, Math.floor((COLS-s.length)/2), s, fg, bold, bg);
+}
+
+function hbar(r, c, val, mx, w, fc) {
+  const f = Math.max(0, Math.round(w*val/mx));
+  for (let i=0;i<w;i++) put(r, c+i, i<f?'█':'░', i<f?fc:C.dim);
+}
+
+function flushGrid() {
+  // Batch render: build image data or just draw text
+  ctx.fillStyle = C.bg;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  for (let r=0; r<ROWS; r++) {
+    for (let c=0; c<COLS; c++) {
+      const {ch,fg,bg,bold} = grid[r][c];
+      if (bg && bg!==C.bg) {
+        ctx.fillStyle = bg;
+        ctx.fillRect(c*CW, r*CH, CW, CH);
+      }
+      if (ch !== ' ') {
+        ctx.font = (bold?'bold ':'') + `14px "Courier New",monospace`;
+        ctx.fillStyle = fg;
+        ctx.fillText(ch, c*CW, r*CH+14);
+      }
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  DRAW FRAME
+// ═══════════════════════════════════════════════════════════════
+function drawGame(g, tick) {
+  // Screen shake for player hits
+  ctx.save();
+  if (g.shake > 0) {
+    const mag = g.shake * 1.5;
+    ctx.translate(
+      (Math.random()-0.5)*mag,
+      (Math.random()-0.5)*mag
+    );
+  }
+  clearGrid();
+
+  // ── borders ──────────────────────────────────────────────────
+  putStr(0, 0, '╔'+'═'.repeat(COLS-2)+'╗', C.border);
+  putStr(3, 0, '╠'+'═'.repeat(COLS-2)+'╣', C.border);
+  for (let r=ARENA_TOP; r<GROUND_ROW; r++) {
+    put(r, 0, '║', C.border);
+    put(r, COLS-1, '║', C.border);
+  }
+  putStr(GROUND_ROW, 0, '╠'+'─'.repeat(COLS-2)+'╣', C.border);
+
+  // ── HUD ──────────────────────────────────────────────────────
+  const barW = Math.floor(COLS/2) - 16;
+  const p1n  = ` ${g.p1.name.padEnd(8)}`;
+  const p2n  = `${g.p2.name.padStart(8)} `;
+  const hp1c = g.p1.hp/MHP>0.3 ? C.green : C.yellow;
+  const hp2c = g.p2.hp/MHP>0.3 ? C.green : C.yellow;
+
+  put(1,0,'║',C.border);
+  putStr(1, 1, p1n, C.cyan, true);
+  hbar(1, 1+p1n.length, g.p1.hp, MHP, barW, hp1c);
+
+  const vsC = Math.floor(COLS/2)-2;
+  putStr(1, vsC, ' VS ', C.white, true, '#111122');
+  hbar(1, vsC+4, g.p2.hp, MHP, barW, hp2c);
+  putStr(1, vsC+4+barW, p2n, C.red, true);
+  put(1, COLS-1, '║', C.border);
+
+  put(2, 0, '║', C.border); put(2, COLS-1, '║', C.border);
+  putStr(2, 2, `HP ${String(g.p1.hp).padStart(3)}`, hp1c);
+  const wins=`[ Round ${g.round}   ${'★'.repeat(g.p1Wins)} P1 · P2 ${'★'.repeat(g.p2Wins)} ]`;
+  putCenter(2, wins, C.dim);
+  putStr(2, COLS-9, `HP ${String(g.p2.hp).padStart(3)}`, hp2c);
+
+  // ── fighters ──────────────────────────────────────────────────
+  for (const f of [g.p1, g.p2]) {
+    const frame = f.getFrame();
+    const rawCol = 1 + Math.round(f.x / ARENA_W * Math.max(1, COLS-2-SW));
+    const col    = Math.max(1, Math.min(COLS-1-SW, rawCol));
+
+    const peakY   = JV0 * JV0 / (2 * GRAV);
+    const jumpOff = f.grounded ? 0 : Math.min(Math.round(f.y / peakY * (ARENA_H-SH-1)), ARENA_H-SH-1);
+    const topRow  = GROUND_ROW - 1 - SH + 1 - jumpOff;
+
+    let fg = f.color, bold = true, bg = null;
+    if (f.state==='ko')      { fg='#444444'; bold=false; }
+    if (f.state==='victory') { fg=C.yellow; }
+    // hurt flash: alternate between normal and magenta every 2 ticks
+    if (f.state==='hurt' && g.flash>0) { fg=C.magenta; bg='#220022'; }
+
+    for (let i=0; i<SH; i++) {
+      const r = topRow + i;
+      if (r<ARENA_TOP || r>=GROUND_ROW) continue;
+      for (let j=0; j<SW; j++) {
+        const ch = frame[i][j];
+        if (ch!==' ') put(r, col+j, ch, fg, bold, bg);
+      }
+    }
+  }
+
+  // ── particles ─────────────────────────────────────────────────
+  for (const p of g.particles) {
+    const r=Math.round(p.y), c=Math.round(p.x);
+    if (r>=ARENA_TOP&&r<GROUND_ROW&&c>0&&c<COLS-1)
+      put(r, c, p.ch, p.col, true);
+  }
+
+  // ── hit label (impact text) ───────────────────────────────────
+  if (g.hitLabelDur > 0) {
+    const label = g.hitLabel;
+    const lc = Math.floor((COLS - label.length) / 2);
+    const lr = ARENA_TOP + 2;
+    putStr(lr, lc, label, g.hitLabelCol, true);
+  }
+
+  // ── message box ───────────────────────────────────────────────
+  if (g.msgDur > 0) {
+    const msg = g.msg;
+    const mw  = msg.length + 4;
+    const mc  = Math.floor(COLS/2 - mw/2);
+    const mr  = Math.floor(ARENA_TOP + ARENA_H/2) - 1;
+    putStr(mr,   mc, '╔'+'═'.repeat(mw-2)+'╗', C.border, false, '#0a0a10');
+    putStr(mr+1, mc, '║ '+msg+' ║',             C.yellow, true,  '#0a0a10');
+    putStr(mr+2, mc, '╚'+'═'.repeat(mw-2)+'╝', C.border, false, '#0a0a10');
+    if (g.over) {
+      const sub='[ SPACE = next round ]';
+      putCenter(mr+4, sub, C.dim);
+    }
+  }
+
+  // ── footer ────────────────────────────────────────────────────
+  putStr(ROWS-4, 0, '╠'+'═'.repeat(COLS-2)+'╣', C.border);
+  put(ROWS-3,0,'║',C.border); put(ROWS-3,COLS-1,'║',C.border);
+  putCenter(ROWS-3, 'A/D:Move  W:Jump  S:Crouch  J:Punch  K:Kick  L:Block  SPACE:Next  Q:Quit', C.dim);
+  putStr(ROWS-2, 0, '╚'+'═'.repeat(COLS-2)+'╝', C.border);
+
+  flushGrid();
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  INPUT
+// ═══════════════════════════════════════════════════════════════
+const keys = new Set();
+const K = {
+  KeyA:'a', KeyD:'d', KeyW:'w', KeyS:'s',
+  KeyJ:'j', KeyK:'k', KeyL:'l',
+  Space:'space', KeyQ:'q',
+  ArrowLeft:'a', ArrowRight:'d', ArrowUp:'w', ArrowDown:'s',
+};
+document.addEventListener('keydown', e => { const k=K[e.code]; if(k){keys.add(k);e.preventDefault();} });
+document.addEventListener('keyup',   e => { const k=K[e.code]; if(k) keys.delete(k); });
+canvas.setAttribute('tabindex','0');
+canvas.addEventListener('click', ()=> canvas.focus());
+
+// ═══════════════════════════════════════════════════════════════
+//  GAME LOOP
+// ═══════════════════════════════════════════════════════════════
+let game = new Game();
+game.show('  WARRIOR  vs  NINJA  ─ Press any key!  ', 99999);
+let titleUp = true;
+let tickCount = 0;
+let lastTime  = 0;
+const TARGET  = 1000 / FPS;
+
+function loop(ts) {
+  requestAnimationFrame(loop);
+  if (ts - lastTime < TARGET - 1) return;
+  lastTime = ts;
+  tickCount++;
+
+  // dismiss title on any key
+  if (titleUp && keys.size > 0) { titleUp=false; game.msgDur=0; }
+
+  if (keys.has('q')) { game=new Game(); game.show('  WARRIOR  vs  NINJA  ─ Press any key!  ',99999); titleUp=true; keys.clear(); return; }
+
+  if (game.over && keys.has('space')) {
+    keys.delete('space');
+    if (!game.nextRound()) {
+      game=new Game();
+      game.show('  NEW MATCH  ─ Press any key!  ', 99999);
+      titleUp=true;
+    }
+    return;
+  }
+
+  game.update(keys);
+  drawGame(game, tickCount);
+}
+
+canvas.focus();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

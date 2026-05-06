@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Engine Docs — Claudecade</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .doc-wrap { max-width: 900px; margin: 0 auto; padding: 7rem 2rem 4rem; }
+    .doc-block { margin-bottom: 3rem; }
+    .doc-pre {
+      font-family: 'Share Tech Mono', 'Courier New', monospace;
+      font-size: 12px;
+      line-height: 1.55;
+      color: var(--fg);
+      white-space: pre;
+      overflow-x: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 1.4rem 1.6rem;
+    }
+    .doc-pre .k  { color: var(--pink); }
+    .doc-pre .c  { color: #555; }
+    .doc-pre .s  { color: #7ec8a0; }
+    .doc-pre .h  { color: var(--fg); font-weight: bold; }
+    .section-eyebrow { font-size: 10px; letter-spacing: .08em; color: var(--dim); margin-bottom: .4rem; }
+    .section-title { font-family: var(--font); font-size: 18px; color: var(--fg); font-weight: normal;
+      margin-bottom: 2rem; letter-spacing: .06em; }
+    .toc-list { list-style: none; display: flex; flex-direction: column; gap: .3rem; margin-bottom: 3rem; }
+    .toc-list a { color: var(--mid); text-decoration: none; font-size: 12px; }
+    .toc-list a:hover { color: var(--pink); }
+    .toc-list a::before { content: '▸ '; color: var(--dim); }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">CLAUDE<span>CADE</span></a>
+  <div class="nav-links">
+    <a href="index.html">HOME</a>
+    <a href="leaderboard.html">SCORES</a>
+    <a href="engine.html" style="color:var(--fg)">ENGINE</a>
+  </div>
+</nav>
+
+<div class="doc-wrap">
+
+  <div class="section-eyebrow">v2.0 · OPEN SOURCE</div>
+  <h1 class="section-title">CLAUDECADE ENGINE DOCS</h1>
+
+  <div class="doc-block">
+<pre class="doc-pre">
+<span class="h">╔══════════════════════════════════════════════════════════════════════════════╗</span>
+<span class="h">║  CLAUDECADE ENGINE  ·  claudcade_engine.py  ·  zero dependencies             ║</span>
+<span class="h">╚══════════════════════════════════════════════════════════════════════════════╝</span>
+
+  A terminal game engine built on Python's curses library.
+  Copy claudcade_engine.py into your project and import it.
+  Tag @ConductorAILabs on social when you ship.
+
+  INSTALL
+  ───────
+  No pip install. Just copy the file:
+
+    cp claudcade_engine.py  your-project/
+
+  QUICK START
+  ───────────
+  from claudcade_engine import Engine, Scene, Input, Renderer
+  from claudcade_engine import PLAYER, ENEMY, GOOD, GOLD, NEUTRAL
+
+  class Game(Scene):
+      def on_enter(self):
+          self.score = 0
+
+      def update(self, inp: Input, tick: int, dt: float) -> str | None:
+          if inp.pause:           return "quit"
+          if inp.just_pressed(ord('j')):
+              self.score += 1
+
+      def draw(self, r: Renderer, tick: int):
+          r.header("MY GAME", left=f"SCORE {self.score}")
+          r.center(r.H // 2, "Hello terminal!", PLAYER, bold=True)
+
+  Engine("My Game", fps=30).scene("game", Game()).run("game")
+</pre>
+  </div>
+
+  <ul class="toc-list">
+    <li><a href="#colors">Color constants</a></li>
+    <li><a href="#input">Input — keyboard &amp; mouse</a></li>
+    <li><a href="#renderer">Renderer — drawing</a></li>
+    <li><a href="#scene">Scene — game screens</a></li>
+    <li><a href="#engine">Engine — game loop</a></li>
+    <li><a href="#entity">Entity &amp; PhysicsEntity</a></li>
+    <li><a href="#animsprite">AnimSprite — frame animation</a></li>
+    <li><a href="#camera">Camera — scrolling worlds</a></li>
+    <li><a href="#particles">Particles — effects</a></li>
+    <li><a href="#timer">Timer</a></li>
+    <li><a href="#gamesave">GameSave — persistence</a></li>
+    <li><a href="#utils">Utility functions</a></li>
+    <li><a href="#patterns">Common patterns</a></li>
+  </ul>
+
+  <!-- ── COLORS ── -->
+  <div class="doc-block" id="colors">
+<pre class="doc-pre">
+<span class="h">╔══════════════════════════════════════════╗</span>
+<span class="h">║  COLOR CONSTANTS                         ║</span>
+<span class="h">╚══════════════════════════════════════════╝</span>
+
+  Use semantic names — they tell you what the color is FOR:
+
+    PLAYER   = CYAN       <span class="c"># player character, info panels</span>
+    ENEMY    = RED        <span class="c"># enemies, damage, warnings</span>
+    GOOD     = GREEN      <span class="c"># health, positives, pickups</span>
+    GOLD     = YELLOW     <span class="c"># score, coins, fire, towns</span>
+    NEUTRAL  = WHITE      <span class="c"># borders, neutral text</span>
+    SPECIAL  = MAGENTA    <span class="c"># magic, abilities</span>
+    SELECT   = HIGHLIGHT  <span class="c"># selected menu item (black on white)</span>
+    WATER    = BLUE       <span class="c"># water, mana</span>
+
+  Raw names (same values, avoid where possible):
+    CYAN  RED  GREEN  YELLOW  WHITE  MAGENTA  HIGHLIGHT  BLUE
+
+  Pass to any Renderer method:
+    r.text(row, col, "HIT!", ENEMY, bold=True)
+    r.bar(row, col, hp, max_hp, 20, fill_color=GOOD)
+</pre>
+  </div>
+
+  <!-- ── INPUT ── -->
+  <div class="doc-block" id="input">
+<pre class="doc-pre">
+<span class="h">╔══════════════════════════════════════════╗</span>
+<span class="h">║  INPUT                                   ║</span>
+<span class="h">╚══════════════════════════════════════════╝</span>
+
+  The inp object is passed to Scene.update() every frame.
+
+  MOVEMENT ALIASES
+  ────────────────
+    inp.up      inp.down     inp.left     inp.right
+    WASD or arrow keys — True every frame the key is held.
+
+  ACTION ALIASES
+  ──────────────
+    inp.fire      J, F, or mouse click
+    inp.jump      SPACE
+    inp.confirm   ENTER or SPACE
+    inp.pause     ESC
+
+  SINGLE-FRAME DETECTION  ← use this for menus and one-shot actions
+  ──────────────────────────────────────────────────────────────────
+    inp.just_pressed(ord('j'))    True only the FIRST frame key goes down
+    inp.just_released(ord('j'))   True only the FIRST frame key comes up
+
+    <span class="c"># Wrong — fires every frame the key is held (cursor races through menu):</span>
+    if inp.down: cursor += 1
+
+    <span class="c"># Right — fires once per keypress:</span>
+    if inp.just_pressed(curses.KEY_DOWN, ord('s')): cursor += 1
+
+  RAW CHECK
+  ─────────
+    inp.pressed(ord('a'), ord('A'))    True any frame any of these are held
+
+  MOUSE
+  ─────
+    inp.mouse_click    True if left mouse button was clicked this frame
+</pre>
+  </div>
+
+  <!-- ── RENDERER ── -->
+  <div class="doc-block" id="renderer">
+<pre class="doc-pre">
+<span class="h">╔══════════════════════════════════════════╗</span>
+<span class="h">║  RENDERER                                ║</span>
+<span class="h">╚══════════════════════════════════════════╝</span>
+
+  r is passed to Scene.draw() every frame.
+  Coordinates are (row, col). Row 0 = TOP of terminal.
+  All methods are bounds-safe — drawing outside the terminal does nothing.
+
+  DIMENSIONS
+  ──────────
+    r.H    terminal height in rows
+    r.W    terminal width in columns
+
+  PRIMITIVES
+  ──────────
+    r.text(row, col, "string", color, bold, dim, reverse, blink)
+    r.center(row, "string", color, bold)
+    r.fill(row, col, h, w, char=' ', color)   <span class="c"># clear a region</span>
+
+  SHAPES
+  ──────
+    r.box(row, col, h, w, color, title="", double=True)
+      ╔═══════╗   double=True  (default)
+      ┌───────┐   double=False
+
+    r.outer_border(color)   full terminal border
+
+  PROGRESS BARS
+  ─────────────
+    r.bar(row, col, value, maximum, width, fill_color, empty_color, label)
+      ████████░░░░  HP 48/60
+
+    r.vbar(top_row, col, height, value, maximum, fill_color, empty_color)
+      Vertical bar — top=empty, bottom=full. Good for power meters.
+
+  SPRITES AND ENTITIES
+  ────────────────────
+    r.sprite(row, col, lines, color, bold)
+      lines = ['( o )', '|=|', '/ \\']
+
+    r.at(entity, sprite, color, bold)
+      Draws sprite at entity.x, entity.y — no manual (row,col) swap needed.
+
+    r.menu(row, col, options, cursor, color_selected, color_normal, width)
+      Vertical menu with ▸ cursor. Cursor wraps automatically.
+
+  TEXT
+  ────
+    r.wrapped_text(row, col, text, width, color, bold)
+      Word-wraps text into width columns. Returns number of rows used.
+
+    r.dialog(row, col, width, speaker, text, tick, speaker_color, portrait, prompt)
+      RPG dialog box: name tag, optional portrait, wrapped text, blinking ▼.
+
+  STANDARD SCREENS
+  ────────────────
+    r.header(game_name, left="", right="", color)
+      ╔══════════════════════════════════╗
+      ║▓▒░ ★ GAME NAME ★  LEFT    RIGHT ░▒▓║
+      ╠══════════════════════════════════╣
+      Draws rows 0–2. Call first in draw().
+
+    r.footer(controls, color)
+      ╠══════════════════════════════════╣
+      ║ WASD Move  J Fire  ESC Pause    ║
+      Draws rows H-3 and H-2.
+
+    r.pause_overlay(game_name, controls)
+      Floating pause menu. Draw after game scene so game shows behind.
+
+    r.gameover_screen(title, score_line, player_label, rank, tick, prompt, title_color)
+      Full-screen game over or victory screen with blinking prompt.
+      title_color=ENEMY for game over, GOOD for victory.
+
+    r.stars(star_list)
+      Draw parallax star field. Use with make_stars() and scroll_stars().
+</pre>
+  </div>
+
+  <!-- ── SCENE ── -->
+  <div class="doc-block" id="scene">
+<pre class="doc-pre">
+<span class="h">╔══════════════════════════════════════════╗</span>
+<span class="h">║  SCENE                                   ║</span>
+<span class="h">╚══════════════════════════════════════════╝</span>
+
+  One screen of a game. Subclass and implement three methods.
+
+  class GameScene(Scene):
+
+      def on_enter(self):
+          <span class="c"># Called once when scene becomes active.</span>
+          <span class="c"># self.engine.H and self.engine.W are available here.</span>
+          self.player = Player(self.engine.W // 2, self.engine.H // 2)
+
+      def update(self, inp: Input, tick: int, dt: float) -> str | None:
+          <span class="c"># Called every frame. dt = elapsed seconds (≈0.033 at 30fps).</span>
+          <span class="c"># Return a scene name to switch, "quit" to exit, or None.</span>
+          self.player.x += 10 * dt   <span class="c"># always scale by dt for smooth movement</span>
+          if inp.pause:
+              return "pause"
+          if self.player.dead:
+              return "gameover"
+
+      def draw(self, r: Renderer, tick: int):
+          <span class="c"># Called every frame after update(). Draw background first.</span>
+          r.header("MY GAME")
+          r.at(self.player, self.player.sprite())
+
+  SWITCHING SCENES
+  ────────────────
+    return "gameover"               <span class="c"># from update() — immediate switch</span>
+    self.engine.switch("gameover")  <span class="c"># programmatic — same result</span>
+    self.engine.fade_to("gameover", ticks=12)  <span class="c"># with fade transition</span>
+
+  DRAW ORDER (critical for correct rendering)
+  ────────────────────────────────────────────
+    1. background / stars / terrain
+    2. world entities (enemies, bullets, platforms)
+    3. player
+    4. particles
+    5. HUD (header, bars, score)
+    6. overlays (pause, dialog)
+</pre>
+  </div>
+
+  <!-- ── ENGINE ── -->
+  <div class="doc-block" id="engine">
+<pre class="doc-pre">
+<span class="h">╔══════════════════════════════════════════╗</span>
+<span class="h">║  ENGINE                                  ║</span>
+<span class="h">╚══════════════════════════════════════════╝</span>
+
+  Engine("Title", fps=30)
+    .scene("menu",     MenuScene())
+    .scene("game",     GameScene())
+    .scene("gameover", GameOverScene())
+    .run("menu")
+
+  PROPERTIES (read from scenes via self.engine.*)
+  ─────────────────────────────────────────────────
+    engine.H        terminal height (updated every frame)
+    engine.W        terminal width
+    engine.dt       seconds since last frame (≈0.033 at 30fps)
+
+  METHODS
+  ───────
+    engine.switch(name)            immediate scene switch
+    engine.fade_to(name, ticks)    scene switch with fade transition
+
+  BUILT-IN BEHAVIOR
+  ─────────────────
+    · Terminal size is checked every frame. If too small (< 50×18)
+      a resize message is shown instead of running the game.
+    · Unknown scene names print a warning to stderr (no silent failures).
+    · Frame timing never tries to "catch up" — if a frame runs long,
+      the next target time is adjusted, preventing speed bursts.
+    · Returns "quit" from update() to cleanly exit.
+</pre>
+  </div>
+
+  <!-- ── ENTITY ── -->
+  <div class="doc-block" id="entity">
+<pre class="doc-pre">
+<span class="h">╔══════════════════════════════════════════╗</span>
+<span class="h">║  ENTITY  /  PHYSICS ENTITY               ║</span>
+<span class="h">╚══════════════════════════════════════════╝</span>
+
+  Entity(x, y)
+    Base class. x=col, y=row in screen space.
+
+    Properties: x, y, vx, vy, alive
+
+    entity.rect()             (x, y, w, h) — override for custom hitbox
+    entity.collides(other)    AABB collision check
+
+  PhysicsEntity(x, y)
+    Adds gravity, velocity, and floor collision.
+
+    entity.gravity = 1.5      class or instance attribute
+    entity.grounded           True when resting on the floor
+
+    entity.apply_physics(floor_y, dt)
+      Call every frame. Always pass dt:
+        self.apply_physics(floor_y=H - 4, dt=dt)
+
+  DRAW CONVENTION
+  ───────────────
+    r.at(entity, sprite)   <span class="c"># recommended — handles row/col conversion</span>
+    r.sprite(int(entity.y), int(entity.x), lines)   <span class="c"># manual</span>
+
+  ENTITY LISTS
+  ────────────
+    <span class="c"># Update all, then cull dead ones:</span>
+    for e in self.enemies:
+        e.update(inp, tick, dt)
+    self.enemies = [e for e in self.enemies if e.alive]
+
+    <span class="c"># Check player vs all enemies:</span>
+    for e in self.enemies:
+        if self.player.collides(e):
+            self.player.alive = False
+</pre>
+  </div>
+
+  <!-- ── ANIMSPRITE ── -->
+  <div class="doc-block" id="animsprite">
+<pre class="doc-pre">
+<span class="h">╔══════════════════════════════════════════╗</span>
+<span class="h">║  ANIMSPRITE                              ║</span>
+<span class="h">╚══════════════════════════════════════════╝</span>
+
+  Frame-cycling sprite with named states and optional completion callbacks.
+
+  SETUP
+  ─────
+    states = {
+        'idle': [ ['( o )', '|=|', '/ \\'] ],          <span class="c"># 1 frame</span>
+        'run':  [ ['(_o_)', '/|\\', '/ \\'],            <span class="c"># 2 frames</span>
+                  ['(_o_)', '\\|/', '/ \\'] ],
+        'die':  [ ['( x )', ' | ', '/ \\'],
+                  ['( x )', '   ', ' - '] ],
+    }
+    sprite = AnimSprite(states, ticks_per_frame=6)
+
+  EACH FRAME
+  ──────────
+    sprite.set_state('run')         <span class="c"># switch state (resets to frame 0)</span>
+    sprite.tick()                   <span class="c"># advance animation</span>
+    r.sprite(row, col, sprite.current(), PLAYER)
+
+  ONE-SHOT ANIMATIONS  (fire-and-forget with callback)
+  ─────────────────────────────────────────────────────
+    sprite.set_state('die', on_complete=lambda: self.remove())
+    sprite.set_state('attack', force=True)   <span class="c"># restart even if already in state</span>
+</pre>
+  </div>
+
+  <!-- ── CAMERA ── -->
+  <div class="doc-block" id="camera">
+<pre class="doc-pre">
+<span class="h">╔══════════════════════════════════════════╗</span>
+<span class="h">║  CAMERA                                  ║</span>
+<span class="h">╚══════════════════════════════════════════╝</span>
+
+  Smooth-follow camera for scrolling worlds.
+
+  SETUP
+  ─────
+    self.cam = Camera()
+    self.cam.set_bounds(0, world_width)   <span class="c"># prevent scrolling past edges</span>
+
+  EACH FRAME  (in update)
+  ────────────────────────
+    self.cam.follow(player.x, player.y, lerp=0.12)
+    <span class="c"># lerp: 1.0 = instant snap, 0.05 = very smooth</span>
+
+  DRAW ENTITIES  (in draw)
+  ─────────────────────────
+    row, col = self.cam.world_to_screen(entity.x, entity.y, r.W, r.H)
+    r.sprite(row, col, entity.sprite())
+
+  Y-AXIS CONVENTION
+  ─────────────────
+    y_up=False  (default)  Y increases downward — terminal convention
+                           Use for top-down games, maps, shooters
+    y_up=True              Y increases upward — platformer convention
+                           Y=0 is the floor, higher Y = higher up
+
+    row, col = cam.world_to_screen(wx, wy, W, H, y_up=True)
+
+  VISIBILITY CHECK
+  ─────────────────
+    if cam.on_screen(entity.x, entity.y, W, H):
+        <span class="c"># only draw visible entities (performance)</span>
+</pre>
+  </div>
+
+  <!-- ── PARTICLES ── -->
+  <div class="doc-block" id="particles">
+<pre class="doc-pre">
+<span class="h">╔══════════════════════════════════════════╗</span>
+<span class="h">║  PARTICLES                               ║</span>
+<span class="h">╚══════════════════════════════════════════╝</span>
+
+  Moving particle system for explosions, sparks, and effects.
+
+  SETUP
+  ─────
+    self.particles = Particles()
+
+  EACH FRAME
+  ──────────
+    self.particles.update()     <span class="c"># advance all particles</span>
+    self.particles.draw(r)      <span class="c"># render (call after entities, before HUD)</span>
+
+  SPAWNING
+  ────────
+    <span class="c"># Radial explosion burst:</span>
+    particles.explode(col, row, count=8, color=GOLD, chars='✦✧★·◆')
+
+    <span class="c"># Directional burst (exhaust, hit sparks):</span>
+    particles.burst(col, row, direction=(-1, 0), spread=0.5, count=4, color=ENEMY)
+
+    <span class="c"># Single custom particle:</span>
+    particles.spawn(col, row, vx=-0.5, vy=-1.2, char='★', color=GOLD, life=10)
+
+    <span class="c"># Count active:</span>
+    particles.count
+</pre>
+  </div>
+
+  <!-- ── TIMER ── -->
+  <div class="doc-block" id="timer">
+<pre class="doc-pre">
+<span class="h">╔══════════════════════════════════════════╗</span>
+<span class="h">║  TIMER                                   ║</span>
+<span class="h">╚══════════════════════════════════════════╝</span>
+
+  Countdown timer for delays, cooldowns, and intervals.
+
+  USAGE
+  ─────
+    <span class="c"># One-shot: fires once after 2 seconds</span>
+    self.invincible = Timer(2.0)
+
+    <span class="c"># Auto-repeating: fires every 0.5 seconds</span>
+    self.fire_rate = Timer(0.5, auto_reset=True)
+
+  EACH FRAME  (in update)
+  ────────────────────────
+    if self.invincible.tick(dt):
+        self.can_take_damage = True
+
+    if self.fire_rate.tick(dt):
+        self.bullets.append(Bullet(x, y))
+
+  PROPERTIES
+  ──────────
+    timer.done          True if timer has completed
+    timer.frac          Progress 0.0 → 1.0
+    timer.remaining     Seconds left
+
+  RESET
+  ─────
+    timer.reset()               restart with same duration
+    timer.reset(duration=1.5)   restart with new duration
+</pre>
+  </div>
+
+  <!-- ── GAMESAVE ── -->
+  <div class="doc-block" id="gamesave">
+<pre class="doc-pre">
+<span class="h">╔══════════════════════════════════════════╗</span>
+<span class="h">║  GAMESAVE                                ║</span>
+<span class="h">╚══════════════════════════════════════════╝</span>
+
+  JSON save file stored in ~/.claudcade_NAME_save.json
+
+  USAGE
+  ─────
+    save = GameSave('mygame')
+
+    <span class="c"># Save any JSON-serialisable dict:</span>
+    save.save({'level': 3, 'score': 12400, 'inventory': ['sword', 'potion']})
+
+    <span class="c"># Load (returns None if no save exists):</span>
+    data = save.load()
+    if data:
+        self.level = data['level']
+
+    <span class="c"># Check and delete:</span>
+    save.exists
+    save.delete()
+</pre>
+  </div>
+
+  <!-- ── UTILS ── -->
+  <div class="doc-block" id="utils">
+<pre class="doc-pre">
+<span class="h">╔══════════════════════════════════════════╗</span>
+<span class="h">║  UTILITY FUNCTIONS                       ║</span>
+<span class="h">╚══════════════════════════════════════════╝</span>
+
+  MATH
+  ────
+    clamp(value, lo, hi)         clamp a float to a range
+    lerp(a, b, t)                linear interpolation
+    ease_in(t)                   quadratic ease-in      (t in 0..1)
+    ease_out(t)                  quadratic ease-out
+    ease_in_out(t)               smooth step
+    sign(x)                      -1.0 / 0.0 / 1.0
+    distance(ax, ay, bx, by)     Euclidean distance
+
+  STARS
+  ─────
+    stars = make_stars(H, W, count=80)    generate parallax field
+    scroll_stars(stars, W, direction=-1)  scroll left each frame
+    r.stars(stars)                        draw in draw()
+
+  ENGINE HELPERS
+  ──────────────
+    setup_colors()          initialise 8 color pairs — call once in curses.wrapper
+    run_game(main_fn, name) standard crash-safe game launcher
+    draw_how_to_play(...)   standard HOW TO PLAY screen
+</pre>
+  </div>
+
+  <!-- ── PATTERNS ── -->
+  <div class="doc-block" id="patterns">
+<pre class="doc-pre">
+<span class="h">╔══════════════════════════════════════════╗</span>
+<span class="h">║  COMMON PATTERNS                         ║</span>
+<span class="h">╚══════════════════════════════════════════╝</span>
+
+  MINIMAL COMPLETE GAME
+  ──────────────────────
+    from claudcade_engine import *
+
+    class Menu(Scene):
+        def update(self, inp, tick, dt):
+            if inp.confirm: return "game"
+            if inp.pause:   return "quit"
+        def draw(self, r, tick):
+            r.center(r.H//2, "PRESS SPACE", GOLD, bold=True)
+
+    class Game(Scene):
+        def on_enter(self):
+            self.x = self.engine.W // 2
+            self.score = 0
+        def update(self, inp, tick, dt):
+            if inp.right: self.x += 20 * dt
+            if inp.left:  self.x -= 20 * dt
+            if inp.pause: return "menu"
+        def draw(self, r, tick):
+            r.header("GAME", right=f"SCORE {self.score}")
+            r.text(r.H//2, int(self.x), "(◙)", PLAYER, bold=True)
+
+    Engine("Demo").scene("menu", Menu()).scene("game", Game()).run("menu")
+
+  ─────────────────────────────────────────────────────────────────────────
+
+  ENTITY LIST WITH COLLISIONS
+  ────────────────────────────
+    class GameScene(Scene):
+        def on_enter(self):
+            self.player  = Player(10, 10)
+            self.enemies = [Enemy(x, 5) for x in range(20, 60, 8)]
+            self.bullets : list[Bullet] = []
+            self.particles = Particles()
+
+        def update(self, inp, tick, dt):
+            self.player.update(inp, tick, dt)
+
+            if inp.just_pressed(ord('j')):
+                self.bullets.append(Bullet(self.player.x, self.player.y))
+
+            for b in self.bullets: b.update(inp, tick, dt)
+            for e in self.enemies: e.update(inp, tick, dt)
+            self.particles.update()
+
+            <span class="c"># bullet vs enemy collisions</span>
+            for b in self.bullets:
+                for e in self.enemies:
+                    if b.collides(e):
+                        b.alive = False
+                        e.alive = False
+                        self.particles.explode(int(e.x), int(e.y), color=ENEMY)
+
+            <span class="c"># cull dead</span>
+            self.bullets = [b for b in self.bullets if b.alive]
+            self.enemies = [e for e in self.enemies if e.alive]
+
+            if not self.player.alive: return "gameover"
+
+        def draw(self, r, tick):
+            r.header("SHOOTER")
+            for e in self.enemies: r.at(e, '(×)', ENEMY)
+            for b in self.bullets: r.at(b, '─▶', GOLD)
+            r.at(self.player, '(◙)', PLAYER, bold=True)
+            self.particles.draw(r)
+
+  ─────────────────────────────────────────────────────────────────────────
+
+  SCROLLING WORLD WITH CAMERA
+  ────────────────────────────
+    class World(Scene):
+        def on_enter(self):
+            self.cam    = Camera()
+            self.cam.set_bounds(0, 500)
+            self.player = Player(0, self.engine.H // 2)
+            self.world_width = 500
+
+        def update(self, inp, tick, dt):
+            self.player.update(inp, tick, dt)
+            self.cam.follow(self.player.x, self.player.y)
+
+        def draw(self, r, tick):
+            r.header("WORLD")
+            for entity in self.entities:
+                if self.cam.on_screen(entity.x, entity.y, r.W, r.H):
+                    row, col = self.cam.world_to_screen(entity.x, entity.y, r.W, r.H)
+                    r.sprite(row, col, entity.sprite(), entity.color)
+
+  ─────────────────────────────────────────────────────────────────────────
+
+  DELTA-TIME MOVEMENT  (always use dt)
+  ──────────────────────────────────────
+    <span class="c"># Wrong — speed changes with FPS:</span>
+    entity.x += 2
+
+    <span class="c"># Right — consistent at any FPS:</span>
+    entity.x += 2 * dt * 30    <span class="c"># "2 cols per frame at 30fps reference"</span>
+
+    <span class="c"># Physics:</span>
+    entity.apply_physics(floor_y=H - 3, dt=dt)
+
+  ─────────────────────────────────────────────────────────────────────────
+
+  TIMER PATTERNS
+  ───────────────
+    <span class="c"># Spawn enemies every 3 seconds:</span>
+    self.spawn_timer = Timer(3.0, auto_reset=True)
+    if self.spawn_timer.tick(dt):
+        self.enemies.append(Enemy(W, H//2))
+
+    <span class="c"># Invincibility flash after hit:</span>
+    self.inv_timer = Timer(2.0)
+    if hit:
+        self.inv_timer.reset()
+    dim = not self.inv_timer.done and (tick // 4) % 2 == 0
+
+    <span class="c"># Countdown bar:</span>
+    r.bar(H-4, 4, self.bomb_timer.remaining, 5.0, 20,
+          fill_color=ENEMY if self.bomb_timer.remaining < 1 else GOLD)
+</pre>
+  </div>
+
+</div>
+
+<div class="site-footer-rule" style="margin-top:2rem"></div>
+<footer>
+  <span>CLAUDECADE <span class="footer-pink">&#xB7;</span> MIT LICENSE</span>
+  <span>
+    <a href="index.html">HOME</a>
+    &nbsp;&#xB7;&nbsp;
+    <a href="https://github.com/ConductorAILabs/claudecade">GITHUB</a>
+  </span>
+</footer>
+
+</body>
+</html>

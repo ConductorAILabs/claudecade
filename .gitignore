@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+build/
+dist/
+
+# Node
+node_modules/
+.next/
+
+# Local secrets / env
+.env
+.env.local
+*.pem
+*.key
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors / IDE
+.vscode/
+.idea/
+*.swp
+
+# Claude Code local settings (machine-specific paths and personal preferences)
+.claude/
+
+# Netlify build state
+claudcade-site/.netlify/
+
+# User runtime data (lives in ~ normally; ignore if it ever lands here)
+.claudcade_id
+.claudcade_scores.json
+finalclaudesy_save.json

@@ -1,0 +1,8 @@
+{
+  "name": "claudcade-site",
+  "version": "1.0.0",
+  "description": "Claudcade — The Claude Terminal Arcade",
+  "dependencies": {
+    "pg": "^8.11.3"
+  }
+}
