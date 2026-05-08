@@ -349,7 +349,19 @@ def run():
     global _launch_script
     script_dir = os.path.dirname(os.path.abspath(__file__))
     while True:
-        curses.wrapper(arcade_main)
+        try:
+            curses.wrapper(arcade_main)
+        except curses.error as e:
+            print('\n  ERROR: Curses terminal support failed')
+            print('  This usually means you\'re not in a proper interactive terminal.\n')
+            print('  To play Claudcade, run it in a tmux session:')
+            print('    $ tmux')
+            print('    $ python3 claudcade.py\n')
+            break
+        except KeyboardInterrupt:
+            print('\n  Thanks for playing — Claudcade\n')
+            break
+
         if _launch_script is None:
             print('\n  Thanks for playing — Claudcade\n')
             break
