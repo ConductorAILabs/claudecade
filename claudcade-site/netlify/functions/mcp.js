@@ -104,7 +104,7 @@ const TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        game:  { type: 'string', description: 'Game ID: ctype, claudtra, fight, or finalclaudesy. Omit for all games.' },
+        game:  { type: 'string', description: 'Game ID: ctype, claudtra, fight, finalclaudesy, superclaudio, claudturismo, or claudemon. Omit for all games.' },
         limit: { type: 'integer', description: 'Max scores to return (default 10)' },
       },
     },
@@ -115,7 +115,7 @@ const TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        game:        { type: 'string',  description: 'Game ID: ctype, claudtra, fight, or finalclaudesy' },
+        game:        { type: 'string',  description: 'Game ID: ctype, claudtra, fight, finalclaudesy, superclaudio, claudturismo, or claudemon' },
         player_name: { type: 'string',  description: 'Player name or number (e.g. "Player #42")' },
         score:       { type: 'integer', description: 'Score value' },
         extra:       { type: 'string',  description: 'Extra info e.g. "Wave 12" or "Lv 20"' },
@@ -149,7 +149,7 @@ function handleSetup() {
 
 function handleListGames() {
   return [
-    'Claudcade — 4 games available:\n',
+    `Claudcade — ${Object.keys(GAME_LABELS).length} games registered:\n`,
     ...Object.entries(GAME_LABELS).map(([id, label]) => `  • ${label}  (id: ${id})`),
     '',
     'Run python3 claudcade.py after cloning to launch the arcade.',

@@ -1,0 +1,175 @@
+ASCII ART FONT: LETTERS I-P
+Box-Drawing Characters | 6 Lines Tall | Consistent Width
+
+================================================================================
+
+LETTER I (6 characters wide):
+Line 1: ╔════╗
+Line 2: ║    ║
+Line 3: ║  █ ║
+Line 4: ║  █ ║
+Line 5: ║    ║
+Line 6: ╚════╝
+
+LETTER J (6 characters wide):
+Line 1: ╔════╗
+Line 2: ║    ║
+Line 3: ║   █║
+Line 4: ║   █║
+Line 5: ║█  █║
+Line 6: ╚══█═╝
+
+LETTER K (6 characters wide):
+Line 1: ╔════╗
+Line 2: ║█   ║
+Line 3: ║█ █ ║
+Line 4: ║██  ║
+Line 5: ║█ █ ║
+Line 6: ╚════╝
+
+LETTER L (6 characters wide):
+Line 1: ╔════╗
+Line 2: ║█   ║
+Line 3: ║█   ║
+Line 4: ║█   ║
+Line 5: ║█ █ ║
+Line 6: ╚════╝
+
+LETTER M (8 characters wide):
+Line 1: ╔══════╗
+Line 2: ║█    █║
+Line 3: ║██  ██║
+Line 4: ║█ ██ █║
+Line 5: ║█    █║
+Line 6: ╚══════╝
+
+LETTER N (8 characters wide):
+Line 1: ╔══════╗
+Line 2: ║█    █║
+Line 3: ║██   █║
+Line 4: ║█ █  █║
+Line 5: ║█  █ █║
+Line 6: ╚══════╝
+
+LETTER O (8 characters wide):
+Line 1: ╔══════╗
+Line 2: ║  ██  ║
+Line 3: ║ █  █ ║
+Line 4: ║█    █║
+Line 5: ║ █  █ ║
+Line 6: ╚══════╝
+
+LETTER P (6 characters wide):
+Line 1: ╔════╗
+Line 2: ║██  ║
+Line 3: ║█ █ ║
+Line 4: ║██  ║
+Line 5: ║█   ║
+Line 6: ╚════╝
+
+================================================================================
+
+ALTERNATE DESIGNS (More Compact - 6 lines each):
+
+LETTER I (Minimal - 4 characters wide):
+Line 1: ╔══╗
+Line 2: ║ █║
+Line 3: ║ █║
+Line 4: ║ █║
+Line 5: ║ █║
+Line 6: ╚══╝
+
+LETTER J (Compact - 5 characters wide):
+Line 1: ╔═══╗
+Line 2: ║  █║
+Line 3: ║  █║
+Line 4: ║█ █║
+Line 5: ║ █ ║
+Line 6: ╚═══╝
+
+LETTER K (Compact - 6 characters wide):
+Line 1: ╔════╗
+Line 2: ║█  █║
+Line 3: ║█ █ ║
+Line 4: ║██  ║
+Line 5: ║█ █ ║
+Line 6: ╚════╝
+
+LETTER L (Compact - 5 characters wide):
+Line 1: ╔═══╗
+Line 2: ║█  ║
+Line 3: ║█  ║
+Line 4: ║█  ║
+Line 5: ║█ █║
+Line 6: ╚═══╝
+
+LETTER M (Compact - 7 characters wide):
+Line 1: ╔═════╗
+Line 2: ║█   █║
+Line 3: ║██ ██║
+Line 4: ║█ █ █║
+Line 5: ║█   █║
+Line 6: ╚═════╝
+
+LETTER N (Compact - 7 characters wide):
+Line 1: ╔═════╗
+Line 2: ║█   █║
+Line 3: ║██  █║
+Line 4: ║█ █ █║
+Line 5: ║█  ██║
+Line 6: ╚═════╝
+
+LETTER O (Compact - 7 characters wide):
+Line 1: ╔═════╗
+Line 2: ║ ███ ║
+Line 3: ║█   █║
+Line 4: ║█   █║
+Line 5: ║ ███ ║
+Line 6: ╚═════╝
+
+LETTER P (Compact - 6 characters wide):
+Line 1: ╔════╗
+Line 2: ║██ ║
+Line 3: ║█ █║
+Line 4: ║██ ║
+Line 5: ║█  ║
+Line 6: ╚════╝
+
+================================================================================
+
+USAGE EXAMPLES:
+
+Single Letter Display (6-char width):
+╔════╗
+║    ║
+║  █ ║
+║  █ ║
+║    ║
+╚════╝
+
+Word "IN":
+╔════╗  ╔════╗
+║    ║  ║    ║
+║  █ ║  ║██  ║
+║  █ ║  ║ █  ║
+║    ║  ║ █  ║
+╚════╝  ╚════╝
+
+Word "PING":
+╔════╗  ╔════╗  ╔════╗  ╔════╗
+║██  ║  ║    ║  ║    ║  ║ ███║
+║█ █ ║  ║  █ ║  ║██  ║  ║█   ║
+║██  ║  ║  █ ║  ║ █  ║  ║███ ║
+║█   ║  ║█ █ ║  ║ █  ║  ║    ║
+╚════╝  ╚════╝  ╚════╝  ╚════╝
+
+================================================================================
+
+DESIGN NOTES:
+- All letters use box-drawing border characters (╔ ╗ ╚ ╝ ║ ═)
+- Interior fill uses █ (full block) for solid areas
+- Each letter is exactly 6 lines tall
+- Consistent width per letter (pad with spaces)
+- Professional arcade/terminal aesthetic
+- Compatible with CLAUDECADE design style
+- Readable and bold while remaining compact

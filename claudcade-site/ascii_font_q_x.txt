@@ -1,0 +1,66 @@
+ASCII ART FONT: LETTERS Q-X (6 lines each)
+================================================
+
+Q (Quickfire)
+Line 1: ╔════╗
+Line 2: ║    ║
+Line 3: ║    ║
+Line 4: ║   ╱
+Line 5: ║  ╱
+Line 6: ╚═╱ ╗
+
+R (Radius)
+Line 1: ╔════╗
+Line 2: ║    ║
+Line 3: ╠════╣
+Line 4: ║  ╱ ║
+Line 5: ║ ╱  ║
+Line 6: ╚╱   ╚
+
+S (Strike)
+Line 1:  ╔══╗
+Line 2:  ║
+Line 3:  ╚══╗
+Line 4:     ║
+Line 5:  ╔══╝
+Line 6:  ╚══╝
+
+T (Thrust)
+Line 1: ╔════╗
+Line 2:   ║
+Line 3:   ║
+Line 4:   ║
+Line 5:   ║
+Line 6:   ╚
+
+U (Ultrabow)
+Line 1: ║    ║
+Line 2: ║    ║
+Line 3: ║    ║
+Line 4: ║    ║
+Line 5: ║    ║
+Line 6: ╚════╝
+
+V (Vector)
+Line 1: ║      ║
+Line 2: ║      ║
+Line 3: ║      ║
+Line 4:  ║    ║
+Line 5:   ╲  ╱
+Line 6:    ╚╝
+
+W (Waveform)
+Line 1: ║  ║  ║
+Line 2: ║  ║  ║
+Line 3: ║  ║  ║
+Line 4: ║ ╱ ╲ ║
+Line 5: ║╱   ╲║
+Line 6: ╚     ╝
+
+X (Xenith)
+Line 1: ║      ║
+Line 2:  ╲    ╱
+Line 3:   ╲  ╱
+Line 4:    ╚╝
+Line 5:   ╱  ╲
+Line 6:  ╱    ╲

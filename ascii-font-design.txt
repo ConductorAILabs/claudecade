@@ -1,0 +1,153 @@
+ASCII ART FONT DESIGN - NUMBERS 6-9 & SYMBOLS
+==============================================
+Each character is EXACTLY 6 lines tall with consistent width
+
+RECOMMENDED VERSION (8 chars wide, bold & professional)
+========================================================
+
+NUMBER 6:
+╔════╗ 
+║      
+╠════╝
+║    █
+║    █
+╚════╝
+
+NUMBER 7:
+╔═════╗
+    █ 
+   █  
+  █   
+ █    
+█     
+
+NUMBER 8:
+╔════╗ 
+║    ║
+╠════╣
+║    ║
+║    ║
+╚════╝
+
+NUMBER 9:
+╔════╗ 
+║    █
+╚════█
+    █ 
+    █ 
+╚════╝
+
+HYPHEN/MINUS:
+
+
+═════  
+
+
+
+
+PLUS:
+  █   
+  █   
+══█═══
+  █   
+  █   
+
+EXCLAMATION:
+  █   
+  █   
+  █   
+  █   
+      
+  █   
+
+QUESTION MARK:
+╔════╗ 
+   █  
+  ██  
+  █   
+      
+  █   
+
+PERIOD/DOT:
+         
+         
+         
+         
+  █     
+  █     
+
+
+COMPACT VERSION (6 chars wide)
+==============================
+
+NUMBER 6:
+╔══╗  
+║     
+╠══╝ 
+║   █
+║   █
+╚══╝ 
+
+NUMBER 7:
+╔═══╗
+   █ 
+  █  
+ █   
+█    
+█    
+
+NUMBER 8:
+╔══╗ 
+║  ║
+╠══╣
+║  ║
+║  ║
+╚══╝
+
+NUMBER 9:
+╔══╗ 
+║  █
+╚══█
+   █
+   █
+╚══╝
+
+HYPHEN/MINUS:
+
+
+═════
+
+
+
+
+PLUS:
+ █   
+ █   
+═█═══
+ █   
+ █   
+
+EXCLAMATION:
+ █   
+ █   
+ █   
+ █   
+     
+ █   
+
+QUESTION MARK:
+╔══╗ 
+  █ 
+ ██ 
+ █  
+    
+ █  
+
+PERIOD/DOT:
+        
+        
+        
+        
+ █     
+ █     
+

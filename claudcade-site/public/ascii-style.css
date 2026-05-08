@@ -1,0 +1,189 @@
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #1a1a1a;
+  color: #cccccc;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: 0;
+  padding: 2rem 1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1000px);
+  justify-items: center;
+  justify-content: center;
+}
+
+pre {
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.3;
+  white-space: pre;
+  color: #cccccc;
+  overflow-x: auto;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 100%;
+  -webkit-font-smoothing: subpixel-antialiased;
+  -moz-osx-font-smoothing: auto;
+}
+
+.title {
+  font-size: 13px;
+  padding: 2rem 0 1rem;
+  line-height: 1.2;
+  margin-bottom: 0;
+  width: 100%;
+  font-weight: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: 0;
+  text-align: center;
+}
+
+.hero-sub {
+  text-align: center;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 14px;
+  color: #999999;
+  line-height: 1.5;
+  margin: 0 auto 2.5rem;
+  max-width: 720px;
+  letter-spacing: 0.02em;
+}
+
+.divider {
+  color: #666666;
+  margin: 2rem 0;
+  text-align: center;
+  font-size: 13px;
+  width: 100%;
+}
+
+.game-card {
+  border: 2px solid #cccccc;
+  padding: 2rem;
+  margin: 1rem 0;
+  background: #1a1a1a;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: pre;
+  overflow-x: auto;
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+  transition: all 0.2s;
+  /* Module rule: card is centered on the page (via grid), but content
+     inside the card reads left-aligned. */
+  text-align: left;
+  cursor: pointer;
+}
+
+.game-card:hover {
+  border-color: #ffffff;
+}
+
+#lb-live {
+  text-align: center;
+  font-size: 13px;
+}
+
+.section-head {
+  text-align: center;
+  font-size: 11px;        /* smaller than page title (13px), bigger feel  */
+  line-height: 1.15;
+  margin: 1rem 0 0.5rem;
+  color: #ffffff;
+  font-weight: normal;
+  -webkit-font-smoothing: antialiased;
+}
+
+.install-section,
+.docs {
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.3;
+  margin: 1rem 0;
+  color: #cccccc;
+}
+
+.docs:first-of-type {
+  margin-top: 1.5rem;
+}
+
+.install-section a,
+.docs a {
+  color: #ffffff;
+  text-decoration: none;
+  border-bottom: 1px solid #555;
+}
+
+.install-section a:hover,
+.docs a:hover {
+  border-bottom-color: #ffffff;
+  background: transparent;
+}
+
+a {
+  color: #cccccc;
+  text-decoration: underline;
+}
+
+a:hover {
+  background: #cccccc;
+  color: #1a1a1a;
+}
+
+@media (max-width: 768px) {
+  body {
+    font-size: 12px;
+    padding: 1rem 0.5rem;
+    grid-template-columns: 1fr;
+  }
+
+  pre {
+    font-size: 11px;
+  }
+
+  .game-card {
+    font-size: 11px;
+    padding: 1.5rem;
+  }
+
+  .title {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    font-size: 11px;
+    padding: 0.5rem;
+    grid-template-columns: 1fr;
+  }
+
+  pre {
+    font-size: 10px;
+  }
+
+  .game-card {
+    font-size: 10px;
+    padding: 1rem;
+    max-width: 100%;
+  }
+
+  .title {
+    font-size: 8px;
+  }
+}

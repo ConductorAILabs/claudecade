@@ -144,25 +144,28 @@ nav::after {
 
 /* ── ASCII SECTION DIVIDERS ────────────────────────────────────────────────── */
 .ascii-rule {
-  font-family:var(--font); font-size:12px; color:var(--dim);
-  text-align:center; padding:.6rem 0; white-space:nowrap; overflow:hidden;
-  position:relative; z-index:1;
+  font-family:var(--font); font-size:11px; color:var(--dim);
+  text-align:center; padding:1.2rem 0; white-space:nowrap; overflow:hidden;
+  position:relative; z-index:1; margin:2rem 0;
 }
-.ascii-rule span { color:#3a3a3a; letter-spacing:.1em; }
+.ascii-rule span { color:#3a3a3a; letter-spacing:.15em; font-weight:bold; }
 .ascii-rule::before, .ascii-rule::after {
   content:''; display:inline-block; height:1px;
-  background:var(--border); vertical-align:middle; width:25%; margin:0 1rem;
+  background:linear-gradient(90deg,var(--border) 50%,transparent 50%);
+  background-size:4px 1px;
+  vertical-align:middle; width:30%; margin:0 1.5rem;
 }
 
 /* ── GAMES — COVER ART GRID ─────────────────────────────────────────────────── */
-#games { padding:4rem 2rem; position:relative; z-index:1; max-width:1400px; margin:0 auto; }
+#games { padding:3rem 2rem; position:relative; z-index:1; max-width:1400px; margin:0 auto; }
 
 .cover-grid {
   display:grid;
   grid-template-columns:repeat(2, 1fr);
-  gap:1px;
-  background:var(--border);
-  border:1px solid var(--border);
+  gap:2.5rem;
+  background:transparent;
+  border:none;
+  padding:0 1rem;
 }
 
 /* Each game cover is a portrait card like a physical box */
@@ -172,6 +175,12 @@ nav::after {
   cursor:default;
   transition:transform .2s, box-shadow .2s;
   position:relative;
+  border:1px solid var(--border);
+  box-shadow:inset 0 0 0 1px var(--dim);
+}
+.game-cover::before {
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:1;
+  border:1px dashed rgba(255,255,255,.08); margin:8px;
 }
 .game-cover:hover { transform:scale(1.02); z-index:2; box-shadow:0 0 30px rgba(0,0,0,.5); }
 
@@ -365,8 +374,8 @@ nav::after {
 #setup { padding:5rem 2rem; position:relative; z-index:1; max-width:900px; margin:0 auto; }
 
 .setup-steps { display:flex; flex-direction:column; }
-.setup-step { display:grid; grid-template-columns:3.5rem 1fr; gap:1.5rem;
-  padding:2rem 0; border-bottom:1px solid var(--border); }
+.setup-step { display:grid; grid-template-columns:3.5rem 1fr; gap:2rem;
+  padding:2.5rem 0; border-bottom:1px dashed var(--dim); }
 .setup-step:last-child { border-bottom:none; }
 .step-num { font-family:var(--font); font-size:22px; color:var(--dim); line-height:1; }
 .step-body { display:flex; flex-direction:column; gap:.6rem; }
@@ -375,10 +384,10 @@ nav::after {
 .step-desc code { color:var(--fg); background:var(--surface); padding:.1em .4em; font-size:11px; }
 .step-desc a { color:var(--pink); text-decoration:none; }
 
-.term { background:var(--bg); border:1px solid var(--border); }
-.term-bar { background:var(--surface); padding:.4rem 1rem; font-size:10px;
-  color:var(--dim); border-bottom:1px solid var(--border); letter-spacing:.1em; }
-.term-body { padding:1rem 1.5rem; display:flex; flex-direction:column; gap:.3rem; }
+.term { background:var(--bg); border:1px solid var(--border); box-shadow:inset 0 0 0 1px var(--dim); }
+.term-bar { background:var(--surface); padding:.5rem 1rem; font-size:9px;
+  color:var(--dim); border-bottom:1px solid var(--border); letter-spacing:.15em; font-weight:bold; }
+.term-body { padding:1.2rem 1.5rem; display:flex; flex-direction:column; gap:.5rem; }
 .t-ln { display:flex; gap:.8rem; font-size:12px; }
 .t-ln .p { color:var(--dim); }
 .t-ln .c { color:var(--fg); }

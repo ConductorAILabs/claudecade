@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Claudecade — Font Family</title>
+<style>
+  @font-face { font-family: 'Claudecade';         src: url('Claudecade-Regular.ttf')         format('truetype'); }
+  @font-face { font-family: 'Claudecade Shadow';  src: url('ClaudecadeShadow-Regular.ttf')   format('truetype'); }
+  @font-face { font-family: 'Claudecade Outline'; src: url('ClaudecadeOutline-Regular.ttf')  format('truetype'); }
+  @font-face { font-family: 'Claudecade Inline';  src: url('ClaudecadeInline-Regular.ttf')   format('truetype'); }
+  @font-face { font-family: 'Claudecade Striped'; src: url('ClaudecadeStriped-Regular.ttf')  format('truetype'); }
+  @font-face { font-family: 'Claudecade Dotted';  src: url('ClaudecadeDotted-Regular.ttf')   format('truetype'); }
+  @font-face { font-family: 'Claudecade Italic';  src: url('ClaudecadeItalic-Regular.ttf')   format('truetype'); }
+  @font-face { font-family: 'Claudecade Mono';    src: url('ClaudecadeMono-Regular.ttf')     format('truetype'); }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #1a1a1a;
+    color: #cccccc;
+    font-family: 'Monaco', 'Courier New', monospace;
+    padding: 2rem;
+  }
+  h1 {
+    font-size: 14px;
+    letter-spacing: 0.2em;
+    margin-bottom: 0.4rem;
+    color: #ffffff;
+  }
+  .sub {
+    font-size: 11px;
+    color: #777;
+    margin-bottom: 2rem;
+    max-width: 720px;
+    line-height: 1.6;
+  }
+  .ctrl {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+  .ctrl input[type=text] {
+    background: #141414;
+    color: #ffffff;
+    border: 1px solid #333;
+    padding: 0.5rem 0.8rem;
+    font-family: 'Monaco', monospace;
+    font-size: 13px;
+    width: 320px;
+  }
+  .ctrl label {
+    font-size: 11px;
+    color: #999;
+    letter-spacing: 0.1em;
+  }
+  .specimen {
+    border: 1px solid #2a2a2a;
+    padding: 1.4rem 1.6rem;
+    margin-bottom: 1rem;
+    background: #141414;
+  }
+  .specimen-name {
+    font-size: 11px;
+    color: #ff2d78;
+    letter-spacing: 0.2em;
+    margin-bottom: 0.3rem;
+  }
+  .specimen-meta {
+    font-size: 10px;
+    color: #555;
+    margin-bottom: 0.8rem;
+  }
+  .specimen-render {
+    font-size: 56px;
+    line-height: 1;
+    letter-spacing: 0;
+    color: #e0e0e0;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 0.4rem 0;
+  }
+  .charset {
+    font-size: 24px;
+    color: #888;
+    margin-top: 0.6rem;
+    line-height: 1.1;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<h1>CLAUDECADE — FONT FAMILY</h1>
+<p class="sub">Eight ASCII-derived display faces. All built from the same letter shapes, differing only in how each sub-pixel cell is rendered. Type below to preview every variant simultaneously.</p>
+
+<div class="ctrl">
+  <label>SAMPLE</label>
+  <input id="sample" type="text" value="CLAUDECADE" maxlength="32" autocomplete="off">
+  <label>SIZE</label>
+  <input id="size"   type="range" min="20" max="120" value="56" style="width:160px">
+  <span id="sizeval" style="font-size:11px;color:#999">56px</span>
+</div>
+
+<div id="specimens"></div>
+
+<script>
+const VARIANTS = [
+  ['Claudecade',          'Regular',  'simple block letters built from █'],
+  ['Claudecade Shadow',   'Shadow',   'same letters with built-in drop shadow'],
+  ['Claudecade Outline',  'Outline',  'edge sub-pixels only, hollow interiors'],
+  ['Claudecade Inline',   'Inline',   'solid fill with a thin hollow stripe'],
+  ['Claudecade Striped',  'Striped',  'every other sub-pixel row dropped — CRT scanline'],
+  ['Claudecade Dotted',   'Dotted',   'checkerboard fill — halftone'],
+  ['Claudecade Italic',   'Italic',   '12 degree geometric slant'],
+  ['Claudecade Mono',     'Mono',     'uniform advance width for terminal alignment'],
+];
+
+const root = document.getElementById('specimens');
+
+function buildSpecimen(family, name, desc) {
+  const wrap = document.createElement('div');
+  wrap.className = 'specimen';
+
+  const nameEl = document.createElement('div');
+  nameEl.className = 'specimen-name';
+  nameEl.textContent = name.toUpperCase();
+  wrap.appendChild(nameEl);
+
+  const metaEl = document.createElement('div');
+  metaEl.className = 'specimen-meta';
+  metaEl.textContent = family + '  ·  ' + desc;
+  wrap.appendChild(metaEl);
+
+  const renderEl = document.createElement('div');
+  renderEl.className = 'specimen-render';
+  renderEl.style.fontFamily = '"' + family + '", monospace';
+  renderEl.dataset.render = '1';
+  renderEl.textContent = 'CLAUDECADE';
+  wrap.appendChild(renderEl);
+
+  const charsetEl = document.createElement('div');
+  charsetEl.className = 'charset';
+  charsetEl.style.fontFamily = '"' + family + '", monospace';
+  charsetEl.textContent = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789';
+  wrap.appendChild(charsetEl);
+
+  root.appendChild(wrap);
+}
+
+for (const [family, name, desc] of VARIANTS) {
+  buildSpecimen(family, name, desc);
+}
+
+const sample  = document.getElementById('sample');
+const size    = document.getElementById('size');
+const sizeval = document.getElementById('sizeval');
+
+function update() {
+  const text = sample.value || 'CLAUDECADE';
+  const sz   = size.value;
+  sizeval.textContent = sz + 'px';
+  document.querySelectorAll('[data-render]').forEach(el => {
+    el.textContent = text;
+    el.style.fontSize = sz + 'px';
+  });
+}
+sample.addEventListener('input', update);
+size.addEventListener('input', update);
+update();
+</script>
+
+</body>
+</html>

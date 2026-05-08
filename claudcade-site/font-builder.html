@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CLAUDECADE Font - ANSI Shadow Style</title>
+  <style>
+    body {
+      background: #1a1a1a;
+      color: #cccccc;
+      font-family: Monaco, "Courier New", monospace;
+      font-size: 14px;
+      padding: 20px;
+      line-height: 1;
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    h1 { text-align: center; margin-bottom: 30px; font-size: 16px; }
+    .section { margin-bottom: 50px; }
+    .section-title {
+      font-size: 14px;
+      color: #ff6b6b;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #444;
+      padding-bottom: 10px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 25px;
+    }
+    .char-box {
+      border: 1px solid #444;
+      padding: 12px;
+      background: #0f0f0f;
+    }
+    .char-label {
+      font-size: 11px;
+      color: #999;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .char-render {
+      white-space: pre;
+      font-family: Monaco, "Courier New", monospace;
+      font-size: 12px;
+      line-height: 1.1;
+      text-align: left;
+      overflow: hidden;
+    }
+    .reference {
+      background: #0a0a0a;
+      padding: 20px;
+      margin-top: 20px;
+      border: 1px solid #333;
+    }
+    .word-test {
+      font-size: 14px;
+      line-height: 1.1;
+      padding: 20px;
+      background: #0a0a0a;
+      border: 1px solid #333;
+      margin-bottom: 20px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>CLAUDECADE FONT - ANSI SHADOW STYLE (extracted from title)</h1>
+
+  <div class="section">
+    <div class="section-title">CLAUDECADE TITLE - SOURCE OF TRUTH</div>
+    <pre class="reference char-render">██████╗ ██╗      █████╗ ██╗   ██╗██████╗ ███████╗ ██████╗ █████╗ ██████╗ ███████╗
+██╔════╝██║     ██╔══██╗██║   ██║██╔══██╗██╔════╝██╔════╝██╔══██╗██╔══██╗██╔════╝
+██║     ██║     ███████║██║   ██║██║  ██║█████╗  ██║     ███████║██║  ██║█████╗
+██║     ██║     ██╔══██║██║   ██║██║  ██║██╔══╝  ██║     ██╔══██║██║  ██║██╔══╝
+╚██████╗███████╗██║  ██║╚██████╔╝██████╔╝███████╗╚██████╗██║  ██║██████╔╝███████╗
+ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═════╝ ╚══════╝</pre>
+  </div>
+
+  <div class="section">
+    <div class="section-title">LETTERS A-Z (ANSI SHADOW STYLE)</div>
+    <div class="grid" id="letterGrid"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">NUMBERS 0-9</div>
+    <div class="grid" id="numberGrid"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">WORD TESTS</div>
+    <div class="word-test" id="wordCLAUDECADE"></div>
+    <div class="word-test" id="wordARCADE"></div>
+    <div class="word-test" id="wordGAMES"></div>
+  </div>
+
+</div>
+
+<script>
+const letters = {
+  A: [
+    " █████╗ ",
+    "██╔══██╗",
+    "███████║",
+    "██╔══██║",
+    "██║  ██║",
+    "╚═╝  ╚═╝"
+  ],
+  B: [
+    "██████╗ ",
+    "██╔══██╗",
+    "██████╔╝",
+    "██╔══██╗",
+    "██████╔╝",
+    "╚═════╝ "
+  ],
+  C: [
+    " ██████╗",
+    "██╔════╝",
+    "██║     ",
+    "██║     ",
+    "╚██████╗",
+    " ╚═════╝"
+  ],
+  D: [
+    "██████╗ ",
+    "██╔══██╗",
+    "██║  ██║",
+    "██║  ██║",
+    "██████╔╝",
+    "╚═════╝ "
+  ],
+  E: [
+    "███████╗",
+    "██╔════╝",
+    "█████╗  ",
+    "██╔══╝  ",
+    "███████╗",
+    "╚══════╝"
+  ],
+  F: [
+    "███████╗",
+    "██╔════╝",
+    "█████╗  ",
+    "██╔══╝  ",
+    "██║     ",
+    "╚═╝     "
+  ],
+  G: [
+    " ██████╗ ",
+    "██╔════╝ ",
+    "██║  ███╗",
+    "██║   ██║",
+    "╚██████╔╝",
+    " ╚═════╝ "
+  ],
+  H: [
+    "██╗  ██╗",
+    "██║  ██║",
+    "███████║",
+    "██╔══██║",
+    "██║  ██║",
+    "╚═╝  ╚═╝"
+  ],
+  I: [
+    "██╗",
+    "██║",
+    "██║",
+    "██║",
+    "██║",
+    "╚═╝"
+  ],
+  J: [
+    "     ██╗",
+    "     ██║",
+    "     ██║",
+    "██   ██║",
+    "╚█████╔╝",
+    " ╚════╝ "
+  ],
+  K: [
+    "██╗  ██╗",
+    "██║ ██╔╝",
+    "█████╔╝ ",
+    "██╔═██╗ ",
+    "██║  ██╗",
+    "╚═╝  ╚═╝"
+  ],
+  L: [
+    "██╗     ",
+    "██║     ",
+    "██║     ",
+    "██║     ",
+    "███████╗",
+    "╚══════╝"
+  ],
+  M: [
+    "███╗   ███╗",
+    "████╗ ████║",
+    "██╔████╔██║",
+    "██║╚██╔╝██║",
+    "██║ ╚═╝ ██║",
+    "╚═╝     ╚═╝"
+  ],
+  N: [
+    "███╗   ██╗",
+    "████╗  ██║",
+    "██╔██╗ ██║",
+    "██║╚██╗██║",
+    "██║ ╚████║",
+    "╚═╝  ╚═══╝"
+  ],
+  O: [
+    " ██████╗ ",
+    "██╔═══██╗",
+    "██║   ██║",
+    "██║   ██║",
+    "╚██████╔╝",
+    " ╚═════╝ "
+  ],
+  P: [
+    "██████╗ ",
+    "██╔══██╗",
+    "██████╔╝",
+    "██╔═══╝ ",
+    "██║     ",
+    "╚═╝     "
+  ],
+  Q: [
+    " ██████╗ ",
+    "██╔═══██╗",
+    "██║   ██║",
+    "██║▄▄ ██║",
+    "╚██████╔╝",
+    " ╚══▀▀═╝ "
+  ],
+  R: [
+    "██████╗ ",
+    "██╔══██╗",
+    "██████╔╝",
+    "██╔══██╗",
+    "██║  ██║",
+    "╚═╝  ╚═╝"
+  ],
+  S: [
+    "███████╗",
+    "██╔════╝",
+    "███████╗",
+    "╚════██║",
+    "███████║",
+    "╚══════╝"
+  ],
+  T: [
+    "████████╗",
+    "╚══██╔══╝",
+    "   ██║   ",
+    "   ██║   ",
+    "   ██║   ",
+    "   ╚═╝   "
+  ],
+  U: [
+    "██╗   ██╗",
+    "██║   ██║",
+    "██║   ██║",
+    "██║   ██║",
+    "╚██████╔╝",
+    " ╚═════╝ "
+  ],
+  V: [
+    "██╗   ██╗",
+    "██║   ██║",
+    "██║   ██║",
+    "╚██╗ ██╔╝",
+    " ╚████╔╝ ",
+    "  ╚═══╝  "
+  ],
+  W: [
+    "██╗    ██╗",
+    "██║    ██║",
+    "██║ █╗ ██║",
+    "██║███╗██║",
+    "╚███╔███╔╝",
+    " ╚══╝╚══╝ "
+  ],
+  X: [
+    "██╗  ██╗",
+    "╚██╗██╔╝",
+    " ╚███╔╝ ",
+    " ██╔██╗ ",
+    "██╔╝ ██╗",
+    "╚═╝  ╚═╝"
+  ],
+  Y: [
+    "██╗   ██╗",
+    "╚██╗ ██╔╝",
+    " ╚████╔╝ ",
+    "  ╚██╔╝  ",
+    "   ██║   ",
+    "   ╚═╝   "
+  ],
+  Z: [
+    "███████╗",
+    "╚══███╔╝",
+    "  ███╔╝ ",
+    " ███╔╝  ",
+    "███████╗",
+    "╚══════╝"
+  ]
+};
+
+const numbers = {
+  '0': [
+    " ██████╗ ",
+    "██╔═████╗",
+    "██║██╔██║",
+    "████╔╝██║",
+    "╚██████╔╝",
+    " ╚═════╝ "
+  ],
+  '1': [
+    " ██╗",
+    "███║",
+    "╚██║",
+    " ██║",
+    " ██║",
+    " ╚═╝"
+  ],
+  '2': [
+    "██████╗ ",
+    "╚════██╗",
+    " █████╔╝",
+    "██╔═══╝ ",
+    "███████╗",
+    "╚══════╝"
+  ],
+  '3': [
+    "██████╗ ",
+    "╚════██╗",
+    " █████╔╝",
+    " ╚═══██╗",
+    "██████╔╝",
+    "╚═════╝ "
+  ],
+  '4': [
+    "██╗  ██╗",
+    "██║  ██║",
+    "███████║",
+    "╚════██║",
+    "     ██║",
+    "     ╚═╝"
+  ],
+  '5': [
+    "███████╗",
+    "██╔════╝",
+    "███████╗",
+    "╚════██║",
+    "███████║",
+    "╚══════╝"
+  ],
+  '6': [
+    " ██████╗ ",
+    "██╔════╝ ",
+    "███████╗ ",
+    "██╔═══██╗",
+    "╚██████╔╝",
+    " ╚═════╝ "
+  ],
+  '7': [
+    "███████╗",
+    "╚════██║",
+    "    ██╔╝",
+    "   ██╔╝ ",
+    "   ██║  ",
+    "   ╚═╝  "
+  ],
+  '8': [
+    " █████╗ ",
+    "██╔══██╗",
+    "╚█████╔╝",
+    "██╔══██╗",
+    "╚█████╔╝",
+    " ╚════╝ "
+  ],
+  '9': [
+    " █████╗ ",
+    "██╔══██╗",
+    "╚██████║",
+    " ╚═══██║",
+    " █████╔╝",
+    " ╚════╝ "
+  ]
+};
+
+// Render single chars
+function renderCharBox(label, lines, container) {
+  const div = document.createElement('div');
+  div.className = 'char-box';
+  const lblDiv = document.createElement('div');
+  lblDiv.className = 'char-label';
+  lblDiv.textContent = label;
+  const renderDiv = document.createElement('div');
+  renderDiv.className = 'char-render';
+  renderDiv.textContent = lines.join('\n');
+  div.appendChild(lblDiv);
+  div.appendChild(renderDiv);
+  container.appendChild(div);
+}
+
+const letterGrid = document.getElementById('letterGrid');
+Object.keys(letters).forEach(L => renderCharBox(L, letters[L], letterGrid));
+
+const numberGrid = document.getElementById('numberGrid');
+Object.keys(numbers).forEach(N => renderCharBox(N, numbers[N], numberGrid));
+
+// Render words by combining letter rows
+function renderWord(word) {
+  const chars = word.split('').map(c => letters[c] || numbers[c] || ['','','','','','']);
+  const lines = [];
+  for (let i = 0; i < 6; i++) {
+    let line = '';
+    chars.forEach(charLines => {
+      line += charLines[i];
+    });
+    lines.push(line);
+  }
+  return lines.join('\n');
+}
+
+document.getElementById('wordCLAUDECADE').textContent = renderWord('CLAUDECADE');
+document.getElementById('wordARCADE').textContent = renderWord('ARCADE');
+document.getElementById('wordGAMES').textContent = renderWord('GAMES');
+
+</script>
+
+</body>
+</html>

@@ -2,7 +2,7 @@
  * Shared database pool, game constants, and JSDoc types for all Netlify functions.
  * Import with: const { pool, VALID_GAMES, GAME_LABELS } = require('./_db');
  *
- * @typedef {'ctype'|'claudtra'|'fight'|'finalclaudesy'} GameId
+ * @typedef {'ctype'|'claudtra'|'fight'|'finalclaudesy'|'superclaudio'|'claudturismo'|'claudemon'} GameId
  *
  * @typedef {{ error: string }} ErrorResponse
  *
@@ -33,13 +33,21 @@ const pool = new Pool({
   max: 5,
 });
 
-const VALID_GAMES = ['ctype', 'claudtra', 'fight', 'finalclaudesy'];
+const VALID_GAMES = [
+  'ctype', 'claudtra', 'fight', 'finalclaudesy',
+  // Placeholder card IDs on the site — Python implementations not built yet,
+  // but the API accepts them so future builds can submit scores immediately.
+  'superclaudio', 'claudturismo', 'claudemon',
+];
 
 const GAME_LABELS = {
   ctype:         'C-TYPE (Space Shooter)',
   claudtra:      'Claudtra (Action Platformer)',
   fight:         'Claude Fighter (Fighting)',
   finalclaudesy: 'Final Claudesy (JRPG)',
+  superclaudio:  'Super Claudio (Platformer)',
+  claudturismo:  'Claude Turismo (Racing)',
+  claudemon:     'Claudemon (Creature RPG)',
 };
 
 // Per-game maximum plausible score. Anything above is rejected as cheated.
@@ -49,6 +57,9 @@ const MAX_SCORES = {
   claudtra:       5_000_000,
   fight:                500,   // p1w * 100, NEED=2 → max ~200; small slack
   finalclaudesy:    999_999,
+  superclaudio:   5_000_000,   // platformer collectible scoring envelope
+  claudturismo:   1_000_000,   // racing — typically low integer scoring
+  claudemon:        999_999,   // RPG-style total like finalclaudesy
 };
 
 // Per-player rate limit: max submissions per ROLLING_WINDOW_MIN minutes.
