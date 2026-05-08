@@ -1,4 +1,5 @@
 [build]
+  command   = "cd .. && python3 build-claudcade.py && cd claudcade-site"
   functions = "netlify/functions"
   publish   = "public"
 

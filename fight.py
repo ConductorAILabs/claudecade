@@ -54,8 +54,11 @@ BM       = 0.08
 MHP      = 100
 STUN_DUR = 18
 NEED     = 2
-ADUR     = {'idle':14,'walk':7,'punch':11,'kick':11,'block':1,
+ADUR     = {'idle':14,'walk':7,'punch':11,'kick':11,'block':4,
             'hurt':8,'crouch':1,'jump':1,'ko':1,'victory':16}
+# Frames of hitstop applied to both fighters when an attack connects. Pauses
+# physics + anim for a beat so the impact feels weighty.
+HITSTOP  = 4
 TITLE_ART = [
     r"  ____ _       _  _   _ ____  ___ ",
     r" / ___| |     / \| | | |  _ \| __|",
@@ -372,6 +375,7 @@ class Game:
         self.stage_idx=stage_idx
         self.p1w=0; self.p2w=0; self.rnd=1
         self.msg=''; self.msg_t=0; self.flash=0; self.sparks=[]
+        self.hitstop=0   # frames to freeze fighter physics + anim after a hit
         self.over=False
         # Combo tracker per fighter — counter, frames-since-last-hit, peak.
         self.combo = {'p1': {'n': 0, 't': 0, 'peak': 0},
@@ -393,7 +397,7 @@ class Game:
                 if abs(d.x-a.x)<=rng and d.can_be_hit_by(a.state):
                     dmg=KD if a.state=='kick' else PD
                     actual=d.take_hit(int(dmg*a.power))
-                    a.hit_dealt=True; self.flash=5
+                    a.hit_dealt=True; self.flash=5; self.hitstop=HITSTOP
                     if actual:
                         # Combo: increment if last hit was within window, else reset.
                         c = self.combo[who]
@@ -413,9 +417,14 @@ class Game:
 
     def update(self, keys, mp=False, mk=False):
         if self.over: return
-        self.p1.update(self.p2,keys,mp,mk)
-        self.p2.update(self.p1)
-        self._hits()
+        # Hitstop: freeze fighter physics + anim for a few frames after a hit.
+        # Sparks/flash/msg still tick so the impact remains visually responsive.
+        if self.hitstop > 0:
+            self.hitstop -= 1
+        else:
+            self.p1.update(self.p2,keys,mp,mk)
+            self.p2.update(self.p1)
+            self._hits()
         self.sparks=[s for s in self.sparks if s[5]>0]
         for s in self.sparks: s[0]+=s[2]; s[1]+=s[3]; s[3]+=.15; s[5]-=1
         if self.msg_t>0: self.msg_t-=1

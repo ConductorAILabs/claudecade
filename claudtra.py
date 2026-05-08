@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import curses, time, random
-from claudcade_engine import Engine, Renderer, Scene, setup_colors
+from claudcade_engine import Engine, Renderer, Scene, setup_colors, at_safe
 from claudcade_engine import draw_how_to_play as _engine_how_to_play
 from claudcade_scores import player_label, submit_async
 
@@ -183,6 +183,7 @@ class Player:
             by = self.y + GUN_ROW
             world.bullets.append({'wx': bx, 'y': by,
                                    'vx': B_SPD * self.facing, 'owner': 'player'})
+            world.muzzle(bx, by, self.facing)
             self.shoot_cd = SHOOT_CD
             if self.grounded: self.set('shoot')
 
@@ -210,7 +211,8 @@ class Enemy:
 
     def tick_anim(self):
         self.at += 1
-        if self.at >= 8:
+        # Unified animation rate (was 8 — felt sluggish vs player's 5/7)
+        if self.at >= 6:
             self.at = 0
             sp = GRUNT if self.etype == 'grunt' else HEAVY
             frames = sp.get(self.state, list(sp.values())[0])
@@ -243,6 +245,7 @@ class Enemy:
                 vx = EB_SPD * (1 if dx > 0 else -1)
                 world.bullets.append({'wx': self.wx, 'y': self.y + GUN_ROW,
                                        'vx': vx, 'owner': 'enemy'})
+                world.muzzle(self.wx, self.y + GUN_ROW, 1 if vx > 0 else -1)
                 self.state = 'shoot'
             elif self.state == 'shoot': self.state = 'walk'
         else:  # heavy
@@ -251,6 +254,7 @@ class Enemy:
                 vx = EB_SPD * 1.4 * (1 if dx > 0 else -1)
                 world.bullets.append({'wx': self.wx, 'y': self.y + GUN_ROW,
                                        'vx': vx, 'owner': 'enemy'})
+                world.muzzle(self.wx, self.y + GUN_ROW, 1 if vx > 0 else -1)
                 self.state = 'shoot'
             elif self.state == 'shoot': self.state = 'idle'
 
@@ -281,6 +285,11 @@ class World:
         self.cam_x = 0.0
         self.player = Player()
         self.enemies = []; self.bullets = []; self.platforms = []
+        # Short-lived FX:
+        # flashes  = muzzle-flash sprites: {'wx','y','dir','ttl'}
+        # particles= death dust + hit sparks: {'wx','y','vx','vy','ttl','ch'}
+        self.flashes   = []
+        self.particles = []
         self.score = 0; self.wave = 1; self._gen_to = 0
         # Most-recently-passed checkpoint; player respawns here on death.
         self.checkpoint_x = 0.0
@@ -288,6 +297,20 @@ class World:
         self.biome_name   = BIOMES[0][1]
         self.biome_msg    = ''; self.biome_msg_t = 0
         self._generate(0, 250)
+
+    def muzzle(self, wx, y, direction):
+        self.flashes.append({'wx': wx, 'y': y, 'dir': direction, 'ttl': 3})
+
+    def burst(self, wx, y, n=6):
+        for _ in range(n):
+            self.particles.append({
+                'wx': wx + random.uniform(-0.5, 0.5),
+                'y':  y  + random.uniform(0.0, 1.5),
+                'vx': random.uniform(-1.2, 1.2),
+                'vy': random.uniform(0.4, 1.4),
+                'ttl': random.randint(5, 10),
+                'ch': random.choice(['·','∙','*','▓']),
+            })
 
     def _generate(self, start, end):
         x = max(start, self._gen_to, 90)  # no enemies in first 90 units
@@ -315,6 +338,9 @@ class World:
                         b['dead'] = True
                         if e.take_hit():
                             self.score += 300 if e.etype == 'heavy' else 100
+                            self.burst(e.wx + 3, e.y, n=10 if e.etype == 'heavy' else 6)
+                        else:
+                            self.burst(b['wx'], b['y'], n=2)
                         break
             else:  # enemy bullet
                 if p.invuln > 0 or p.state == 'dead': continue
@@ -337,11 +363,18 @@ class World:
 
         for e in self.enemies: e.update(p, self)
         for b in self.bullets:  b['wx'] += b['vx']
+        for f in self.flashes:  f['ttl'] -= 1
+        for pt in self.particles:
+            pt['wx'] += pt['vx']; pt['y'] += pt['vy']
+            pt['vy'] *= 0.85; pt['vx'] *= 0.92
+            pt['ttl'] -= 1
 
         lo, hi = self.cam_x - 10, self.cam_x + 95
         self.bullets   = [b for b in self.bullets   if not b.get('dead') and lo < b['wx'] < hi]
         self.enemies   = [e for e in self.enemies   if e.wx > self.cam_x - 15]
         self.platforms = [pl for pl in self.platforms if pl['x'] + pl['w'] > self.cam_x - 10]
+        self.flashes   = [f for f in self.flashes   if f['ttl'] > 0]
+        self.particles = [pt for pt in self.particles if pt['ttl'] > 0 and lo < pt['wx'] < hi]
         self._check_hits()
         self.wave = 1 + int(p.wx) // 200
 
@@ -357,10 +390,7 @@ class World:
             self.biome_msg_t = 60
         if self.biome_msg_t > 0:
             self.biome_msg_t -= 1
-def _p(scr, H, W, r, c, s, a=0):
-    try:
-        if 0 <= r < H-1 and 0 <= c < W: scr.addstr(r, c, s[:W-c], a)
-    except curses.error: pass
+_p = at_safe
 
 def draw_intro(scr, H, W, tick):
     P = curses.color_pair; scr.erase()
@@ -471,8 +501,12 @@ def draw_game(scr, world, H, W, tick):
     wd = f'[{world.biome_name}]  WAVE:{world.wave}  DIST:{dist_m:05d}m'
     p(1, W-len(wd)-3, wd, P(bcp)|curses.A_BOLD)
 
-    # Biome-entry toast — flashes briefly when crossing a boundary
-    if world.biome_msg_t > 0 and (tick // 6) % 2 == 0:
+    # Biome-entry: bright full-width band for the first ~6 frames, then blink toast
+    if world.biome_msg_t > 54:
+        band_y = H // 2 - 1
+        band   = '>>>' + world.biome_msg.strip().rjust(20).ljust(28) + '<<<'
+        p(band_y, max(1, (W - len(band)) // 2), band[:W-2], P(bcp)|curses.A_BOLD|curses.A_REVERSE)
+    elif world.biome_msg_t > 0 and (tick // 6) % 2 == 0:
         bx = (W - len(world.biome_msg)) // 2
         p(H // 2 - 1, bx, world.biome_msg, P(bcp)|curses.A_BOLD|curses.A_REVERSE)
 
@@ -569,6 +603,20 @@ def draw_game(scr, world, H, W, tick):
                 sprite = '◄━'
                 cp = P(2)|curses.A_BOLD
             p(br, c0, sprite, cp)
+
+    # ── Muzzle flashes (1–2 frames at gun position before bullet flies) ────
+    for f in world.flashes:
+        c0 = sc(f['wx']); br = brow(f['y'])
+        if 1 <= c0 < W-2 and AT <= br < GR:
+            ch = '╪' if f['ttl'] >= 2 else '+'
+            p(br, c0, ch, P(4)|curses.A_BOLD)
+
+    # ── Death-burst particles ─────────────────────────────────────────────
+    for pt in world.particles:
+        c0 = sc(pt['wx']); br = brow(pt['y'])
+        if 1 <= c0 < W-1 and AT <= br < GR:
+            attr = curses.A_BOLD if pt['ttl'] > 4 else curses.A_DIM
+            p(br, c0, pt['ch'], P(2)|attr)
 
     # ── In-game overlay (death / respawn) ──────────────────────────────────
     if pl.state == 'dead' and pl.dead_timer > 35:

@@ -25,13 +25,13 @@ def draw_title(scr, H, W, tick, has_save, ng_plus_available=False):
     scr.erase()
     box(scr, 0, 0, H, W, '', 5)
 
-    # Starfield
+    # Starfield — fewer stars, slower blink (was 60 stars + tick//10)
     random.seed(42)
-    for _ in range(60):
+    for _ in range(20):
         r = random.randint(1, H-2)
         c = random.randint(1, W-2)
         ch = random.choice(['·', '+', '*'])
-        if (tick // 10 + r + c) % 5 == 0:
+        if (tick // 30 + r + c) % 5 == 0:
             safe_add(scr, r, c, ch, P(5)|curses.A_DIM)
     random.seed()
 

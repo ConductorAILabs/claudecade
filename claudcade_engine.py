@@ -253,6 +253,20 @@ class Input:
         return inp
 
 
+# ── Bounds-safe primitive ──────────────────────────────────────────────────────
+# Many games (ctype, claudtra, finalclaudesy) use a `_p()` lambda wrapping
+# scr.addstr with the same try/except + bounds check. Use this shared helper
+# to avoid duplicating the implementation across files.
+
+def at_safe(scr, H: int, W: int, row: int, col: int, s: str, attr: int = 0) -> None:
+    """Bounds-safe addstr: silently no-ops outside the terminal."""
+    try:
+        if 0 <= row < H - 1 and 0 <= col < W:
+            scr.addstr(row, col, s[:max(0, W - col)], attr)
+    except curses.error:
+        pass
+
+
 # ── Renderer ───────────────────────────────────────────────────────────────────
 
 class Renderer:

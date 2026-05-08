@@ -15,6 +15,25 @@ TILE_CHAR  = {
     'A': 'A', 'E': 'E', 'C': 'C',
     '1': '1', '2': '2', '3': '3',
 }
+# Per-tile texture variants — picked deterministically from (x,y) so terrain
+# looks varied without flickering. Landmark tiles (towns, dungeons, mountains)
+# stay fixed so the player can identify them.
+TILE_VARIANTS = {
+    '.': '.,\'·░',
+    'T': 'T♣Y♠',
+    '~': '~≈∽⌒',
+}
+
+def _tile_glyph(tile: str, x: int, y: int, tick: int) -> str:
+    """Pick a textured glyph for terrain tiles, animated for water."""
+    variants = TILE_VARIANTS.get(tile)
+    if not variants: return TILE_CHAR.get(tile, tile)
+    if tile == '~':
+        # Water shimmers — phase shifts every ~30 ticks
+        idx = (x * 7 + y * 13 + tick // 30) % len(variants)
+    else:
+        idx = (x * 31 + y * 17) % len(variants)
+    return variants[idx]
 
 # ── World map ──────────────────────────────────────────────────────────────────
 class WorldMap:
@@ -88,10 +107,12 @@ class WorldMap:
             for vx in range(vw):
                 mx, my = vx0 + vx, vy0 + vy
                 tile   = self._tile(mx, my)
-                ch     = TILE_CHAR.get(tile, tile)
+                ch     = _tile_glyph(tile, mx, my, tick)
                 cp_n   = TILE_COLOR.get(tile, 5)
                 attr   = curses.color_pair(cp_n)
                 if tile in ('^', 'T'): attr |= curses.A_BOLD
+                # Faint dim on plain grass texture variants for depth
+                if tile == '.' and ch in ('░', '·'): attr |= curses.A_DIM
                 if mx == self.x and my == self.y:
                     attr = P(1)|curses.A_BOLD; ch = '@'
                 safe_add(scr, 1 + vy, 1 + vx, ch, attr)

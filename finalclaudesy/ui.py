@@ -40,9 +40,12 @@ def center(scr, y, text, W=None, attr=0):
 
 def menu_list(scr, y, x, options, cursor, cp_sel=7, cp_norm=0, width=20):
     for i, opt in enumerate(options):
-        label = f'> {opt}' if i == cursor else f'  {opt}'
-        label = label.ljust(width)[:width]
-        attr = curses.color_pair(cp_sel) | curses.A_BOLD if i == cursor else curses.color_pair(cp_norm)
+        if i == cursor:
+            label = f'▶ {opt}'.ljust(width)[:width]
+            attr  = curses.color_pair(cp_sel) | curses.A_BOLD | curses.A_REVERSE
+        else:
+            label = f'  {opt}'.ljust(width)[:width]
+            attr  = curses.color_pair(cp_norm)
         safe_add(scr, y + i, x, label, attr)
 
 

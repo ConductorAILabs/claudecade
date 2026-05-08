@@ -1,0 +1,18 @@
+#!/bin/bash
+# claudecadeupdate — rebuild and package claudecade games
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BUILD_SCRIPT="$SCRIPT_DIR/build-claudcade.py"
+
+if [ ! -f "$BUILD_SCRIPT" ]; then
+  echo "Error: build-claudcade.py not found at $BUILD_SCRIPT"
+  exit 1
+fi
+
+echo "[CLAUDECADE] Building package..."
+python3 "$BUILD_SCRIPT"
+
+echo "[CLAUDECADE] Done! To re-download the latest version:"
+echo "  rm /tmp/claudcade.zip && curl -L https://starlit-macaron-113a83.netlify.app/claudcade.zip -o /tmp/claudcade.zip && unzip -q /tmp/claudcade.zip -d ~/claudecade"

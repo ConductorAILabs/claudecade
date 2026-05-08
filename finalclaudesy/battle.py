@@ -585,10 +585,14 @@ class Battle:
             if not e.alive:
                 safe_add(scr, ey_off + len(sprite)//2, ex + 2, '  * * K O * *  ', P(2)|curses.A_BOLD)
                 continue
-            # Boss name flash
-            cp = P(e.color) | curses.A_BOLD
+            # Boss name flash + idle pulse so the sprite breathes (was static).
+            # Per-enemy phase offset so a row of enemies doesn't pulse in lockstep.
+            phase  = (tick + i * 11) % 40
+            bobble = 1 if phase < 20 else 0
+            attr   = curses.A_BOLD if phase < 30 else curses.A_DIM
+            cp     = P(e.color) | attr
             for si, row in enumerate(sprite):
-                safe_add(scr, ey_off + si, ex, row, cp)
+                safe_add(scr, ey_off + si, ex + bobble, row, cp)
             # Name + HP bar
             ny = ey_off + len(sprite) + 1
             safe_add(scr, ny, ex, e.name[:ex_each-2], P(5)|curses.A_BOLD)

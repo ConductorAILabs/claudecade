@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import curses, time, random, math
-from claudcade_engine import Engine, Renderer, Scene, setup_colors
+from claudcade_engine import Engine, Renderer, Scene, setup_colors, at_safe
 from claudcade_engine import draw_how_to_play as _engine_how_to_play
 from claudcade_scores import player_label, submit_async
 INTRO, PLAY, GAME_OVER, PAUSE, HOW_TO_PLAY = range(5)
@@ -83,11 +83,14 @@ PSHIPS = [
     ],
 ]
 
-def get_ship(power, charged):
+_CHARGE_GLYPHS = ['◉', '★', '◈', '✦']
+
+def get_ship(power, charged, tick=0):
     sp = PSHIPS[min(power, len(PSHIPS)-1)]
     if charged:
-        # Charging glow: replace leading char with ◉ and add ★ to tip
-        return ['◉' + s[1:] for s in sp]
+        # Charging glow: leading char animates through ◉/★/◈/✦ to telegraph power
+        g = _CHARGE_GLYPHS[(tick // 3) % len(_CHARGE_GLYPHS)]
+        return [g + s[1:] for s in sp]
     return sp
 
 # ── Enemy sprites ────────────────────────────────────────────────────────────
@@ -187,7 +190,7 @@ class Player:
         self.bombs   = BOMBS_PER_LIFE
         self.bomb_cd = 0      # debounce for B key
 
-    def sprites(self): return get_ship(self.power, self.charge >= CHARGE_MAX)
+    def sprites(self, tick=0): return get_ship(self.power, self.charge >= CHARGE_MAX, tick)
 
     def get_hit(self):
         if self.invuln > 0 or self.shield > 0:
@@ -226,10 +229,15 @@ class Player:
             self.charge = min(self.charge+1, CHARGE_MAX)
             # Rapid-fire while holding; stops when charge fills (switches to beam mode)
             if self.charge < CHARGE_MAX and self.shoot_cd == 0:
-                game.pbullets.append({'x': self.x+PSW, 'y': self.y+1, 'vx': PB_SPD, 'vy': 0})
+                # Power 2 paints the middle bolt as a heavier ━▶ and pulls the side
+                # barrels back one tile so the volley looks splayed in flight.
+                heavy = self.power >= 2
+                back  = 1 if self.power >= 2 else 0
+                game.pbullets.append({'x': self.x+PSW, 'y': self.y+1, 'vx': PB_SPD, 'vy': 0,
+                                       'heavy': heavy})
                 if self.power >= 1:
-                    game.pbullets.append({'x': self.x+PSW, 'y': self.y,   'vx': PB_SPD, 'vy':-0.3})
-                    game.pbullets.append({'x': self.x+PSW, 'y': self.y+2, 'vx': PB_SPD, 'vy': 0.3})
+                    game.pbullets.append({'x': self.x+PSW-back, 'y': self.y,   'vx': PB_SPD, 'vy':-0.3})
+                    game.pbullets.append({'x': self.x+PSW-back, 'y': self.y+2, 'vx': PB_SPD, 'vy': 0.3})
                 self.shoot_cd = SHOOT_CD
         else:
             if self.charge >= 15:
@@ -334,6 +342,8 @@ class Game:
         self.pbullets  = []
         self.ebullets  = []
         self.explosions= []
+        self.particles = []   # small hit-spark sprites: dicts of x,y,vx,vy,ttl,ch,cp
+        self.shake     = 0    # screen-shake counter; decays each tick
         self.powerups  = []
         self.stars     = _make_ctype_stars(H, W)
         self.score     = 0
@@ -343,6 +353,23 @@ class Game:
         self.boss      = None
         self.boss_mode = False
         self.msg       = ''; self.msg_t = 0
+
+    def spark(self, x, y, n=5, color=4):
+        """Spawn n short-lived particles flying outward from (x,y)."""
+        for _ in range(n):
+            ang = random.random() * 2 * math.pi
+            spd = random.uniform(0.5, 1.6)
+            self.particles.append({
+                'x': float(x), 'y': float(y),
+                'vx': math.cos(ang)*spd, 'vy': math.sin(ang)*spd*0.6,
+                'ttl': random.randint(4, 9),
+                'ch': random.choice(['·','∙','*','+','✦']),
+                'cp': color,
+            })
+
+    def kick(self, amount=4):
+        """Set screen shake to at least `amount` ticks."""
+        if amount > self.shake: self.shake = amount
 
     def show(self, m, d=90): self.msg=m; self.msg_t=d
 
@@ -435,16 +462,26 @@ class Game:
                 if hit:
                     if not beam: b['dead'] = True
                     killed = e.take_hit(dmg if beam else 1)
+                    # Hit spark on every connection (more on kills)
+                    self.spark(int(b['x']), int(b['y']), n=3, color=4)
                     if killed:
                         self.explosions.append(Explosion(int(e.x), int(e.y+eh//2)))
                         sc = {'grunt':100,'sine':150,'diver':200,'heavy':400,'turret':300}
                         if isinstance(e, Boss):
                             self.score += 5000; self.boss_mode=False; self.boss=None
                             self.show('  BOSS DESTROYED!  ', 90)
+                            self.spark(int(e.x+ew//2), int(e.y+eh//2), n=24, color=4)
+                            self.kick(10)
                         else:
                             self.score += sc.get(e.etype,100)
+                            self.spark(int(e.x+ew//2), int(e.y+eh//2),
+                                       n=8 if e.etype in ('heavy','turret') else 5, color=2)
+                            if e.etype in ('heavy','turret'): self.kick(3)
                             if random.random() < 0.12:
                                 self.powerups.append(Powerup(e.x, e.y))
+                    elif isinstance(e, Boss):
+                        # Boss takes a hit but survives — small kick for feedback
+                        self.kick(2)
                     if not beam: break
 
         if p.invuln == 0:
@@ -453,7 +490,10 @@ class Game:
                 if (abs(b['x'] - p.x - PSW//2) < 4 and
                     abs(b['y'] - p.y - PSH//2) < 3):
                     b['dead'] = True
-                    if p.get_hit(): self.explosions.append(Explosion(int(p.x+2), int(p.y+1)))
+                    if p.get_hit():
+                        self.explosions.append(Explosion(int(p.x+2), int(p.y+1)))
+                        self.spark(int(p.x+PSW//2), int(p.y+PSH//2), n=12, color=2)
+                        self.kick(8)
             if self.boss and self.boss.alive:
                 if (self.boss.x <= p.x+PSW and p.x <= self.boss.x+self.boss.w and
                     self.boss.y <= p.y+PSH and p.y <= self.boss.y+self.boss.h):
@@ -498,6 +538,11 @@ class Game:
         for b in self.ebullets: b['x'] += b['vx']; b['y'] += b.get('vy',0)
         for ex in self.explosions: ex.tick()
         for pu in self.powerups: pu.update()
+        for pt in self.particles:
+            pt['x'] += pt['vx']; pt['y'] += pt['vy']
+            pt['vx'] *= 0.88;    pt['vy'] *= 0.88
+            pt['ttl'] -= 1
+        if self.shake > 0: self.shake -= 1
 
         self._check_hits()
 
@@ -511,6 +556,7 @@ class Game:
         self.enemies   = [e for e in self.enemies   if e.alive and e.x > -10]
         self.explosions= [ex for ex in self.explosions if not ex.done]
         self.powerups  = [pu for pu in self.powerups  if not pu.gone]
+        self.particles = [pt for pt in self.particles if pt['ttl'] > 0]
         if self.msg_t > 0: self.msg_t -= 1
 def _make_ctype_stars(H, W, count=100):
     """Parallax starfield with varied depth glyphs for C-TYPE.
@@ -551,10 +597,7 @@ def _make_ctype_stars(H, W, count=100):
         })
     return result
 
-def _p(scr, H, W, r, c, s, a=0):
-    try:
-        if 0 <= r < H-1 and 0 <= c < W: scr.addstr(r, c, s[:W-c], a)
-    except curses.error: pass
+_p = at_safe
 
 def draw_intro(scr, H, W, tick):
     P = curses.color_pair; scr.erase()
@@ -730,11 +773,18 @@ def draw_game(scr, game, H, W, tick):
         if AT <= by < GR and 1 <= bx < W-1:
             p(by, bx, '◉', P(4)|curses.A_BOLD)
 
+    # ── Screen shake offset (applied to player + bullets + particles) ─────────
+    if game.shake > 0:
+        sx_off = random.randint(-1, 1)
+        sy_off = random.randint(-1, 1) if game.shake >= 4 else 0
+    else:
+        sx_off = sy_off = 0
+
     # ── Player ship ───────────────────────────────────────────────────────────
     blink = pl.invuln > 0 and (tick//3)%2==0
     if not blink:
-        rows = pl.sprites()
-        pr=int(pl.y); pc=int(pl.x)
+        rows = pl.sprites(tick)
+        pr=int(pl.y) + sy_off; pc=int(pl.x) + sx_off
         if pl.charge >= CHARGE_MAX:
             cp = P(4)|curses.A_BOLD    # gold when fully charged
         elif pl.charge > CHARGE_MAX // 2:
@@ -758,7 +808,7 @@ def draw_game(scr, game, H, W, tick):
 
     # ── Player bullets ────────────────────────────────────────────────────────
     for b in game.pbullets:
-        bc=int(b['x']); br=int(b['y'])
+        bc=int(b['x']) + sx_off; br=int(b['y']) + sy_off
         if AT<=br<GR and 1<=bc<W-1:
             if b.get('beam'):
                 # Charge beam bullet — thick golden bolt
@@ -766,9 +816,19 @@ def draw_game(scr, game, H, W, tick):
                 p(br, bc, '◉', P(4)|curses.A_BOLD)
                 for dx in range(1, min(blen, W-bc-1)):
                     p(br, bc+dx, '═', P(4)|curses.A_BOLD)
+            elif b.get('heavy'):
+                # Power-2 center bolt — heavier glyph, gold tint
+                p(br, bc, '━▶', P(4)|curses.A_BOLD)
             else:
                 # Normal bullet — slim cyan dart
                 p(br, bc, '─▶', P(1)|curses.A_BOLD)
+
+    # ── Particles (hit sparks) ────────────────────────────────────────────────
+    for pt in game.particles:
+        pc_=int(pt['x']) + sx_off; pr_=int(pt['y']) + sy_off
+        if AT<=pr_<GR and 1<=pc_<W-1:
+            attr = curses.A_BOLD if pt['ttl'] > 4 else curses.A_DIM
+            p(pr_, pc_, pt['ch'], P(pt['cp'])|attr)
 
     # ── Enemy bullets ─────────────────────────────────────────────────────────
     for b in game.ebullets:
