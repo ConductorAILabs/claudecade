@@ -13,19 +13,25 @@ SAVE_PATH = os.path.expanduser('~/finalclaudesy_save.json')
 
 # ── Title screen ───────────────────────────────────────────────────────────────
 TITLE_ART = [
-    r"  _____ ___ _   _   _   _      ___ _      _   _   _ ___  ___ _____   __",
-    r" |  ___|_ _| \ | | / \ | |    / __| |    / \ | | | |   \| __/ __\ \ / /",
-    r" | |_   | ||  \| |/ _ \| |   | (__| |   / _ \| |_| | |) | _|\__ \\ V / ",
-    r" |  _|  | || |\  / ___ \ |___ \__ \ |__/ ___ \  _  | __/|___|___/ | |  ",
-    r" |_|   |___|_| \_/_/   \_\____|___/____/_/   \_\_| |_|_|  |___\__/ |_|  ",
+    r"  ███████ ██ ███   ███   ███   ███  ███  ██  ██ ██ ███ ███ ███████  ██",
+    r" ██      ███  ██  ██ ██ ██ ██ ██    ██ ██ ██ ██ ███ ██████ ██   █████",
+    r" ██████ ███   ██ ██   ██ ██ ██ ███  ██ ██ ███  ██ █ ███ ████ █████ ██ ",
+    r" ██     ███ █  █ ███ ███  ███  ███ ████  ██  ██  ████████ █████ ██ ",
+    r" ███████ ███ █  █ ██   ██ █   ███  ██ ██  █    ██ ██  ████ █████ ██ ",
 ]
 
 def draw_title(scr, H, W, tick, has_save, ng_plus_available=False):
     P = curses.color_pair
     scr.erase()
-    box(scr, 0, 0, H, W, '', 5)
 
-    # Starfield — fewer stars, slower blink (was 60 stars + tick//10)
+    # Bold border with decorative pattern
+    safe_add(scr, 0, 0, '╔' + '═'*(W-2) + '╗', P(5)|curses.A_BOLD)
+    safe_add(scr, H-1, 0, '╚' + '═'*(W-2) + '╝', P(5)|curses.A_BOLD)
+    for r in range(1, H-1):
+        safe_add(scr, r, 0, '║', P(5)|curses.A_BOLD)
+        safe_add(scr, r, W-1, '║', P(5)|curses.A_BOLD)
+
+    # Starfield — fewer stars, slower blink
     random.seed(42)
     for _ in range(20):
         r = random.randint(1, H-2)
@@ -35,35 +41,62 @@ def draw_title(scr, H, W, tick, has_save, ng_plus_available=False):
             safe_add(scr, r, c, ch, P(5)|curses.A_DIM)
     random.seed()
 
-    # Title art
-    tr = max(2, H//2 - 6)
+    # Title art with color cycling
+    tr = max(2, H//2 - 7)
+    colors = [4, 1, 6, 4, 1]  # magenta, red, cyan cycle
     for i, line in enumerate(TITLE_ART):
         col = max(1, (W - len(line)) // 2)
-        attr = P(4 if i%2==0 else 1)|curses.A_BOLD
+        color_idx = (i + tick // 20) % len(colors)
+        attr = P(colors[color_idx])|curses.A_BOLD
         safe_add(scr, tr+i, col, line, attr)
 
-    sub = 'A TERMINAL JRPG'
+    # Subtitle with decorative separators
+    sep = '▓▒░░▒▓'
+    sub = f'{sep} A TERMINAL JRPG {sep}'
     center(scr, tr+6, sub, W, P(6)|curses.A_BOLD)
 
+    # Menu options with blinking effect
     if (tick // 20) % 2 == 0:
-        center(scr, H//2+3, '[ SPACE ] New Game', W, P(4)|curses.A_BOLD)
+        center(scr, H//2+2, '╔════════════════════╗', W, P(4))
+        center(scr, H//2+3, '  [ SPACE ] New Game  ', W, P(4)|curses.A_BOLD)
+        center(scr, H//2+4, '╚════════════════════╝', W, P(4))
         if has_save:
-            center(scr, H//2+5, '[ L ] Load Game', W, P(3)|curses.A_BOLD)
+            center(scr, H//2+6, '╔════════════════════╗', W, P(3))
+            center(scr, H//2+7, '  [ L ] Load Game  ', W, P(3)|curses.A_BOLD)
+            center(scr, H//2+8, '╚════════════════════╝', W, P(3))
         if ng_plus_available:
-            center(scr, H//2+7, '[ N ] NewGame+ — keep levels', W, P(6)|curses.A_BOLD)
-    center(scr, H-3, 'WASD/Arrows: Move   J/Space: Confirm   Q/ESC: Back   M: Menu', W, P(5))
+            y_offset = 10 if has_save else 6
+            center(scr, H//2+y_offset, '╔═══════════════════════════════╗', W, P(6))
+            center(scr, H//2+y_offset+1, '  [ N ] NewGame+ — keep levels  ', W, P(6)|curses.A_BOLD)
+            center(scr, H//2+y_offset+2, '╚═══════════════════════════════╝', W, P(6))
+
+    # Control hint
+    ctrl = '║ WASD:Move  J/Space:Confirm  Q/ESC:Back  M:Menu ║'
+    center(scr, H-3, ctrl, W, P(5))
     scr.refresh()
 
 
 def draw_story(scr, H, W, lines, tick):
     P = curses.color_pair
     scr.erase()
-    box(scr, 0, 0, H, W, '', 5)
-    start = max(0, H//2 - len(lines)//2 - 1)
+
+    # Bold decorative border
+    safe_add(scr, 0, 0, '╔' + '═'*(W-2) + '╗', P(5)|curses.A_BOLD)
+    safe_add(scr, H-1, 0, '╚' + '═'*(W-2) + '╝', P(5)|curses.A_BOLD)
+    for r in range(1, H-1):
+        safe_add(scr, r, 0, '║', P(5)|curses.A_BOLD)
+        safe_add(scr, r, W-1, '║', P(5)|curses.A_BOLD)
+
+    # Decorative header
+    header = '▓ STORY ▓'
+    center(scr, 1, header, W, P(6)|curses.A_BOLD)
+    safe_add(scr, 2, 0, '╠' + '═'*(W-2) + '╣', P(5)|curses.A_BOLD)
+
+    start = max(3, H//2 - len(lines)//2 - 1)
     for i, line in enumerate(lines):
         if line == '[ Press SPACE ]':
             if (tick // 15) % 2 == 0:
-                center(scr, H-4, line, W, P(5)|curses.A_BOLD)
+                center(scr, H-4, '┤ ' + line + ' ├', W, P(5)|curses.A_BOLD)
         else:
             center(scr, start+i, line, W, P(5))
     scr.refresh()

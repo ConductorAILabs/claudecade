@@ -60,17 +60,19 @@ ADUR     = {'idle':14,'walk':7,'punch':11,'kick':11,'block':4,
 # physics + anim for a beat so the impact feels weighty.
 HITSTOP  = 4
 TITLE_ART = [
-    r"  ____ _       _  _   _ ____  ___ ",
-    r" / ___| |     / \| | | |  _ \| __|",
-    r"| |   | |    / _ \ | | | | | | _| ",
-    r"| |___| |___/ ___ \ |_| | |_| | |___",
-    r" \____|_____/_/   \_\___/|____/|____|",
+    r"██████╗ ██╗      █████╗ ██╗   ██╗██████╗ ███████╗",
+    r"██╔════╝ ██║     ██╔══██╗██║   ██║██╔══██╗██╔════╝",
+    r"██║  ███╗██║     ███████║██║   ██║██║  ██║█████╗  ",
+    r"██║   ██║██║     ██╔══██║██║   ██║██║  ██║██╔══╝  ",
+    r"╚██████╔╝███████╗██║  ██║╚██████╔╝██████╔╝███████╗",
+    r" ╚═════╝ ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝",
     r"",
-    r" _____ ___ ____ _  _ _____ ___ ____  ",
-    r"|  ___|_ _/ ___| || |_   _| __| __ \ ",
-    r"| |_   | | |  _| || | | | | _||  __/ ",
-    r"|  _|  | | |_| |__   _|| | | |_| |   ",
-    r"|_|   |___\____|  |_|  |_| |___|_|   ",
+    r"███████╗██╗ ██████╗ ██╗  ██╗████████╗███████╗██████╗ ",
+    r"██╔════╝██║██╔════╝ ██║  ██║╚══██╔══╝██╔════╝██╔══██╗",
+    r"█████╗  ██║██║  ███╗███████║   ██║   █████╗  ██████╔╝",
+    r"██╔══╝  ██║██║   ██║██╔══██║   ██║   ██╔══╝  ██╔══██╗",
+    r"██║     ██║╚██████╔╝██║  ██║   ██║   ███████╗██║  ██║",
+    r"╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝",
 ]
 CHARS = [
     {
@@ -469,9 +471,13 @@ def draw_intro(scr, H, W, tick):
         put(r,0,'║',P(5)); put(r,W-1,'║',P(5))
 
     start_row=max(1,(H-len(TITLE_ART))//2-1)
+    # Color cycle: cyan -> yellow -> magenta -> cyan
+    colors = [6, 3, 5]  # 6=cyan, 3=yellow, 5=magenta
     for i,line in enumerate(TITLE_ART):
         col=max(1,(W-len(line))//2)
-        attr=P(1)|curses.A_BOLD if i<4 else P(4)|curses.A_BOLD
+        # Cycle colors through the block-font title (13 lines)
+        color_idx = (i + (tick // 8)) % len(colors)
+        attr = P(colors[color_idx]) | curses.A_BOLD
         put(start_row+i,col,line,attr)
 
     fr_idx=(tick//14)%2
@@ -636,10 +642,10 @@ def draw_fight(scr, g, W, H):
     title_bar = '║' + '▓▒░' + ' ★ CLAUDE FIGHTER ★ '.center(W-8) + '░▒▓' + '║'
     put(0,0,title_bar,P(2)|curses.A_BOLD)
 
-    # ── HUD row 1: health bars ────────────────────────────────────────────────
-    # Layout: ║ NAME ████████░░ HP:NNN ▐VS▌ NNN:HP ░░████████ NAME ║
-    MARGIN = 2
-    center_label = '╠ VS ╣'
+    # ── HUD row 1: health bars + names + HP numbers ────────────────────────────
+    # Layout: ║ NAME ████████░░ HP:NNN  ◆VS◆  NNN:HP ░░████████ NAME ║
+    MARGIN = 1
+    center_label = ' ◆ VS ◆ '
     cl = len(center_label)
     bar_space = (W - 2 - 2*MARGIN - cl) // 2  # space each side for name+bar+number
     name_w = 8
@@ -658,34 +664,34 @@ def draw_fight(scr, g, W, H):
     p1_num  = f' {g.p1.hp:3d}HP'
     put(1, left_col, p1_name, P(g.p1.cp)|curses.A_BOLD)
     put(1, left_col+name_w, p1_bar, P(cp1)|curses.A_BOLD)
-    put(1, left_col+name_w+bar_w, p1_num, P(cp1))
+    put(1, left_col+name_w+bar_w, p1_num, P(cp1)|curses.A_BOLD)
 
-    # Center VS marker
-    put(1, center_col, center_label, P(7)|curses.A_BOLD)
+    # Center VS marker - more visually distinct
+    put(1, center_col, center_label, P(4)|curses.A_BOLD)
 
     # P2 name + bar (grows left, mirrored)
     p2_name = g.p2.name[:name_w].rjust(name_w)
     p2_bar  = _hbar(g.p2.hp, MHP, bar_w, fill='█', empty='░')
     p2_num  = f'HP:{g.p2.hp:3d} '
     p2_bar_start = center_col + cl
-    put(1, p2_bar_start, p2_num, P(cp2))
+    put(1, p2_bar_start, p2_num, P(cp2)|curses.A_BOLD)
     put(1, p2_bar_start + len(p2_num), p2_bar, P(cp2)|curses.A_BOLD)
     put(1, p2_bar_start + len(p2_num) + bar_w, p2_name, P(g.p2.cp)|curses.A_BOLD)
 
     put(1, 0, '║', P(5)|curses.A_BOLD)
     put(1, W-1, '║', P(5)|curses.A_BOLD)
 
-    # ── HUD row 2: thin decorative bar ───────────────────────────────────────
+    # ── HUD row 2: round counter + stage name ────────────────────────────────
     put(2, 0, '║', P(5)); put(2, W-1, '║', P(5))
-    wins = f'  ROUND {g.rnd}   {"▣"*g.p1w}{"□"*(NEED-g.p1w)} P1  ·  P2 {"□"*(NEED-g.p2w)}{"▣"*g.p2w}  '
-    put(2, (W-len(wins))//2, wins, P(5)|curses.A_BOLD)
+    round_info = f'ROUND {g.rnd}  '
+    wins_p1 = '▣' * g.p1w + '□' * (NEED - g.p1w)
+    wins_p2 = '□' * (NEED - g.p2w) + '▣' * g.p2w
+    score = f'{wins_p1}  P1 vs P2  {wins_p2}'
+    put(2, 3, round_info, P(5)|curses.A_BOLD)
+    put(2, (W-len(score))//2, score, P(5)|curses.A_BOLD)
 
-    # ── HUD row 3: HP numbers + stage name ───────────────────────────────────
+    # ── HUD row 3: spacing/breathing room ────────────────────────────────────
     put(3, 0, '║', P(5)); put(3, W-1, '║', P(5))
-    put(3, 2, f'HP:{g.p1.hp:3d}', P(cp1)|curses.A_BOLD)
-    stage = '── DOJO OF FATE ──'
-    put(3, (W-len(stage))//2, stage, P(5)|curses.A_DIM)
-    put(3, W-9, f'HP:{g.p2.hp:3d}', P(cp2)|curses.A_BOLD)
 
     # ── arena floor — textured ───────────────────────────────────────────────
     floor_chars = '▓▒░▒'
@@ -751,8 +757,23 @@ def draw_fight(scr, g, W, H):
             put(AT - 1, col, tag, P(color)|curses.A_BOLD|curses.A_REVERSE)
 
     # ── control bar ──────────────────────────────────────────────────────────
-    ctrl='A/D:Move  SPC:Jump  S:Crouch  J:Punch  K:Kick  L:Block  ESC:Pause  Q:Quit'
-    put(H-3,1,ctrl[:W-2].center(W-2),P(5)|curses.A_DIM)
+    # Box-styled control bar with clear sections
+    ctrl_parts = [
+        'MOVE: A/D',
+        'JUMP: SPC',
+        'CROUCH: S',
+        'PUNCH: J',
+        'KICK: K',
+        'BLOCK: L',
+        'PAUSE: ESC',
+        'QUIT: Q',
+    ]
+    ctrl = '  |  '.join(ctrl_parts)
+    if len(ctrl) > W - 4:
+        ctrl = ctrl[:W-4]
+    put(H-3, 1, '┌' + '─'*(W-4) + '┐', P(5)|curses.A_DIM)
+    put(H-3, 1, ctrl.center(W-2), P(5)|curses.A_DIM)
+    put(H-3, W-1, '┐', P(5)|curses.A_DIM)
     scr.refresh()
 class IntroScene(Scene):
     def update(self, inp, tick, dt):

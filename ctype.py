@@ -665,30 +665,39 @@ def draw_game(scr, game, H, W, tick):
     p(GR,  0, '╠'+'═'*(W-2)+'╣', P(5)|curses.A_BOLD)
     p(H-1, 0, '╚'+'═'*(W-2)+'╝', P(5)|curses.A_BOLD)
 
-    # ── HUD row 1 ─────────────────────────────────────────────────────────────
+    # ── HUD row 1 (three-box layout) ──────────────────────────────────────────
     p(1, 0, '║', P(5)|curses.A_BOLD); p(1, W-1, '║', P(5)|curses.A_BOLD)
+
+    # Decorative edges
     p(1, 1, '▓▒░', P(5)|curses.A_DIM); p(1, W-4, '░▒▓', P(5)|curses.A_DIM)
 
-    # Game title
+    # Game title — centered on screen with decorative box
     p(1, 5, '◈ C-TYPE ◈', P(4)|curses.A_BOLD)
 
-    # Lives display: ♥ × lives, ♡ × (LIVES - lives)
-    lv_s = ('♥ ' * pl.lives + '♡ ' * max(0, LIVES - pl.lives)).rstrip()
-    p(1, 18, lv_s, P(2)|curses.A_BOLD)
+    # ── HUD BOX 1: LIVES (left section, green) ────────────────────────────────
+    lives_pips = '█' * pl.lives + '░' * max(0, LIVES - pl.lives)
+    lives_box = f'┌LIVES┐ [{lives_pips}]'
+    p(1, 18, lives_box, P(2)|curses.A_BOLD)
 
-    # Bombs (B to detonate): ◆ filled, ◇ used
-    bomb_s = ('◆ ' * pl.bombs + '◇ ' * max(0, BOMBS_PER_LIFE - pl.bombs)).rstrip()
-    p(1, 30, bomb_s, P(4)|curses.A_BOLD)
+    # ── HUD BOX 2: SCORE (center section, yellow) ────────────────────────────
+    score_s = f'┌ SCORE ┐'
+    score_val = f'{game.score:08d}'
+    score_box = f'{score_val}'
+    score_pos = (W - len(score_val)) // 2
+    p(1, score_pos - 5, score_s, P(4)|curses.A_BOLD)
+    p(1, score_pos, score_box, P(4)|curses.A_BOLD)
 
-    # Score centered
-    sc_s = f'◆ {game.score:08d} ◆'
-    p(1, (W-len(sc_s))//2, sc_s, P(4)|curses.A_BOLD)
+    # ── HUD BOX 3: POWER + WAVE + BOMBS (right section, cyan) ────────────────
+    pwr_pips = '▰' * (pl.power + 1) + '▱' * (2 - pl.power)
+    bombs_s = f'◆' * pl.bombs + '◇' * max(0, BOMBS_PER_LIFE - pl.bombs)
 
-    # Power + Wave (right side)
-    pwr_pips  = '▰'*(pl.power+1) + '▱'*(2-pl.power)
-    wave_s    = f'│ PWR:{pwr_pips} │ WAVE:{game.wave:02d} │'
-    if game.boss_mode: wave_s += ' ★BOSS★ │'
-    p(1, W-len(wave_s)-4, wave_s, P(3))
+    wave_info = f'WAVE:{game.wave:02d}'
+    if game.boss_mode:
+        wave_info += ' ★BOSS★'
+
+    # Build right-side HUD: PWR indicator, WAVE, and BOMBS
+    right_hud = f'┌PWR:{pwr_pips}┐ ┌{wave_info}┐ ┌BOMBS:{bombs_s}┐'
+    p(1, W - len(right_hud) - 4, right_hud, P(3)|curses.A_BOLD)
 
     # ── Starfield ─────────────────────────────────────────────────────────────
     for s in game.stars:

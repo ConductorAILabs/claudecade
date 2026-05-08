@@ -484,22 +484,32 @@ def draw_game(scr, world, H, W, tick):
     p(1, 0, '║', P(5)|curses.A_BOLD); p(1, W-1, '║', P(5)|curses.A_BOLD)
     p(2, 0, '╠'+'═'*(W-2)+'╣', P(5)|curses.A_BOLD)
 
-    # HP bar — filled blocks
+    # HUD section 1: LIVES (left)
     hp_filled = pl.lives
     hp_empty  = LIVES - hp_filled
-    hp_bar = '▐' + '█'*hp_filled + '░'*hp_empty + '▌'
-    p(1, 2, 'HP:', P(2)|curses.A_BOLD)
-    p(1, 5, hp_bar, P(2)|curses.A_BOLD)
+    hp_bar = '█'*hp_filled + '░'*hp_empty
+    lives_str = f'  LIVES: [{hp_bar}]'
+    p(1, 1, lives_str, P(2)|curses.A_BOLD)
 
-    # Score — centred
+    # HUD section 2: SCORE (center)
     sc_str = f'◄ SCORE: {world.score:07d} ►'
-    p(1, (W-len(sc_str))//2, sc_str, P(4)|curses.A_BOLD)
+    score_col = (W - len(sc_str)) // 2
+    p(1, score_col, sc_str, P(4)|curses.A_BOLD)
 
-    # Wave + Distance + Biome — right side
+    # HUD section 3: WAVE & DISTANCE (right)
     dist_m = int(pl.wx * 2)
     bcp    = biome_for(pl.wx)[2]
-    wd = f'[{world.biome_name}]  WAVE:{world.wave}  DIST:{dist_m:05d}m'
-    p(1, W-len(wd)-3, wd, P(bcp)|curses.A_BOLD)
+    wd = f'WAVE:{world.wave:2d}  DIST:{dist_m:05d}m  '
+    wave_col = W - len(wd) - 2
+    p(1, wave_col, wd, P(bcp)|curses.A_BOLD)
+
+    # Vertical dividers between sections
+    div1_col = score_col - 2
+    div2_col = wave_col - 1
+    if div1_col > len(lives_str) + 1:
+        p(1, div1_col, '║', P(5)|curses.A_BOLD)
+    if div2_col > score_col + len(sc_str) + 1:
+        p(1, div2_col, '║', P(5)|curses.A_BOLD)
 
     # Biome-entry: bright full-width band for the first ~6 frames, then blink toast
     if world.biome_msg_t > 54:
@@ -653,54 +663,95 @@ def draw_gameover(scr, H, W, score, tick, sub_result=None):
         p(r, 0,   '║', P(5)|curses.A_BOLD)
         p(r, W-1, '║', P(5)|curses.A_BOLD)
 
-    # Dead player art at centre-top
-    dead_art = [
-        r"   ╳──╳   ",
-        r"  ╱║╲     ",
-        r"   ║      ",
-        r"  ╲ ╱     ",
-        r"▓▓▓▓▓▓▓▓▓▓",
-    ]
-    art_y = max(1, H//2 - 8)
-    for i, line in enumerate(dead_art):
-        p(art_y+i, (W-len(line))//2, line, P(5)|curses.A_DIM)
+    # Scrolling starfield background (similar to intro)
+    stars = ['·', '·', '·', '·', '∙', '∘', '○']
+    rng = random.Random(tick // 6)
+    for r in range(2, H-4):
+        for c in range(2, W-2, 7):
+            s = stars[rng.randint(0, len(stars)-1)]
+            p(r, (c + (tick//4)) % (W-4) + 2, s, P(5)|curses.A_DIM)
 
-    mr = H//2
-    # Title box
-    go_lines = [
-        '╔══════════════════════╗',
-        '║   G A M E   O V E R  ║',
-        '╚══════════════════════╝',
-    ]
-    for i, ln in enumerate(go_lines):
-        p(mr-1+i, (W-len(ln))//2, ln, P(2)|curses.A_BOLD)
+    # Color-banded decoration (top section)
+    color_band = [P(1)|curses.A_BOLD, P(4)|curses.A_BOLD,
+                  P(3)|curses.A_BOLD, P(6)|curses.A_BOLD]
+    for bi in range(2):
+        band_row = 2 + bi
+        if band_row < H - 4:
+            p(band_row, 1, '═'*(W-2), color_band[bi % len(color_band)])
 
-    # Score box
+    # "GAME OVER" header in block-font style
+    mr = H//2 - 5
+    go_header = [
+        r'  ██████╗  █████╗ ███╗   ███╗███████╗    ██████╗ ██╗   ██╗███████╗██████╗ ',
+        r' ██╔════╝ ██╔══██╗████╗ ████║██╔════╝    ██╔══██╗╚██╗ ██╔╝██╔════╝██╔══██╗',
+        r' ██║  ███╗███████║██╔████╔██║█████╗      ██║  ██║ ╚████╔╝ █████╗  ██████╔╝',
+        r' ██║   ██║██╔══██║██║╚██╔╝██║██╔══╝      ██║  ██║  ╚██╔╝  ██╔══╝  ██╔══██╗',
+        r' ╚██████╔╝██║  ██║██║ ╚═╝ ██║███████╗    ██████╔╝   ██║   ███████╗██║  ██║',
+        r'  ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝    ╚═════╝    ╚═╝   ╚══════╝╚═╝  ╚═╝',
+    ]
+    # Fall back to shorter header if terminal too narrow
+    if W < 80:
+        go_header = [
+            r' ██████╗  █████╗ ███╗   ███╗███████╗',
+            r'██╔════╝ ██╔══██╗████╗ ████║██╔════╝',
+            r'██║  ███╗███████║██╔████╔██║█████╗  ',
+            r'██║   ██║██╔══██║██║╚██╔╝██║██╔══╝  ',
+            r'╚██████╔╝██║  ██║██║ ╚═╝ ██║███████╗',
+            r' ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝',
+        ]
+    header_colors = [P(6)|curses.A_BOLD, P(1)|curses.A_BOLD,
+                     P(4)|curses.A_BOLD, P(6)|curses.A_BOLD,
+                     P(1)|curses.A_BOLD, P(4)|curses.A_BOLD]
+    for i, line in enumerate(go_header):
+        if mr + i < H - 6:
+            cx = max(1, (W - len(line)) // 2)
+            p(mr + i, cx, line[:W-2], header_colors[i % len(header_colors)])
+
+    mr = mr + len(go_header) + 1
+
+    # Score box with decorative borders
     sc_lines = [
-        '┌──────────────────────────┐',
-        f'│  FINAL SCORE:  {score:07d}  │',
-        '└──────────────────────────┘',
+        '╔════════════════════════════╗',
+        f'║  FINAL SCORE:  {score:07d}   ║',
+        '╚════════════════════════════╝',
     ]
     for i, ln in enumerate(sc_lines):
-        p(mr+3+i, (W-len(ln))//2, ln, P(4)|curses.A_BOLD)
+        color = P(1)|curses.A_BOLD if i == 1 else P(5)|curses.A_BOLD
+        p(mr+i, (W-len(ln))//2, ln, color)
 
-    # Player label
+    # Player label with decorative brackets
     pl = player_label()
-    p(mr+7, (W-len(pl)-4)//2, f'◄  {pl}  ►', P(1)|curses.A_BOLD)
+    p(mr+4, (W-len(pl)-4)//2, f'◄  {pl}  ►', P(4)|curses.A_BOLD)
 
-    # Rank / submitting
+    # Rank / submitting with visual badges
     if sub_result and sub_result[0]:
         rank = sub_result[0].get('rank')
         if rank:
-            rm = f'★  Global rank: #{rank}  ★'
-            p(mr+8, (W-len(rm))//2, rm, P(3)|curses.A_BOLD)
+            # Award visual based on rank
+            if rank <= 10:
+                badge = '★ ELITE ★'
+                badge_color = P(3)|curses.A_BOLD
+            elif rank <= 50:
+                badge = '▲ TOP 50 ▲'
+                badge_color = P(4)|curses.A_BOLD
+            else:
+                badge = '◆ RANKED ◆'
+                badge_color = P(6)|curses.A_BOLD
+            rm = f'  {badge}  Global rank: #{rank}  '
+            p(mr+5, (W-len(rm))//2, rm, badge_color)
     elif sub_result and sub_result[0] is None:
-        p(mr+8, (W-26)//2, '  Submitting score...  ', P(5)|curses.A_DIM)
+        p(mr+5, (W-26)//2, '  Submitting score...  ', P(5)|curses.A_DIM)
 
-    # Blinking prompt
+    # Color-banded decoration (bottom section)
+    for bi in range(2):
+        band_row = H - 5 + bi
+        if band_row < H - 1:
+            p(band_row, 1, '═'*(W-2), color_band[(3-bi) % len(color_band)])
+
+    # Blinking prompt with more visual prominence
     if (tick//18) % 2 == 0:
-        msg = '[ SPACE = Play Again ]     [ ESC = Quit ]'
-        p(H-3, (W-len(msg))//2, msg, P(5)|curses.A_BOLD)
+        msg = '▸ SPACE = Play Again  │  ESC = Quit ◂'
+        p(H-3, (W-len(msg))//2, msg, P(4)|curses.A_BOLD)
 
     scr.refresh()
 class IntroScene(Scene):

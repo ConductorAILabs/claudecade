@@ -565,16 +565,22 @@ class Battle:
         # Phase message overlay
         if self._phase_timer > 0:
             self._phase_timer -= 1
-            center(scr, H//2, self._phase_msg, W, P(2)|curses.A_BOLD)
+            phase_text = '▓▓▓ ' + self._phase_msg + ' ▓▓▓'
+            center(scr, H//2, phase_text, W, P(2)|curses.A_BOLD)
             scr.refresh(); return
 
         enemy_area_h = H - 16
         enemy_area_h = max(8, enemy_area_h)
 
-        # ── Top border ──
-        box(scr, 0, 0, H, W, '', 5)
+        # ── Top border with bold block-font header ──
+        safe_add(scr, 0, 0, '╔' + '═'*(W-2) + '╗', P(5)|curses.A_BOLD)
+        battle_header = '█ B A T T L E █'
+        safe_add(scr, 0, (W-len(battle_header))//2, battle_header, P(2)|curses.A_BOLD)
 
-        # ── Enemy area ──
+        # ── Enemy area with visual boxes ──
+        safe_add(scr, 1, 0, '╠' + '═'*(W-2) + '╣', P(2)|curses.A_BOLD)
+        safe_add(scr, 1, 2, '▓ ENEMIES ▓', P(2)|curses.A_BOLD)
+
         enemies = self.enemies
         ex_each = max(14, W // max(1, len(enemies)))
         for i, e in enumerate(enemies):
@@ -583,7 +589,8 @@ class Battle:
             ey_off = 2
             # Flash on defeat
             if not e.alive:
-                safe_add(scr, ey_off + len(sprite)//2, ex + 2, '  * * K O * *  ', P(2)|curses.A_BOLD)
+                ko_text = '▓▓ K O ▓▓'
+                safe_add(scr, ey_off + len(sprite)//2, max(ex, (ex_each-len(ko_text))//2+ex-2), ko_text, P(2)|curses.A_BOLD)
                 continue
             # Boss name flash + idle pulse so the sprite breathes (was static).
             # Per-enemy phase offset so a row of enemies doesn't pulse in lockstep.
@@ -593,23 +600,26 @@ class Battle:
             cp     = P(e.color) | attr
             for si, row in enumerate(sprite):
                 safe_add(scr, ey_off + si, ex + bobble, row, cp)
-            # Name + HP bar
+            # Name + HP bar with better formatting
             ny = ey_off + len(sprite) + 1
-            safe_add(scr, ny, ex, e.name[:ex_each-2], P(5)|curses.A_BOLD)
+            name_box = f'┤ {e.name[:ex_each-4]} ├'
+            safe_add(scr, ny, ex, name_box[:ex_each], P(2)|curses.A_BOLD)
             hp_w = min(ex_each - 2, 18)
             hp_cp = 3 if e.hp > e.max_hp * 0.5 else (4 if e.hp > e.max_hp * 0.25 else 2)
             bar(scr, ny+1, ex, e.hp, e.max_hp, hp_w, hp_cp)
-            safe_add(scr, ny+2, ex, f'{e.hp}/{e.max_hp}', P(5))
-            # Status
+            hp_text = f'[{e.hp:>4}/{e.max_hp:<4}]'
+            safe_add(scr, ny+2, max(ex, ex+max(0,(hp_w-len(hp_text))//2)), hp_text[:hp_w], P(2)|curses.A_BOLD)
+            # Status with better styling
             if e.status:
-                s_str = ' '.join(f'[{k.upper()[:3]}]' for k in e.status)
-                safe_add(scr, ny+3, ex, s_str[:ex_each-2], P(6))
+                s_str = '║ ' + ' '.join(f'{k.upper()[:2]}' for k in e.status) + ' ║'
+                safe_add(scr, ny+3, ex, s_str[:ex_each-2], P(6)|curses.A_BOLD)
 
-        # ── Divider ──
+        # ── Divider with party header ──
         div_y = enemy_area_h + 2
-        safe_add(scr, div_y, 0, '╠' + '═'*(W-2) + '╣', P(5))
+        safe_add(scr, div_y, 0, '╠' + '═'*(W-2) + '╣', P(3)|curses.A_BOLD)
+        safe_add(scr, div_y, 2, '▓ PARTY ▓', P(3)|curses.A_BOLD)
 
-        # ── Party status ──
+        # ── Party status with visual improvements ──
         py = div_y + 1
         for mi, m in enumerate(self.party.members):
             mx = 1
@@ -619,34 +629,36 @@ class Battle:
                       self._turn_order[self._turn_idx][1] is m)
             name_attr = P(m.color)|curses.A_BOLD if m.alive else P(5)
             if is_cur: name_attr |= curses.A_REVERSE
-            label = f'{"▶ " if is_cur else "  "}{m.name:<8} Lv{m.level:<3}'
+            cur_mark = '██' if is_cur else '░░'
+            label = f'{cur_mark} {m.name:<8} Lv{m.level:<3}'
             safe_add(scr, py + mi, mx, label, name_attr)
-            # HP bar
+            # HP bar with block fill
             bx = mx + 22
             hp_cp = 3 if m.hp > m.max_hp * 0.5 else (4 if m.hp > m.max_hp * 0.25 else 2)
-            safe_add(scr, py+mi, bx-5, 'HP', P(3))
-            bar(scr, py+mi, bx-3, m.hp, m.max_hp, 12, hp_cp)
-            safe_add(scr, py+mi, bx+10, f'{m.hp:>4}/{m.max_hp}', P(5))
-            # MP bar
+            safe_add(scr, py+mi, bx-5, '▓HP▓', P(3)|curses.A_BOLD)
+            bar(scr, py+mi, bx-1, m.hp, m.max_hp, 12, hp_cp)
+            safe_add(scr, py+mi, bx+12, f'{m.hp:>4}/{m.max_hp}', P(3))
+            # MP bar with block fill
             mpx = bx + 22
-            safe_add(scr, py+mi, mpx-5, 'MP', P(8))
-            bar(scr, py+mi, mpx-3, m.mp, m.max_mp, 10, 8)
-            safe_add(scr, py+mi, mpx+8, f'{m.mp:>3}/{m.max_mp}', P(5))
-            # Status
+            safe_add(scr, py+mi, mpx-5, '▓MP▓', P(8)|curses.A_BOLD)
+            bar(scr, py+mi, mpx-1, m.mp, m.max_mp, 10, 8)
+            safe_add(scr, py+mi, mpx+12, f'{m.mp:>3}/{m.max_mp}', P(8))
+            # Status with block styling
             sx = mpx + 18
             if not m.alive:
-                safe_add(scr, py+mi, sx, '[KO]', P(2)|curses.A_BOLD)
+                safe_add(scr, py+mi, sx, '▓KO▓', P(2)|curses.A_BOLD)
             elif m.status:
-                s_str = ' '.join(f'[{k.upper()[:3]}]' for k in m.status)
-                safe_add(scr, py+mi, sx, s_str[:12], P(6))
+                s_str = '▓' + ''.join(f'{k.upper()[:1]}' for k in m.status) + '▓'
+                safe_add(scr, py+mi, sx, s_str[:12], P(6)|curses.A_BOLD)
             else:
-                safe_add(scr, py+mi, sx, '[OK] ', P(3))
+                safe_add(scr, py+mi, sx, '▓OK▓', P(3)|curses.A_BOLD)
 
         # ── Second divider ──
         div2_y = py + 3
-        safe_add(scr, div2_y, 0, '╠' + '═'*(W-2) + '╣', P(5))
+        safe_add(scr, div2_y, 0, '╠' + '═'*(W-2) + '╣', P(1)|curses.A_BOLD)
+        safe_add(scr, div2_y, 2, '▓ ACTIONS ▓', P(1)|curses.A_BOLD)
 
-        # ── Action menu ──
+        # ── Action menu with visual prominence ──
         kind, actor = self._current_actor()
         act_y = div2_y + 1
 
@@ -654,43 +666,53 @@ class Battle:
             pass  # nothing to show
         elif kind == 'player' and self._act_state == 'ACT_MENU':
             opts = self._menu_options(actor)
-            safe_add(scr, act_y, 2, f'{actor.name}\'s turn:', P(actor.color)|curses.A_BOLD)
-            menu_list(scr, act_y+1, 4, opts, self._act_cursor, width=10)
+            turn_label = f'█ {actor.name}\'s Turn █'
+            safe_add(scr, act_y, 2, turn_label, P(actor.color)|curses.A_BOLD)
+            # Draw action menu with borders
+            for i, opt in enumerate(opts[:8]):
+                prefix = '▶' if i == self._act_cursor else ' '
+                label = f'{prefix} {opt}'
+                cp = P(7)|curses.A_BOLD if i == self._act_cursor else P(6)
+                safe_add(scr, act_y+1+i, 4, label, cp)
 
         elif kind == 'player' and self._act_state == 'ACT_SPELL':
             spells = actor.spells
-            safe_add(scr, act_y, 2, 'MAGIC:', P(6)|curses.A_BOLD)
+            safe_add(scr, act_y, 2, '█ MAGIC █', P(6)|curses.A_BOLD)
             for i, sp_name in enumerate(spells[:8]):
                 sp = SPELLS.get(sp_name, {})
-                label = f'{sp_name:<14} {sp.get("mp",0):>3}MP'
+                prefix = '▶' if i == self._spell_cursor else ' '
+                label = f'{prefix} {sp_name:<14} {sp.get("mp",0):>3}MP'
                 cp = P(7)|curses.A_BOLD if i == self._spell_cursor else P(6)
                 safe_add(scr, act_y+1+i, 4, label, cp)
 
         elif kind == 'player' and self._act_state == 'ACT_ITEM':
             avail = self._items_available()
-            safe_add(scr, act_y, 2, 'ITEMS:', P(4)|curses.A_BOLD)
+            safe_add(scr, act_y, 2, '█ ITEMS █', P(4)|curses.A_BOLD)
             for i, (name, cnt) in enumerate(avail[:8]):
-                label = f'{name:<18} x{cnt}'
+                prefix = '▶' if i == self._item_cursor else ' '
+                label = f'{prefix} {name:<18} x{cnt}'
                 cp = P(7)|curses.A_BOLD if i == self._item_cursor else P(4)
                 safe_add(scr, act_y+1+i, 4, label, cp)
 
         elif kind == 'player' and self._act_state == 'ACT_TARGET':
             if self._act_mode in ('attack_target','spell_target'):
                 tgts = self._living_enemies()
-                safe_add(scr, act_y, 2, 'TARGET:', P(2)|curses.A_BOLD)
+                safe_add(scr, act_y, 2, '█ TARGET ENEMY █', P(2)|curses.A_BOLD)
             else:
                 tgts = self.party.members
-                safe_add(scr, act_y, 2, 'TARGET:', P(1)|curses.A_BOLD)
+                safe_add(scr, act_y, 2, '█ TARGET PARTY █', P(1)|curses.A_BOLD)
             for i, t in enumerate(tgts[:6]):
-                label = f'{"▶ " if i == self._target_cursor else "  "}{t.name}'
+                prefix = '▶' if i == self._target_cursor else ' '
+                label = f'{prefix} {t.name}'
                 cp = P(7)|curses.A_BOLD if i == self._target_cursor else P(5)
                 safe_add(scr, act_y+1+i, 4, label, cp)
 
-        # ── Message log ──
+        # ── Message log with visual styling ──
         log_x   = W // 2
         log_y   = act_y
         log_h   = H - act_y - 2
-        safe_add(scr, log_y, log_x, '┤ BATTLE LOG ├', P(5))
+        log_header = '▓ BATTLE LOG ▓'
+        safe_add(scr, log_y, log_x+1, log_header, P(5)|curses.A_BOLD)
         visible = self.log[-log_h:] if len(self.log) > log_h else self.log
         for i, line in enumerate(visible):
             safe_add(scr, log_y+1+i, log_x+1, line[:W-log_x-3], P(5))
@@ -702,17 +724,25 @@ class Battle:
         """Draw win/lose/escaped result screen."""
         P = curses.color_pair
         scr.erase()
+
+        # Bold border
+        safe_add(scr, 0, 0, '╔' + '═'*(W-2) + '╗', P(5)|curses.A_BOLD)
+        safe_add(scr, H-1, 0, '╚' + '═'*(W-2) + '╝', P(5)|curses.A_BOLD)
+        for r in range(1, H-1):
+            safe_add(scr, r, 0, '║', P(5)|curses.A_BOLD)
+            safe_add(scr, r, W-1, '║', P(5)|curses.A_BOLD)
+
         if self.result == 'win':
-            title = '★ VICTORY ★'
+            title = '▓▓▓ V I C T O R Y ▓▓▓'
             tcp = P(4)|curses.A_BOLD
         elif self.result == 'lose':
-            title = '✖ DEFEATED ✖'
+            title = '▓▓▓ D E F E A T E D ▓▓▓'
             tcp = P(2)|curses.A_BOLD
         else:
-            title = 'You escaped!'
+            title = '▓ You escaped! ▓'
             tcp = P(5)|curses.A_BOLD
         center(scr, H//2-len(msgs)//2-2, title, W, tcp)
         for i, m in enumerate(msgs):
             center(scr, H//2-len(msgs)//2+i, m, W, P(5))
-        center(scr, H//2+len(msgs)//2+2, '[ Press SPACE ]', W, P(5))
+        center(scr, H//2+len(msgs)//2+2, '▒ [ Press SPACE ] ▒', W, P(5)|curses.A_BOLD)
         scr.refresh()

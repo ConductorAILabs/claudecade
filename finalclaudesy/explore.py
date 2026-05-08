@@ -96,12 +96,12 @@ class WorldMap:
         vx0 = max(0, min(MAP_W - vw, self.x - vw // 2))
         vy0 = max(0, min(MAP_H - vh, self.y - vh // 2))
 
-        safe_add(scr, 0, 0, '╔'+'═'*(W-2)+'╗', curses.color_pair(5)|curses.A_BOLD)
-        safe_add(scr, 1, 1, '▓▒░'+'░'*(W-8)+'░▒▓', curses.color_pair(5)|curses.A_DIM)
-        safe_add(scr, 1, 5, '★ FINAL CLAUDESY ★  WORLD MAP', curses.color_pair(6)|curses.A_BOLD)
+        # Bold decorative header with block styling
+        safe_add(scr, 0, 0, '╔'+'═'*(W-2)+'╗', P(5)|curses.A_BOLD)
+        safe_add(scr, 1, 1, '█████ WORLD MAP █████', P(5)|curses.A_BOLD)
         gx = f'Gold: {self.party.gold}g'
-        safe_add(scr, 1, W-len(gx)-4, gx, curses.color_pair(4)|curses.A_BOLD)
-        safe_add(scr, 2, 0, '╠'+'═'*(W-2)+'╣', curses.color_pair(5)|curses.A_BOLD)
+        safe_add(scr, 1, W-len(gx)-4, gx, P(4)|curses.A_BOLD)
+        safe_add(scr, 2, 0, '╠'+'═'*(W-2)+'╣', P(5)|curses.A_BOLD)
 
         for vy in range(vh):
             for vx in range(vw):
@@ -117,19 +117,23 @@ class WorldMap:
                     attr = P(1)|curses.A_BOLD; ch = '@'
                 safe_add(scr, 1 + vy, 1 + vx, ch, attr)
 
-        # HUD
+        # HUD with visual improvements
         p0, p1, p2 = self.party.members
         hud_y = H - 4
-        safe_add(scr, hud_y, 0, '╠' + '═'*(W-2) + '╣', P(5))
+        safe_add(scr, hud_y, 0, '╠' + '═'*(W-2) + '╣', P(3)|curses.A_BOLD)
+        safe_add(scr, hud_y, 2, '▓ PARTY ▓', P(3)|curses.A_BOLD)
         for i, m in enumerate(self.party.members):
             mx = 2 + i * (W // 3)
             alive_attr = P(m.color)|curses.A_BOLD if m.alive else P(5)
             safe_add(scr, hud_y+1, mx, f'{m.name} Lv{m.level}', alive_attr)
-            safe_add(scr, hud_y+2, mx, f'HP:{m.hp}/{m.max_hp} MP:{m.mp}/{m.max_mp}', P(5))
+            hp_bar = f'HP:█{m.hp:>3}/{m.max_hp:<3}█'
+            mp_bar = f'MP:█{m.mp:>3}/{m.max_mp:<3}█'
+            safe_add(scr, hud_y+2, mx, hp_bar, P(3))
+            safe_add(scr, hud_y+3, mx, mp_bar, P(8))
 
-        safe_add(scr, H-1, 0, '╚' + '═'*(W-2) + '╝', P(5))
-        ctrl = 'WASD:Move  T:Town/Dungeon  M:Menu  S:Save'
-        safe_add(scr, hud_y+3, (W-len(ctrl))//2, ctrl, P(5))
+        safe_add(scr, H-1, 0, '╚' + '═'*(W-2) + '╝', P(5)|curses.A_BOLD)
+        ctrl = '║ WASD:Move  T:Town/Dungeon  M:Menu  S:Save ║'
+        safe_add(scr, hud_y+3, (W-len(ctrl))//2, ctrl[:W], P(5)|curses.A_BOLD)
         scr.refresh()
 
 
@@ -254,68 +258,100 @@ class TownScreen:
     def draw(self, scr: 'curses.window', H: int, W: int, tick: int) -> None:
         P = curses.color_pair
         scr.erase()
-        box(scr, 0, 0, H, W, f'★ {self.name} ★', 4)
-        safe_add(scr, 1, 2, self.data['desc'], P(5))
+        # Bold header
+        safe_add(scr, 0, 0, '╔' + '═'*(W-2) + '╗', P(4)|curses.A_BOLD)
+        town_header = f'▓ {self.name} ▓'
+        safe_add(scr, 0, (W-len(town_header))//2, town_header, P(4)|curses.A_BOLD)
+        safe_add(scr, 1, 0, '╠' + '═'*(W-2) + '╣', P(4)|curses.A_BOLD)
+        safe_add(scr, 2, 2, self.data['desc'], P(5))
 
         if self._msg_timer > 0:
             self._msg_timer -= 1
             safe_add(scr, 2, 2, self._msg[:W-4], P(4)|curses.A_BOLD)
 
         if self._state == 'MAIN':
-            box(scr, 4, 2, 8, 22, 'Menu', 5)
-            menu_list(scr, 5, 4, self.MAIN_OPTS, self._cursor, width=18)
+            # Menu with block styling
+            safe_add(scr, 4, 2, '╔════════════════════╗', P(5)|curses.A_BOLD)
+            safe_add(scr, 4, 5, '▓ MENU ▓', P(5)|curses.A_BOLD)
+            for i, opt in enumerate(self.MAIN_OPTS):
+                prefix = '▶' if i == self._cursor else ' '
+                label = f'{prefix} {opt}'
+                cp = P(7)|curses.A_BOLD if i == self._cursor else P(5)
+                safe_add(scr, 5+i, 4, label, cp)
+            safe_add(scr, 5+len(self.MAIN_OPTS), 2, '╚════════════════════╝', P(5)|curses.A_BOLD)
 
         elif self._state == 'NPC':
             npcs  = self.data['npcs']
             npc   = npcs[self._npc_idx]
             lines = npc['lines']
-            box(scr, 4, 2, 10, W-4, npc['name'], 1)
+            # NPC dialog box with borders
+            safe_add(scr, 4, 2, '╔' + '═'*(W-6) + '╗', P(1)|curses.A_BOLD)
+            npc_header = f'█ {npc["name"]} █'
+            safe_add(scr, 4, (W-len(npc_header))//2, npc_header, P(1)|curses.A_BOLD)
+            safe_add(scr, 5, 2, '╠' + '═'*(W-6) + '╣', P(1)|curses.A_BOLD)
             line = lines[min(self._npc_line, len(lines)-1)]
             safe_add(scr, 6, 4, line, P(5))
-            safe_add(scr, 12, 4, '[SPACE] next / [Q] back', P(5))
+            safe_add(scr, 12, 2, '╚' + '═'*(W-6) + '╝', P(1)|curses.A_BOLD)
+            safe_add(scr, 13, 4, '▒ [SPACE] next / [Q] back ▒', P(5)|curses.A_BOLD)
 
         elif self._state == 'SHOP':
             self._draw_shop(scr, H, W)
 
-        # Party quick status
+        # Party quick status with visual styling
         status_y = H - 5
-        safe_add(scr, status_y, 0, '╠' + '═'*(W-2) + '╣', P(5))
+        safe_add(scr, status_y, 0, '╠' + '═'*(W-2) + '╣', P(3)|curses.A_BOLD)
+        safe_add(scr, status_y, 2, '▓ PARTY STATUS ▓', P(3)|curses.A_BOLD)
         for i, m in enumerate(self.party.members):
             mx = 2 + i*(W//3)
             safe_add(scr, status_y+1, mx, f'{m.name} Lv{m.level}', P(m.color)|curses.A_BOLD)
-            safe_add(scr, status_y+2, mx, f'HP:{m.hp}/{m.max_hp}', P(3))
-            safe_add(scr, status_y+3, mx, f'MP:{m.mp}/{m.max_mp} G:{self.party.gold}', P(8))
-        safe_add(scr, H-1, 0, '╚' + '═'*(W-2) + '╝', P(5))
+            safe_add(scr, status_y+2, mx, f'█HP:{m.hp:>3}/{m.max_hp}█', P(3))
+            safe_add(scr, status_y+3, mx, f'█MP:{m.mp:>3}/{m.max_mp}█ G:{self.party.gold}', P(8))
+        safe_add(scr, H-1, 0, '╚' + '═'*(W-2) + '╝', P(5)|curses.A_BOLD)
         scr.refresh()
 
     def _draw_shop(self, scr, H, W):
         P = curses.color_pair
         shop = SHOPS.get(self.name, {})
-        box(scr, 4, 2, 4, 22, 'Categories', 4)
-        menu_list(scr, 5, 4, self._shop_cats,
-                  self._shop_cat if self._shop_state == 'CATEGORY' else -1, width=18)
+        # Shop categories with block styling
+        safe_add(scr, 4, 2, '╔══════════════════════╗', P(4)|curses.A_BOLD)
+        safe_add(scr, 4, 5, '▓ CATEGORIES ▓', P(4)|curses.A_BOLD)
+        for i, cat in enumerate(self._shop_cats):
+            prefix = '▶' if (i == self._shop_cat and self._shop_state == 'CATEGORY') else ' '
+            label = f'{prefix} {cat}'
+            cp = P(7)|curses.A_BOLD if (i == self._shop_cat and self._shop_state == 'CATEGORY') else P(4)
+            safe_add(scr, 5+i, 4, label, cp)
+        safe_add(scr, 5+len(self._shop_cats), 2, '╚══════════════════════╝', P(4)|curses.A_BOLD)
 
-        safe_add(scr, 4, 26, f'Gold: {self.party.gold}g', P(4)|curses.A_BOLD)
+        gold_display = f'█ Gold: {self.party.gold}g █'
+        safe_add(scr, 4, 26, gold_display, P(4)|curses.A_BOLD)
 
         if self._shop_state == 'BUY' and self._shop_items:
             from .data import ITEMS, EQUIPMENT
-            box(scr, 8, 2, min(len(self._shop_items)+3, H-14), W-4, 'Buy', 4)
+            # Buy menu with borders
+            safe_add(scr, 8, 2, '╔' + '═'*(W-6) + '╗', P(4)|curses.A_BOLD)
+            safe_add(scr, 8, (W-10)//2, '▓ BUY ▓', P(4)|curses.A_BOLD)
+            safe_add(scr, 9, 2, '╠' + '═'*(W-6) + '╣', P(4)|curses.A_BOLD)
             for i, item in enumerate(self._shop_items[:H-20]):
                 d = ITEMS.get(item) or EQUIPMENT.get(item, {})
                 price = d.get('price', 0)
                 desc  = d.get('desc', '')
-                label = f'{item:<22} {price:>5}g  {desc}'
+                prefix = '▶' if i == self._shop_cursor else ' '
+                label = f'{prefix} {item:<20} {price:>5}g  {desc}'
                 cp = P(7)|curses.A_BOLD if i == self._shop_cursor else P(5)
                 safe_add(scr, 10+i, 4, label[:W-8], cp)
 
         elif self._shop_state == 'SELL':
             inv = [(n,c) for n,c in self.party.items.items()]
-            box(scr, 8, 2, min(len(inv)+3, H-14), W-4, 'Sell (half price)', 4)
+            # Sell menu with borders
+            safe_add(scr, 8, 2, '╔' + '═'*(W-6) + '╗', P(4)|curses.A_BOLD)
+            safe_add(scr, 8, (W-18)//2, '▓ SELL (half price) ▓', P(4)|curses.A_BOLD)
+            safe_add(scr, 9, 2, '╠' + '═'*(W-6) + '╣', P(4)|curses.A_BOLD)
             from .data import ITEMS
             for i, (name, cnt) in enumerate(inv[:H-20]):
                 d    = ITEMS.get(name, {})
                 sell = d.get('price', 10) // 2
-                label = f'{name:<22} x{cnt:<3}  sell:{sell}g'
+                prefix = '▶' if i == self._shop_cursor else ' '
+                label = f'{prefix} {name:<20} x{cnt:<3}  sell:{sell}g'
                 cp = P(7)|curses.A_BOLD if i == self._shop_cursor else P(4)
                 safe_add(scr, 10+i, 4, label[:W-8], cp)
 
@@ -389,7 +425,11 @@ class DungeonScreen:
     def draw(self, scr: 'curses.window', H: int, W: int, tick: int) -> None:
         P = curses.color_pair
         scr.erase()
-        box(scr, 0, 0, H, W, self.dname, 2)
+        # Dungeon header with bold styling
+        safe_add(scr, 0, 0, '╔' + '═'*(W-2) + '╗', P(2)|curses.A_BOLD)
+        dungeon_header = f'█ {self.dname} █'
+        safe_add(scr, 0, (W-len(dungeon_header))//2, dungeon_header, P(2)|curses.A_BOLD)
+        safe_add(scr, 1, 0, '╠' + '═'*(W-2) + '╣', P(2)|curses.A_BOLD)
 
         dh = len(self.dmap)
         dw = len(self.dmap[0]) if dh else 0
@@ -422,21 +462,24 @@ class DungeonScreen:
                     else:
                         safe_add(scr, sy, sx, '■ ', P(4)|curses.A_BOLD)
 
-        # Log
+        # Log with decorative styling
         log_y = H - 7
-        safe_add(scr, log_y, 0, '╠' + '═'*(W-2) + '╣', P(5))
+        safe_add(scr, log_y, 0, '╠' + '═'*(W-2) + '╣', P(5)|curses.A_BOLD)
+        safe_add(scr, log_y, 2, '▓ LOG ▓', P(5)|curses.A_BOLD)
         for i, line in enumerate(self.log[-2:]):
             safe_add(scr, log_y+1+i, 2, line[:W-4], P(5))
 
-        # Party HUD
+        # Party HUD with visual improvements
         hud_y = H - 4
-        safe_add(scr, hud_y, 0, '╠' + '═'*(W-2) + '╣', P(5))
+        safe_add(scr, hud_y, 0, '╠' + '═'*(W-2) + '╣', P(3)|curses.A_BOLD)
+        safe_add(scr, hud_y, 2, '▓ PARTY ▓', P(3)|curses.A_BOLD)
         for i, m in enumerate(self.party.members):
             mx = 2 + i*(W//3)
-            safe_add(scr, hud_y+1, mx, f'{m.name} HP:{m.hp}/{m.max_hp}',
-                     P(m.color)|curses.A_BOLD if m.alive else P(5))
-        safe_add(scr, H-2, 2, 'WASD:Move  Q:Exit  ■=Chest  !!=Boss', P(5))
-        safe_add(scr, H-1, 0, '╚'+'═'*(W-2)+'╝', P(5))
+            alive_attr = P(m.color)|curses.A_BOLD if m.alive else P(5)
+            safe_add(scr, hud_y+1, mx, f'{m.name} █ {m.hp:>3}/{m.max_hp}',
+                     alive_attr)
+        safe_add(scr, H-2, 2, '▒ WASD:Move  Q:Exit  ██=Chest  !!=Boss ▒', P(5)|curses.A_BOLD)
+        safe_add(scr, H-1, 0, '╚'+'═'*(W-2)+'╝', P(5)|curses.A_BOLD)
         scr.refresh()
 
 
@@ -570,20 +613,25 @@ class PartyMenu:
     def draw(self, scr, H, W, tick):
         P = curses.color_pair
         scr.erase()
-        box(scr, 0, 0, H, W, 'MENU', 5)
+        # Menu header with bold styling
+        safe_add(scr, 0, 0, '╔' + '═'*(W-2) + '╗', P(5)|curses.A_BOLD)
+        menu_header = '█ M E N U █'
+        safe_add(scr, 0, (W-len(menu_header))//2, menu_header, P(5)|curses.A_BOLD)
+        safe_add(scr, 1, 0, '╠' + '═'*(W-2) + '╣', P(5)|curses.A_BOLD)
 
-        # Tab bar
+        # Tab bar with visual styling
         tx = 2
         for i, tab in enumerate(self.TABS):
-            attr = P(7)|curses.A_BOLD if i == self._tab else P(5)
-            safe_add(scr, 1, tx, f' {tab} ', attr)
-            tx += len(tab) + 3
+            attr = P(7)|curses.A_BOLD|curses.A_REVERSE if i == self._tab else P(6)
+            tab_str = f'[ {tab} ]'
+            safe_add(scr, 2, tx, tab_str, attr)
+            tx += len(tab_str) + 2
 
         if self._msg_t > 0:
             self._msg_t -= 1
-            safe_add(scr, 2, 2, self._msg[:W-4], P(4)|curses.A_BOLD)
+            safe_add(scr, 3, 2, self._msg[:W-4], P(4)|curses.A_BOLD)
 
-        safe_add(scr, 2, W-20, f'Gold: {self.party.gold}g', P(4)|curses.A_BOLD)
+        safe_add(scr, 3, W-24, f'█ Gold: {self.party.gold}g █', P(4)|curses.A_BOLD)
 
         tab = self.TABS[self._tab]
 
@@ -594,59 +642,77 @@ class PartyMenu:
         elif tab == 'Items':
             self._draw_items(scr, H, W)
         elif tab == 'Save':
-            center(scr, H//2, 'Press ENTER to save game.', W, P(4)|curses.A_BOLD)
+            save_prompt = '█ Press ENTER to save game █'
+            center(scr, H//2, save_prompt, W, P(4)|curses.A_BOLD)
 
-        safe_add(scr, H-1, 0, '╚'+'═'*(W-2)+'╝', P(5))
+        safe_add(scr, H-1, 0, '╚'+'═'*(W-2)+'╝', P(5)|curses.A_BOLD)
         scr.refresh()
 
     def _draw_status(self, scr, H, W):
         P = curses.color_pair
         m = self.party.members[self._cursor]
-        box(scr, 3, 2, 4, 18, 'Party', 5)
+        # Party selection box with borders
+        safe_add(scr, 3, 2, '╔══════════════════╗', P(5)|curses.A_BOLD)
+        safe_add(scr, 3, 5, '▓ PARTY ▓', P(5)|curses.A_BOLD)
         for i, mm in enumerate(self.party.members):
             attr = P(7)|curses.A_BOLD if i == self._cursor else P(mm.color)
-            safe_add(scr, 4+i, 4, f'{"▶ " if i==self._cursor else "  "}{mm.name}', attr)
-        # Stats panel
+            prefix = '▶' if i==self._cursor else ' '
+            safe_add(scr, 4+i, 4, f'{prefix} {mm.name}', attr)
+        safe_add(scr, 7, 2, '╚══════════════════╝', P(5)|curses.A_BOLD)
+        # Stats panel with block styling
         bx = 22
-        safe_add(scr, 3,  bx, f'{m.name} the {m.cls}', P(m.color)|curses.A_BOLD)
+        safe_add(scr, 3,  bx, f'█ {m.name} the {m.cls} █', P(m.color)|curses.A_BOLD)
         safe_add(scr, 4,  bx, f'Level: {m.level}   EXP: {m.exp}/{m.exp_to_next()}', P(5))
-        safe_add(scr, 5,  bx, f'HP:  {m.hp}/{m.max_hp}', P(3))
-        safe_add(scr, 6,  bx, f'MP:  {m.mp}/{m.max_mp}', P(8))
+        safe_add(scr, 5,  bx, f'█ HP:  {m.hp:>4}/{m.max_hp:<4}█', P(3)|curses.A_BOLD)
+        safe_add(scr, 6,  bx, f'█ MP:  {m.mp:>4}/{m.max_mp:<4}█', P(8)|curses.A_BOLD)
         safe_add(scr, 7,  bx, f'ATK: {m.atk}   DEF: {m.defense}', P(5))
         safe_add(scr, 8,  bx, f'MAG: {m.mag}   SPD: {m.spd}', P(5))
         safe_add(scr, 9,  bx, f'Weapon:    {m.weapon or "—"}', P(5))
         safe_add(scr, 10, bx, f'Armor:     {m.armor  or "—"}', P(5))
         safe_add(scr, 11, bx, f'Accessory: {m.acc    or "—"}', P(5))
         spells_str = ', '.join(m.spells) if m.spells else '—'
-        safe_add(scr, 12, bx, f'Spells: {spells_str[:W-bx-4]}', P(6))
+        safe_add(scr, 12, bx, f'Spells: {spells_str[:W-bx-4]}', P(6)|curses.A_BOLD)
 
     def _draw_equip(self, scr, H, W):
         P = curses.color_pair
         from .data import EQUIPMENT
         chars = self.party.members
-        box(scr, 3, 2, 5, 20, 'Character', 5)
+        # Character selection with borders
+        safe_add(scr, 3, 2, '╔════════════════════╗', P(5)|curses.A_BOLD)
+        safe_add(scr, 3, 5, '▓ CHARACTER ▓', P(5)|curses.A_BOLD)
         for i, m in enumerate(chars):
             attr = P(7)|curses.A_BOLD if i == self._equip_char and self._equip_state != 'CHAR' else P(m.color)
-            safe_add(scr, 4+i, 4, f'{"▶ " if i == self._equip_char else "  "}{m.name}', attr)
+            prefix = '▶' if i == self._equip_char else ' '
+            safe_add(scr, 4+i, 4, f'{prefix} {m.name}', attr)
+        safe_add(scr, 7, 2, '╚════════════════════╝', P(5)|curses.A_BOLD)
+
         if self._equip_state in ('EQUIP_CHOOSE','ITEM_LIST'):
             char = chars[self._equip_char]
             slots = ['Weapon','Armor','Accessory']
-            box(scr, 3, 24, 5, 18, 'Slot', 5)
+            # Slot selection with borders
+            safe_add(scr, 3, 24, '╔══════════════════╗', P(5)|curses.A_BOLD)
+            safe_add(scr, 3, 27, '▓ SLOT ▓', P(5)|curses.A_BOLD)
             for i, sl in enumerate(slots):
+                prefix = '▶' if i == self._equip_slot else ' '
                 attr = P(7)|curses.A_BOLD if i == self._equip_slot else P(5)
-                safe_add(scr, 4+i, 26, sl, attr)
+                safe_add(scr, 4+i, 26, f'{prefix} {sl}', attr)
+            safe_add(scr, 7, 24, '╚══════════════════╝', P(5)|curses.A_BOLD)
         if self._equip_state == 'ITEM_LIST':
             items = getattr(self, '_equip_items', [])
             char  = chars[self._equip_char]
-            box(scr, 8, 2, min(len(items)+3, H-12), W-4, 'Choose Equipment', 5)
+            # Equipment list with borders
+            safe_add(scr, 8, 2, '╔' + '═'*(W-6) + '╗', P(5)|curses.A_BOLD)
+            safe_add(scr, 8, (W-16)//2, '▓ EQUIPMENT ▓', P(5)|curses.A_BOLD)
+            safe_add(scr, 9, 2, '╠' + '═'*(W-6) + '╣', P(5)|curses.A_BOLD)
             for i, nm in enumerate(items[:H-20]):
                 d = EQUIPMENT.get(nm, {})
+                prefix = '▶' if i == self._cursor else ' '
                 if nm == '[Remove]':
-                    label = '[Remove current]'
+                    label = f'{prefix} [Remove current]'
                 else:
                     delta = char.stat_preview(nm)
                     parts = [f'{k}:{("+" if v>=0 else "")}{v}' for k,v in delta.items() if v != 0]
-                    label = f'{nm:<22} {d.get("price",0):>5}g  {" ".join(parts)}'
+                    label = f'{prefix} {nm:<20} {d.get("price",0):>5}g  {" ".join(parts)}'
                 attr = P(7)|curses.A_BOLD if i == self._cursor else P(5)
                 safe_add(scr, 10+i, 4, label[:W-8], attr)
 
@@ -654,14 +720,22 @@ class PartyMenu:
         P = curses.color_pair
         from .data import ITEMS
         avail = [(n,c) for n,c in self.party.items.items()]
-        box(scr, 3, 2, min(len(avail)+4, H-10), W//2, 'Items', 5)
+        # Items list with borders
+        safe_add(scr, 3, 2, '╔' + '═'*(W//2-4) + '╗', P(4)|curses.A_BOLD)
+        safe_add(scr, 3, W//2-8, '▓ ITEMS ▓', P(4)|curses.A_BOLD)
+        safe_add(scr, 4, 2, '╠' + '═'*(W//2-4) + '╣', P(4)|curses.A_BOLD)
         for i, (name, cnt) in enumerate(avail[:H-16]):
             d     = ITEMS.get(name, {})
-            label = f'{name:<20} x{cnt:<3}  {d.get("desc","")}'
+            prefix = '▶' if i == self._item_cursor else ' '
+            label = f'{prefix} {name:<18} x{cnt:<3}  {d.get("desc","")}'
             attr  = P(7)|curses.A_BOLD if i == self._item_cursor else P(4)
             safe_add(scr, 5+i, 4, label[:W//2-4], attr)
         if self._item_state == 'TARGET':
-            box(scr, 3, W//2+2, 7, 24, 'Use on...', 5)
+            # Target selection with borders
+            safe_add(scr, 3, W//2+2, '╔' + '═'*22 + '╗', P(5)|curses.A_BOLD)
+            safe_add(scr, 3, W//2+8, '▓ USE ON ▓', P(5)|curses.A_BOLD)
+            safe_add(scr, 4, W//2+2, '╠' + '═'*22 + '╣', P(5)|curses.A_BOLD)
             for i, m in enumerate(self.party.members):
+                prefix = '▶' if i == self._item_target else ' '
                 attr = P(7)|curses.A_BOLD if i == self._item_target else P(m.color)
-                safe_add(scr, 5+i, W//2+4, f'{"▶ " if i==self._item_target else "  "}{m.name} HP:{m.hp}', attr)
+                safe_add(scr, 5+i, W//2+4, f'{prefix} {m.name} HP:{m.hp}', attr)
