@@ -3,13 +3,51 @@
 import curses, time, random, subprocess, os, sys
 from claudcade_engine import setup_colors
 
-# ── TITLE ART ──────────────────────────────────────────────────────────────────
+# ── TITLE ART (CLAUDECADE in block font) ───────────────────────────────────────
 TITLE = [
-    r"  ___  _      _   _   _  ___   ___   _    ___  ___ ",
-    r" / __|| |    /_\ | | | ||   \ / __| /_\  |   \| __|",
-    r"| (__ | |__ / _ \| |_| || |) | (__ / _ \ | |) | _| ",
-    r" \___||____/_/ \_\\___/ |___/ \___/_/ \_\|___/|___|",
+    " ██████╗██╗      █████╗ ██╗   ██╗██████╗ ███████╗ ██████╗ █████╗ ██████╗ ███████╗",
+    "██╔════╝██║     ██╔══██╗██║   ██║██╔══██╗██╔════╝██╔════╝██╔══██╗██╔══██╗██╔════╝",
+    "██║     ██║     ███████║██║   ██║██║  ██║█████╗  ██║     ███████║██║  ██║█████╗  ",
+    "██║     ██║     ██╔══██║██║   ██║██║  ██║██╔══╝  ██║     ██╔══██║██║  ██║██╔══╝  ",
+    "╚██████╗███████╗██║  ██║╚██████╔╝██████╔╝███████╗╚██████╗██║  ██║██████╔╝███████╗",
+    " ╚═════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═════╝ ╚══════╝",
 ]
+
+# Game block-font titles (for right panel display)
+GAME_TITLES = {
+    'ctype': [
+        " ██████╗       ████████╗██╗   ██╗██████╗ ███████╗",
+        "██╔════╝       ╚══██╔══╝╚██╗ ██╔╝██╔══██╗██╔════╝",
+        "██║     ██████╗   ██║    ╚████╔╝ ██████╔╝█████╗  ",
+        "██║     ╚═════╝   ██║     ╚██╔╝  ██╔═══╝ ██╔══╝  ",
+        "╚██████╗          ██║      ██║   ██║     ███████╗",
+        " ╚═════╝          ╚═╝      ╚═╝   ╚═╝     ╚══════╝",
+    ],
+    'claudtra': [
+        " ██████╗██╗      █████╗ ██╗   ██╗██████╗ ████████╗██████╗  █████╗ ",
+        "██╔════╝██║     ██╔══██╗██║   ██║██╔══██╗╚══██╔══╝██╔══██╗██╔══██╗",
+        "██║     ██║     ███████║██║   ██║██║  ██║   ██║   ██████╔╝███████║",
+        "██║     ██║     ██╔══██║██║   ██║██║  ██║   ██║   ██╔══██╗██╔══██║",
+        "╚██████╗███████╗██║  ██║╚██████╔╝██████╔╝   ██║   ██║  ██║██║  ██║",
+        " ╚═════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝    ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝",
+    ],
+    'fight': [
+        " ██████╗██╗      █████╗ ██╗   ██╗██████╗ ███████╗    ███████╗██╗ ██████╗ ██╗  ██╗████████╗███████╗██████╗ ",
+        "██╔════╝██║     ██╔══██╗██║   ██║██╔══██╗██╔════╝    ██╔════╝██║██╔════╝ ██║  ██║╚══██╔══╝██╔════╝██╔══██╗",
+        "██║     ██║     ███████║██║   ██║██║  ██║█████╗      █████╗  ██║██║  ███╗███████║   ██║   █████╗  ██████╔╝",
+        "██║     ██║     ██╔══██║██║   ██║██║  ██║██╔══╝      ██╔══╝  ██║██║   ██║██╔══██║   ██║   ██╔══╝  ██╔══██╗",
+        "╚██████╗███████╗██║  ██║╚██████╔╝██████╔╝███████╗    ██║     ██║╚██████╔╝██║  ██║   ██║   ███████╗██║  ██║",
+        " ╚═════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝    ╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝",
+    ],
+    'finalclaudesy': [
+        "███████╗██╗███╗   ██╗ █████╗ ██╗          ██████╗██╗      █████╗ ██╗   ██╗██████╗ ███████╗███████╗██╗   ██╗",
+        "██╔════╝██║████╗  ██║██╔══██╗██║         ██╔════╝██║     ██╔══██╗██║   ██║██╔══██╗██╔════╝██╔════╝╚██╗ ██╔╝",
+        "█████╗  ██║██╔██╗ ██║███████║██║         ██║     ██║     ███████║██║   ██║██║  ██║█████╗  ███████╗ ╚████╔╝ ",
+        "██╔══╝  ██║██║╚██╗██║██╔══██║██║         ██║     ██║     ██╔══██║██║   ██║██║  ██║██╔══╝  ╚════██║  ╚██╔╝  ",
+        "██║     ██║██║ ╚████║██║  ██║███████╗    ╚██████╗███████╗██║  ██║╚██████╔╝██████╔╝███████╗███████║   ██║   ",
+        "╚═╝     ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝     ╚═════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝╚══════╝   ╚═╝   ",
+    ],
+}
 
 # ── GAME CATALOGUE ─────────────────────────────────────────────────────────────
 GAMES = [
@@ -19,98 +57,101 @@ GAMES = [
         'script':   'ctype.py',
         'genre':    'SHMUP',
         'color':    1,
+        'title_key': 'ctype',
         'desc': [
-            '5 enemy types + escalating wave system',
-            'Parallax star-field, power-ups',
-            'Boss battle every 6th wave',
-            'Hold J for charge beam · mouse to fire',
+            'Dodge waves · Charge beam · Get power-ups',
+            'Boss every 6th wave · Parallax starfield',
+            '5 enemy types · Escalating difficulty',
+            'Score system with local leaderboard',
         ],
         'controls': [
             'WASD / Arrows  Move',
-            'J / Click      Shoot',
+            'J / SPACE      Fire',
             'Hold J         Charge beam',
-            'ESC            Pause',
+            'ESC            Pause / Quit',
         ],
         'art': [
-            "  /~\\   <==>  /T\\  ",
-            ">===)>  <~~>  [===] ",
-            "  \\_/   <==>  /T\\  ",
+            "    ▲      ",
+            "◀═══◆═══▶  ",
+            "    ▼      ",
         ],
     },
     {
-        'name':     'Claudtra',
-        'subtitle': 'ACTION PLATFORMER',
+        'name':     'CLAUDTRA',
+        'subtitle': 'RUN & GUN',
         'script':   'claudtra.py',
         'genre':    'ACTION',
         'color':    3,
+        'title_key': 'claudtra',
         'desc': [
-            'Side-scrolling run-and-gun platformer',
-            'Grunt and heavy enemy classes',
-            'Multi-life system with respawn',
+            'Side-scrolling action platformer',
+            'Grunt and heavy enemies · Multi-life system',
             'Jump, crouch, shoot through waves',
+            'Score system with local leaderboard',
         ],
         'controls': [
             'A / D          Move left / right',
             'SPACE          Jump',
-            'J / Click      Shoot',
-            'S              Crouch',
-            'ESC            Pause',
+            'J              Shoot',
+            'S              Crouch · ESC  Pause',
         ],
         'art': [
-            " _O_->   <-O    ",
-            " \\|/=>   <-\\|  ",
-            "  |        |    ",
+            "  ╭─╮      ",
+            "  │·│═══► ",
+            "  ╰┬╯     ",
+            "  ╱╲      ",
         ],
     },
     {
-        'name':     'Claude Fighter',
-        'subtitle': '1v1 FIGHTING',
+        'name':     'CLAUDE FIGHTER',
+        'subtitle': '1V1 FIGHTING',
         'script':   'fight.py',
         'genre':    'FIGHTING',
         'color':    2,
+        'title_key': 'fight',
         'desc': [
             '5 unique fighters with distinct styles',
-            'Punch, kick, block, jump, crouch',
+            'Punch, kick, block, jump mechanics',
             'Best of 3 rounds vs AI opponent',
-            'Mouse left/right click to fight',
+            'Score system with local leaderboard',
         ],
         'controls': [
             'A / D          Move',
             'SPACE          Jump',
-            'S              Crouch',
-            'J / Click      Punch',
-            'K              Kick',
-            'L              Block',
-            'ESC            Pause',
+            'J              Punch',
+            'K  Kick · L  Block · S  Crouch',
         ],
         'art': [
-            " _/O\\_   /-*-\\ ",
-            "/|X X|\\  |o_o|  ",
-            "  |||    _|=|_  ",
+            "  ╲ ╱    ",
+            "   ╳     ",
+            "  ╱ ╲    ",
         ],
     },
     {
         'name':     'FINAL CLAUDESY',
-        'subtitle': 'TERMINAL JRPG',
+        'subtitle': 'EPIC JRPG',
         'script':   'finalclaudesy.py',
         'genre':    'RPG',
         'color':    6,
+        'title_key': 'finalclaudesy',
         'desc': [
-            '3 heroes · 3 regions · final boss',
-            'Turn-based combat with 20+ spells',
-            'Towns, dungeons, equipment, story',
-            'Save system · ~3 hours of content',
+            '3 heroes · 3 regions · 20+ spells',
+            'Turn-based combat · Equipment system',
+            'Towns, dungeons, NPCs, full story',
+            '~3 hours of content · Multiple endings',
         ],
         'controls': [
-            'WASD / Arrows  Move / Navigate',
-            'SPACE / Enter  Confirm',
-            'Q / ESC        Back / Cancel',
-            'M              Party menu',
+            'WASD / Arrows  Move or select',
+            'SPACE / Enter  Confirm action',
+            'M              Open party menu',
+            'Q / ESC        Cancel / Back',
         ],
         'art': [
-            " /O\\  *~*  (+) ",
-            "/|=|\\ )0(  (|+|)",
-            "/ \\/ \\ V   |+| ",
+            "     ▲     ",
+            "    ╔╪╗    ",
+            "     ║     ",
+            "     ║     ",
+            "     ▼     ",
         ],
     },
 ]
@@ -198,46 +239,59 @@ def draw_main(scr, H, W, tick, cursor):
     g   = GAMES[cursor]
     gcp = g['color']
 
-    # Title row
-    gt   = f'★  {g["name"]}  —  {g["subtitle"]}  ★'
-    gta  = P(gcp)|curses.A_BOLD
-    _p(scr, H, W, PANEL_Y,   DET_X+1, gt, gta)
-    _p(scr, H, W, PANEL_Y+1, DET_X+1, '═'*(DET_W-2), P(gcp)|curses.A_DIM)
+    # Block-font game title
+    title_key = g.get('title_key', g['name'].lower().replace(' ', ''))
+    if title_key in GAME_TITLES:
+        ART_Y = PANEL_Y
+        for i, line in enumerate(GAME_TITLES[title_key]):
+            if ART_Y + i < H - 4:
+                trimmed = line[:DET_W-2] if len(line) > DET_W-2 else line
+                _p(scr, H, W, ART_Y+i, DET_X+1, trimmed, P(gcp)|curses.A_BOLD)
+        ART_Y += len(GAME_TITLES[title_key])
+    else:
+        ART_Y = PANEL_Y
+        gt   = f'★  {g["name"]}  —  {g["subtitle"]}  ★'
+        _p(scr, H, W, ART_Y, DET_X+1, gt[:DET_W-2], P(gcp)|curses.A_BOLD)
+        ART_Y += 1
 
-    # ASCII art preview (with shaded box)
-    ART_Y = PANEL_Y + 2
+    _p(scr, H, W, ART_Y, DET_X+1, '═'*(DET_W-2), P(gcp)|curses.A_DIM)
+
+    # Game sprite (small art preview)
+    ART_Y = ART_Y + 2
     ART_X = DET_X + 3
     art   = g['art']
-    aw    = max(len(l) for l in art) + 4
-    ah    = len(art) + 2
-    # box around art
-    _p(scr, H, W, ART_Y,      ART_X-2, '┌'+'─'*(aw)+'┐', P(5)|curses.A_DIM)
-    _p(scr, H, W, ART_Y+ah-1, ART_X-2, '└'+'─'*(aw)+'┘', P(5)|curses.A_DIM)
-    for r in range(1, ah-1):
-        _p(scr, H, W, ART_Y+r, ART_X-2, '│', P(5)|curses.A_DIM)
-        _p(scr, H, W, ART_Y+r, ART_X-2+aw+1, '│', P(5)|curses.A_DIM)
-    for i, line in enumerate(art):
-        _p(scr, H, W, ART_Y+1+i, ART_X, line, P(gcp)|curses.A_BOLD)
+    if art:
+        aw    = max(len(l) for l in art) + 2
+        ah    = len(art) + 2
+        if ART_Y + ah < H - 6:
+            _p(scr, H, W, ART_Y,      ART_X-2, '┌'+'─'*aw+'┐', P(5)|curses.A_DIM)
+            _p(scr, H, W, ART_Y+ah-1, ART_X-2, '└'+'─'*aw+'┘', P(5)|curses.A_DIM)
+            for r in range(1, ah-1):
+                _p(scr, H, W, ART_Y+r, ART_X-2, '│', P(5)|curses.A_DIM)
+                _p(scr, H, W, ART_Y+r, ART_X-2+aw+1, '│', P(5)|curses.A_DIM)
+            for i, line in enumerate(art):
+                _p(scr, H, W, ART_Y+1+i, ART_X, line, P(gcp)|curses.A_BOLD)
 
     # Description
-    DESC_X = ART_X + aw + 3
-    _p(scr, H, W, ART_Y,     DESC_X, g['subtitle'], P(gcp)|curses.A_BOLD)
-    _p(scr, H, W, ART_Y+1,   DESC_X, '─'*max(0, W-DESC_X-2), P(5)|curses.A_DIM)
+    DESC_X = DET_X + 2
+    _p(scr, H, W, ART_Y,   DESC_X, g['subtitle'], P(gcp)|curses.A_BOLD)
+    _p(scr, H, W, ART_Y+1, DESC_X, '─'*max(0, DET_W-2), P(5)|curses.A_DIM)
     for i, line in enumerate(g['desc']):
-        if ART_Y+2+i < H-4:
+        if ART_Y+2+i < H-5:
             _p(scr, H, W, ART_Y+2+i, DESC_X, f'• {line}', P(5))
 
     # Controls
-    CTRL_Y = ART_Y + ah + 1
-    _p(scr, H, W, CTRL_Y, DET_X+2, 'CONTROLS', P(5)|curses.A_BOLD)
-    _p(scr, H, W, CTRL_Y, DET_X+12, '─'*(DET_W-12), P(5)|curses.A_DIM)
-    for i, ctrl in enumerate(g['controls']):
-        ky, rest = ctrl.split(None, 1) if ' ' in ctrl else (ctrl, '')
-        cy = CTRL_Y + 1 + i
-        if cy >= H-4: break
-        _p(scr, H, W, cy, DET_X+4, ky, P(gcp)|curses.A_BOLD)
-        pad = 14 - len(ky)
-        _p(scr, H, W, cy, DET_X+4+len(ky)+max(1,pad), rest, P(5))
+    CTRL_Y = ART_Y + len(g['desc']) + 3
+    if CTRL_Y < H - 5:
+        _p(scr, H, W, CTRL_Y, DET_X+2, 'CONTROLS', P(5)|curses.A_BOLD)
+        _p(scr, H, W, CTRL_Y, DET_X+12, '─'*max(0, DET_W-12), P(5)|curses.A_DIM)
+        for i, ctrl in enumerate(g['controls']):
+            ky, rest = ctrl.split(None, 1) if ' ' in ctrl else (ctrl, '')
+            cy = CTRL_Y + 1 + i
+            if cy >= H-4: break
+            _p(scr, H, W, cy, DET_X+4, ky, P(gcp)|curses.A_BOLD)
+            pad = 14 - len(ky)
+            _p(scr, H, W, cy, DET_X+4+len(ky)+max(1,pad), rest, P(5))
 
     # Launch prompt (blinking)
     if (tick // 15) % 2 == 0:
