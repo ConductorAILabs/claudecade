@@ -190,20 +190,23 @@ def draw_main(scr, H, W, tick, cursor):
     shade_full = '▓▒░' + '░'*(W-8) + '░▒▓'
     _p(scr, H, W, 1, 1, shade_full[:W-2], P(5)|curses.A_DIM)
 
-    # Title art — cycle through 4 colors for flair
+    # Title art — cycle through colors for flair (modulo so any title length works)
     title_colors = [P(4)|curses.A_BOLD, P(1)|curses.A_BOLD,
-                    P(6)|curses.A_BOLD, P(4)|curses.A_BOLD]
+                    P(6)|curses.A_BOLD, P(4)|curses.A_BOLD,
+                    P(1)|curses.A_BOLD, P(6)|curses.A_BOLD]
     for i, line in enumerate(TITLE):
         tx = max(1, (W - len(line)) // 2)
-        _p(scr, H, W, 2+i, tx, line, title_colors[i])
+        _p(scr, H, W, 2+i, tx, line, title_colors[i % len(title_colors)])
 
+    # Compute layout based on actual title height
+    TITLE_END = 2 + len(TITLE)  # title rows: 2..TITLE_END-1
     sub = '◈   T H E   C L A U D E   T E R M I N A L   A R C A D E   ◈'
-    _p(scr, H, W, 6, max(1, (W-len(sub))//2), sub, P(6)|curses.A_BOLD)
+    _p(scr, H, W, TITLE_END, max(1, (W-len(sub))//2), sub, P(6)|curses.A_BOLD)
 
-    _p(scr, H, W, 7, 1, shade_full[:W-2], P(5)|curses.A_DIM)
+    _p(scr, H, W, TITLE_END+1, 1, shade_full[:W-2], P(5)|curses.A_DIM)
 
     # ── Section divider ─────────────────────────────────────────────────────
-    DIV = 8
+    DIV = TITLE_END + 2
     _p(scr, H, W, DIV, 0, '╠'+'═'*(W-2)+'╣', P(5)|curses.A_BOLD)
 
     # ── Vertical panel split ─────────────────────────────────────────────────
