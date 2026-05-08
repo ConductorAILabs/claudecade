@@ -41,7 +41,7 @@ def draw_how_to_play(scr, H, W, tick):
             '• Stay mobile',
         ],
     )
-FPS      = 30
+FPS      = 60
 ARENA_W  = 68
 SW, SH   = 9, 6
 WALK     = 1.4

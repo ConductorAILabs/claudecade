@@ -41,7 +41,7 @@ def draw_how_to_play(scr, H, W, tick):
             '• Heavy enemies take multiple hits',
         ],
     )
-FPS       = 30
+FPS       = 60
 SW, SH    = 7, 5
 WALK      = 1.3
 JV0       = 6.0

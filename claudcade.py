@@ -50,6 +50,9 @@ GAME_TITLES = {
 }
 
 # ── GAME CATALOGUE ─────────────────────────────────────────────────────────────
+# Each game has 'frames' (list of frame-art for animation) instead of static 'art'.
+# Animation cycles every ~6 ticks via frames[(tick // 6) % len(frames)].
+
 GAMES = [
     {
         'name':     'C-TYPE',
@@ -70,10 +73,20 @@ GAMES = [
             'Hold J         Charge beam',
             'ESC            Pause / Quit',
         ],
-        'art': [
-            "    ▲      ",
-            "◀═══◆═══▶  ",
-            "    ▼      ",
+        # Animation: ship firing bullets at enemies that approach from right
+        'frames': [
+            ["  ▲          ◆ ",
+             "═►·   ·   ·  ◇ ",
+             "  ▼          ◆ "],
+            ["  ▲       ·  ◆ ",
+             "═► ·   ·     ◇ ",
+             "  ▼          ◆ "],
+            ["  ▲    ·     · ",
+             "═►  ·     ·  ✦ ",
+             "  ▼          · "],
+            ["  ▲ ·  ·  ·  · ",
+             "═►       ·   ✦ ",
+             "  ▼ ·     ·  · "],
         ],
     },
     {
@@ -95,11 +108,24 @@ GAMES = [
             'J              Shoot',
             'S              Crouch · ESC  Pause',
         ],
-        'art': [
-            "  ╭─╮      ",
-            "  │·│═══► ",
-            "  ╰┬╯     ",
-            "  ╱╲      ",
+        # Animation: running character firing right
+        'frames': [
+            ["  ╭─╮          ",
+             "  │·│═►  · · ◆ ",
+             "  ╰┬╯          ",
+             " ╱ ╲           "],
+            ["  ╭─╮    ·     ",
+             "  │·│═► · ·  ◆ ",
+             "  ╰┬╯          ",
+             " ╲╱            "],
+            ["  ╭─╮  ·       ",
+             "  │·│═►·    · ◆",
+             "  ╰┬╯          ",
+             " ╱╲            "],
+            ["  ╭─╮·         ",
+             "  │·│═►  ·· · ✦",
+             "  ╰┬╯          ",
+             " ╲ ╱           "],
         ],
     },
     {
@@ -121,10 +147,140 @@ GAMES = [
             'J              Punch',
             'K  Kick · L  Block · S  Crouch',
         ],
-        'art': [
-            "  ╲ ╱    ",
-            "   ╳     ",
-            "  ╱ ╲    ",
+        # Animation: two fighters trading punches
+        'frames': [
+            ["  ◯       ◯  ",
+             " ╱│╲     ╱│╲ ",
+             "  ╱╲     ╱╲  "],
+            ["  ◯       ◯  ",
+             " ╱│═►   ◀═│╲ ",
+             "  ╱╲     ╱╲  "],
+            ["  ◯  ✦   ✦◯  ",
+             " ╱│════ ════│╲",
+             "  ╱╲     ╱╲  "],
+            ["  ◯       ◯  ",
+             "╲╱│       │╲╱",
+             "  ╱╲     ╱╲  "],
+        ],
+    },
+    {
+        'name':     'SUPER CLAUDIO',
+        'subtitle': 'PLATFORMER',
+        'script':   None,
+        'genre':    'PLATFORM',
+        'color':    4,
+        'title_key': 'superclaudio',
+        'coming_soon': True,
+        'desc': [
+            'Save the princess. Jump, stomp, collect.',
+            '4 worlds · Power-ups · Hidden levels',
+            'Classic platforming action',
+            'COMING SOON · In development',
+        ],
+        'controls': [
+            'A / D          Move',
+            'W / SPACE      Jump',
+            'J              Fire / Run',
+            'ESC            Pause',
+        ],
+        # Animation: jumping character collecting coins
+        'frames': [
+            ["    ★         ",
+             "   ◯  ◆  ◆    ",
+             "  ╱│╲         ",
+             "  ╱ ╲ ▓▓▓▓▓▓▓ "],
+            ["    ★ ◆       ",
+             "   ◯     ◆    ",
+             "  ╱│╲         ",
+             "  ╱ ╲ ▓▓▓▓▓▓▓ "],
+            ["    ◯ ◆       ",
+             "   ╱│╲   ◆    ",
+             "    ▼         ",
+             "  ╱ ╲ ▓▓▓▓▓▓▓ "],
+            ["    ★         ",
+             "   ◯     ✦    ",
+             "  ╱│╲         ",
+             "  ╱ ╲ ▓▓▓▓▓▓▓ "],
+        ],
+    },
+    {
+        'name':     'CLAUDTURISMO',
+        'subtitle': 'RACING',
+        'script':   None,
+        'genre':    'RACING',
+        'color':    1,
+        'title_key': 'claudturismo',
+        'coming_soon': True,
+        'desc': [
+            'Pseudo-3D racing · 3 laps, real curves',
+            '8 tracks · 5 cars · Time attack mode',
+            'Drift physics · Boost system',
+            'COMING SOON · In development',
+        ],
+        'controls': [
+            'W / UP         Accelerate',
+            'S / DOWN       Brake',
+            'A / D          Steer',
+            'SPACE          Boost',
+        ],
+        # Animation: car driving with road scrolling
+        'frames': [
+            ["   ╱─────╲   ",
+             "  ╱  ◉═◉  ╲  ",
+             "  ▔▔▔▔▔▔▔▔▔  ",
+             "  ║│ │ │ │║  "],
+            ["   ╱─────╲   ",
+             "  ╱  ◉═◉  ╲  ",
+             "  ▔▔▔▔▔▔▔▔▔  ",
+             "  │║ │ │ │║  "],
+            ["   ╱─────╲   ",
+             "  ╱  ◉═◉  ╲  ",
+             "  ▔▔▔▔▔▔▔▔▔  ",
+             "  │ ║│ │ │║  "],
+            ["   ╱─────╲   ",
+             "  ╱  ◉═◉  ╲  ",
+             "  ▔▔▔▔▔▔▔▔▔  ",
+             "  │ │║ │ │║  "],
+        ],
+    },
+    {
+        'name':     'CLAUDEMON',
+        'subtitle': 'CREATURE RPG',
+        'script':   None,
+        'genre':    'CRTR-RPG',
+        'color':    3,
+        'title_key': 'claudemon',
+        'coming_soon': True,
+        'desc': [
+            'Catch all 20 creatures · Turn-based battles',
+            'Type matchups · Evolution · Trading',
+            '6 gym leaders · Elite Four · Champion',
+            'COMING SOON · In development',
+        ],
+        'controls': [
+            'WASD / Arrows  Move',
+            'SPACE          Confirm',
+            'M              Menu',
+            'B              Bag / Items',
+        ],
+        # Animation: creature wiggling with sparkles
+        'frames': [
+            ["   ╭───╮     ",
+             "   │◉ ◉│  ✦  ",
+             "   ╰─◡─╯     ",
+             "    ╱╲       "],
+            ["    ╭───╮    ",
+             "    │◉ ◉│ ✧  ",
+             "    ╰─◡─╯    ",
+             "     ╱╲      "],
+            ["   ╭───╮     ",
+             " ✦ │● ●│     ",
+             "   ╰─◠─╯     ",
+             "    ╱╲       "],
+            ["    ╭───╮    ",
+             "  ✧ │◉ ◉│    ",
+             "    ╰─◡─╯    ",
+             "     ╱╲      "],
         ],
     },
     {
@@ -146,12 +302,24 @@ GAMES = [
             'M              Open party menu',
             'Q / ESC        Cancel / Back',
         ],
-        'art': [
-            "     ▲     ",
-            "    ╔╪╗    ",
-            "     ║     ",
-            "     ║     ",
-            "     ▼     ",
+        # Animation: hero swinging sword
+        'frames': [
+            ["    ◯        ",
+             "   ╱│╲═►     ",
+             "    │  ◆     ",
+             "   ╱ ╲       "],
+            ["    ◯        ",
+             "   ╱│         ",
+             "    │═►◆     ",
+             "   ╱ ╲       "],
+            ["    ◯        ",
+             "   ╱│         ",
+             "    │  ✦◆    ",
+             "   ╱ ╲═►     "],
+            ["    ◯        ",
+             "  ◀═│╲       ",
+             "    │   ◆    ",
+             "   ╱ ╲       "],
         ],
     },
 ]
@@ -190,10 +358,16 @@ def draw_main(scr, H, W, tick, cursor):
     shade_full = '▓▒░' + '░'*(W-8) + '░▒▓'
     _p(scr, H, W, 1, 1, shade_full[:W-2], P(5)|curses.A_DIM)
 
-    # Title art — cycle through colors for flair (modulo so any title length works)
-    title_colors = [P(4)|curses.A_BOLD, P(1)|curses.A_BOLD,
-                    P(6)|curses.A_BOLD, P(4)|curses.A_BOLD,
-                    P(1)|curses.A_BOLD, P(6)|curses.A_BOLD]
+    # Title art — gradient from blue → cyan → magenta → pink (top to bottom)
+    # Standard 8-color palette: BLUE(8), CYAN(1), MAGENTA(6) approximate the gradient
+    title_colors = [
+        P(8)|curses.A_BOLD,  # bright blue
+        P(8)|curses.A_BOLD,  # bright blue
+        P(1)|curses.A_BOLD,  # cyan (transition)
+        P(6),                # magenta (transition)
+        P(6)|curses.A_BOLD,  # bright pink/magenta
+        P(6)|curses.A_BOLD,  # bright pink/magenta
+    ]
     for i, line in enumerate(TITLE):
         tx = max(1, (W - len(line)) // 2)
         _p(scr, H, W, 2+i, tx, line, title_colors[i % len(title_colors)])
@@ -230,9 +404,14 @@ def draw_main(scr, H, W, tick, cursor):
         gy = PANEL_Y + 2 + i * 2
         if gy >= H-4: break
         sel = (i == cursor)
-        prefix   = '▶ ' if sel else '  '
-        name_a   = (P(g['color'])|curses.A_BOLD|curses.A_REVERSE) if sel else (P(g['color'])|curses.A_BOLD)
-        genre_a  = P(7) if sel else (P(5)|curses.A_DIM)
+        cs  = g.get('coming_soon')
+        prefix = '▶ ' if sel else '  '
+        if cs:
+            name_a  = (P(5)|curses.A_BOLD|curses.A_REVERSE) if sel else (P(5)|curses.A_DIM)
+            genre_a = P(5)|curses.A_DIM
+        else:
+            name_a  = (P(g['color'])|curses.A_BOLD|curses.A_REVERSE) if sel else (P(g['color'])|curses.A_BOLD)
+            genre_a = P(7) if sel else (P(5)|curses.A_DIM)
         _p(scr, H, W, gy,   2, prefix + g['name'][:17], name_a)
         _p(scr, H, W, gy,  21, f'[{g["genre"]:7}]',    genre_a)
         if sel:
@@ -259,10 +438,11 @@ def draw_main(scr, H, W, tick, cursor):
 
     _p(scr, H, W, ART_Y, DET_X+1, '═'*(DET_W-2), P(gcp)|curses.A_DIM)
 
-    # Game sprite (small art preview)
+    # Game sprite — animated preview using frames[(tick // 6) % len(frames)]
     ART_Y = ART_Y + 2
     ART_X = DET_X + 3
-    art   = g['art']
+    frames = g.get('frames') or [g.get('art', [])]
+    art    = frames[(tick // 6) % len(frames)] if frames else []
     if art:
         aw    = max(len(l) for l in art) + 2
         ah    = len(art) + 2
@@ -296,11 +476,16 @@ def draw_main(scr, H, W, tick, cursor):
             pad = 14 - len(ky)
             _p(scr, H, W, cy, DET_X+4+len(ky)+max(1,pad), rest, P(5))
 
-    # Launch prompt (blinking)
+    # Launch prompt (blinking) — different message for coming-soon games
     if (tick // 15) % 2 == 0:
-        lp = f'[ ENTER ]  Launch  {g["name"]}'
+        if g.get('coming_soon'):
+            lp = f'★ COMING SOON ★  {g["name"]}'
+            attr = P(5)|curses.A_BOLD|curses.A_REVERSE
+        else:
+            lp = f'[ ENTER ]  Launch  {g["name"]}'
+            attr = P(gcp)|curses.A_BOLD|curses.A_REVERSE
         lx = DET_X + (DET_W - len(lp)) // 2
-        _p(scr, H, W, H-4, lx, lp, P(gcp)|curses.A_BOLD|curses.A_REVERSE)
+        _p(scr, H, W, H-4, lx, lp, attr)
 
     # ── Footer ──────────────────────────────────────────────────────────────
     _p(scr, H, W, H-3, 0, '╠'+'═'*(W-2)+'╣', P(5)|curses.A_BOLD)
@@ -327,7 +512,7 @@ def arcade_main(scr):
     while True:
         now = time.perf_counter()
         if now < nxt: time.sleep(max(0, nxt-now-0.001)); continue
-        nxt += 1/30; tick += 1
+        nxt += 1/60; tick += 1
 
         H, W = scr.getmaxyx()
         keys = set()
@@ -344,7 +529,12 @@ def arcade_main(scr):
         if UP:   cursor = (cursor-1) % len(GAMES)
         if DOWN: cursor = (cursor+1) % len(GAMES)
         if QUIT: _launch_script = None; break
-        if OK:   _launch_script = GAMES[cursor]['script']; break
+        if OK:
+            if GAMES[cursor].get('coming_soon'):
+                # Don't launch; just buzz visually next loop
+                continue
+            _launch_script = GAMES[cursor]['script']
+            break
 
         draw_main(scr, H, W, tick, cursor)
 

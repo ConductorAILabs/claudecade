@@ -40,7 +40,7 @@ def draw_how_to_play(scr, H, W, tick):
             '• Boss every 6 waves',
         ],
     )
-FPS        = 30
+FPS        = 60
 AT         = 3          # arena top row
 P_SPD      = 2.0        # player speed (rows/cols per tick)
 PB_SPD     = 5.0        # player bullet speed
@@ -840,10 +840,16 @@ def draw_game(scr, game, H, W, tick):
             p(pr_, pc_, pt['ch'], P(pt['cp'])|attr)
 
     # ── Enemy bullets ─────────────────────────────────────────────────────────
+    # Use solid, distinctive bullet glyphs with reverse-video to clearly
+    # differentiate from background stars. Animated trail for visibility.
     for b in game.ebullets:
         bc=int(b['x']); br=int(b['y'])
         if AT<=br<GR and 1<=bc<W-1:
-            p(br, bc, '◁·', P(2)|curses.A_BOLD)
+            # Solid arrow with double-line trail — much chunkier than stars
+            p(br, bc, '◄═', P(2)|curses.A_BOLD|curses.A_REVERSE)
+            # Add a faint trail to the right (where bullet came from) for motion
+            if bc+2 < W-1:
+                p(br, bc+2, '·', P(2)|curses.A_DIM)
 
     # ── Explosions ────────────────────────────────────────────────────────────
     for ex in game.explosions:

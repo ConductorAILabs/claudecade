@@ -19,13 +19,21 @@ if [ -n "$TMUX" ]; then
   SESSION=$(tmux display-message -p '#S')
   echo "[INFO] In tmux: session '$SESSION'"
 else
+  # Try to find the attached client's session first
   SESSION=$(tmux list-clients -F '#{session_name}' 2>/dev/null | head -1)
   if [ -z "$SESSION" ]; then
-    echo "[ERROR] No tmux session found."
-    echo "  Quit Claude (Ctrl+C), then run: tmux ; claude ; /claudcade"
-    exit 3
+    # Fallback: use the most recently active session
+    SESSION=$(tmux list-sessions -F '#{session_activity} #{session_name}' 2>/dev/null \
+      | sort -rn | head -1 | awk '{print $2}')
+    if [ -z "$SESSION" ]; then
+      echo "[ERROR] No tmux session found at all."
+      echo "  Quit Claude (Ctrl+C), then run: tmux ; claude ; /claudcade"
+      exit 3
+    fi
+    echo "[INFO] No attached client, using most recent session: '$SESSION'"
+  else
+    echo "[INFO] No \$TMUX, using attached session: '$SESSION'"
   fi
-  echo "[INFO] No \$TMUX, using attached session: '$SESSION'"
 fi
 
 # Step 1: create a fresh interactive bash window
