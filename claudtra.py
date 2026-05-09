@@ -290,6 +290,7 @@ class World:
         # particles= death dust + hit sparks: {'wx','y','vx','vy','ttl','ch'}
         self.flashes   = []
         self.particles = []
+        self.popups    = []   # floating score popups: {'wx','y','txt','ttl'}
         self.score = 0; self.wave = 1; self._gen_to = 0
         # Most-recently-passed checkpoint; player respawns here on death.
         self.checkpoint_x = 0.0
@@ -337,8 +338,11 @@ class World:
                     if abs(b['wx'] - e.wx - 3) < 6 and abs(b['y'] - (e.y + GUN_ROW)) < 4:
                         b['dead'] = True
                         if e.take_hit():
-                            self.score += 300 if e.etype == 'heavy' else 100
+                            pts = 300 if e.etype == 'heavy' else 100
+                            self.score += pts
                             self.burst(e.wx + 3, e.y, n=10 if e.etype == 'heavy' else 6)
+                            self.popups.append({'wx': e.wx + 3, 'y': e.y + 2,
+                                                'txt': f'+{pts}', 'ttl': 22})
                         else:
                             self.burst(b['wx'], b['y'], n=2)
                         break
@@ -368,6 +372,10 @@ class World:
             pt['wx'] += pt['vx']; pt['y'] += pt['vy']
             pt['vy'] *= 0.85; pt['vx'] *= 0.92
             pt['ttl'] -= 1
+        # Floating score popups: drift up + fade
+        for pop in self.popups:
+            pop['y'] += 0.4
+            pop['ttl'] -= 1
 
         lo, hi = self.cam_x - 10, self.cam_x + 95
         self.bullets   = [b for b in self.bullets   if not b.get('dead') and lo < b['wx'] < hi]
@@ -375,6 +383,7 @@ class World:
         self.platforms = [pl for pl in self.platforms if pl['x'] + pl['w'] > self.cam_x - 10]
         self.flashes   = [f for f in self.flashes   if f['ttl'] > 0]
         self.particles = [pt for pt in self.particles if pt['ttl'] > 0 and lo < pt['wx'] < hi]
+        self.popups    = [pop for pop in self.popups   if pop['ttl'] > 0 and lo < pop['wx'] < hi]
         self._check_hits()
         self.wave = 1 + int(p.wx) // 200
 
@@ -480,9 +489,13 @@ def draw_game(scr, world, H, W, tick):
         return GR - int(bullet_y) - 1
 
     # ── HUD top bar ────────────────────────────────────────────────────────
-    p(0, 0, '╔'+'═'*(W-2)+'╗', P(5)|curses.A_BOLD)
-    p(1, 0, '║', P(5)|curses.A_BOLD); p(1, W-1, '║', P(5)|curses.A_BOLD)
-    p(2, 0, '╠'+'═'*(W-2)+'╣', P(5)|curses.A_BOLD)
+    # Border flashes red on the first 4 frames of invulnerability so the
+    # hit feedback registers even when the player sprite is mid-flicker.
+    hit = pl.invuln >= INVULN - 4
+    bcp = (P(2)|curses.A_BOLD|curses.A_REVERSE) if hit else (P(5)|curses.A_BOLD)
+    p(0, 0, '╔'+'═'*(W-2)+'╗', bcp)
+    p(1, 0, '║', bcp); p(1, W-1, '║', bcp)
+    p(2, 0, '╠'+'═'*(W-2)+'╣', bcp)
 
     # HUD section 1: LIVES (left)
     hp_filled = pl.lives
@@ -628,6 +641,13 @@ def draw_game(scr, world, H, W, tick):
         if 1 <= c0 < W-1 and AT <= br < GR:
             attr = curses.A_BOLD if pt['ttl'] > 4 else curses.A_DIM
             p(br, c0, pt['ch'], P(2)|attr)
+
+    # ── Floating score popups ─────────────────────────────────────────────
+    for pop in world.popups:
+        c0 = sc(pop['wx']); br = brow(pop['y'])
+        if AT <= br < GR and 1 <= c0 < W - len(pop['txt']) - 1:
+            attr = curses.A_BOLD if pop['ttl'] > 8 else curses.A_DIM
+            p(br, c0, pop['txt'], P(4)|attr)
 
     # ── In-game overlay (death / respawn) ──────────────────────────────────
     if pl.state == 'dead' and pl.dead_timer > 35:

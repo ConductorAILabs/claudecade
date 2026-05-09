@@ -638,12 +638,12 @@ class Battle:
             safe_add(scr, py+mi, mpx+12, f'{m.mp:>3}/{m.max_mp}', P(8))
             sx = mpx + 18
             if not m.alive:
-                safe_add(scr, py+mi, sx, '▓KO▓', P(2)|curses.A_BOLD)
+                safe_add(scr, py+mi, sx, '✕ KO', P(2)|curses.A_BOLD|curses.A_REVERSE)
             elif m.status:
-                s_str = '▓' + ''.join(f'{k.upper()[:1]}' for k in m.status) + '▓'
+                s_str = '✦ ' + ''.join(f'{k.upper()[:1]}' for k in m.status)
                 safe_add(scr, py+mi, sx, s_str[:12], P(6)|curses.A_BOLD)
             else:
-                safe_add(scr, py+mi, sx, '▓OK▓', P(3)|curses.A_BOLD)
+                safe_add(scr, py+mi, sx, '◉ OK', P(3)|curses.A_BOLD)
 
         # ── Second divider ──
         div2_y = py + 3

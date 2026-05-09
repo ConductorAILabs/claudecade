@@ -341,6 +341,7 @@ class Game:
         self.ebullets  = []
         self.explosions= []
         self.particles = []   # small hit-spark sprites: dicts of x,y,vx,vy,ttl,ch,cp
+        self.popups    = []   # floating score popups: {x, y, txt, ttl}
         self.shake     = 0    # screen-shake counter; decays each tick
         self.powerups  = []
         self.stars     = _make_ctype_stars(H, W)
@@ -470,13 +471,18 @@ class Game:
                             self.show('  BOSS DESTROYED!  ', 90)
                             self.spark(int(e.x+ew//2), int(e.y+eh//2), n=24, color=4)
                             self.kick(10)
+                            self.popups.append({'x': float(e.x+ew//2), 'y': float(e.y),
+                                                'txt': '+5000', 'ttl': 30})
                         else:
-                            self.score += sc.get(e.etype,100)
+                            pts = sc.get(e.etype, 100)
+                            self.score += pts
                             self.spark(int(e.x+ew//2), int(e.y+eh//2),
                                        n=8 if e.etype in ('heavy','turret') else 5, color=2)
                             if e.etype in ('heavy','turret'): self.kick(3)
                             if random.random() < 0.12:
                                 self.powerups.append(Powerup(e.x, e.y))
+                            self.popups.append({'x': float(e.x+ew//2), 'y': float(e.y),
+                                                'txt': f'+{pts}', 'ttl': 22})
                     elif isinstance(e, Boss):
                         # Boss takes a hit but survives — small kick for feedback
                         self.kick(2)
@@ -540,6 +546,10 @@ class Game:
             pt['x'] += pt['vx']; pt['y'] += pt['vy']
             pt['vx'] *= 0.88;    pt['vy'] *= 0.88
             pt['ttl'] -= 1
+        # Floating score popups: drift up, fade out
+        for pop in self.popups:
+            pop['y'] -= 0.4
+            pop['ttl'] -= 1
         if self.shake > 0: self.shake -= 1
 
         self._check_hits()
@@ -555,6 +565,7 @@ class Game:
         self.explosions= [ex for ex in self.explosions if not ex.done]
         self.powerups  = [pu for pu in self.powerups  if not pu.gone]
         self.particles = [pt for pt in self.particles if pt['ttl'] > 0]
+        self.popups    = [pop for pop in self.popups    if pop['ttl'] > 0]
         if self.msg_t > 0: self.msg_t -= 1
 def _make_ctype_stars(H, W, count=100):
     """Parallax starfield with varied depth glyphs for C-TYPE.
@@ -660,11 +671,16 @@ def draw_game(scr, game, H, W, tick):
     GR = game.GR
 
     # ── Frame borders ─────────────────────────────────────────────────────────
-    p(0,   0, '╔'+'═'*(W-2)+'╗', P(5)|curses.A_BOLD)
-    p(2,   0, '╠'+'═'*(W-2)+'╣', P(5)|curses.A_BOLD)
-    for r in range(AT, GR): p(r,0,'║',P(5)); p(r,W-1,'║',P(5))
-    p(GR,  0, '╠'+'═'*(W-2)+'╣', P(5)|curses.A_BOLD)
-    p(H-1, 0, '╚'+'═'*(W-2)+'╝', P(5)|curses.A_BOLD)
+    # Border flashes red on the first 4 frames of invulnerability (just hit)
+    # so the hit registers visually even when the player sprite is mid-flicker.
+    hit = pl.invuln >= INVULN - 4
+    bcp = (P(2)|curses.A_BOLD|curses.A_REVERSE) if hit else (P(5)|curses.A_BOLD)
+    p(0,   0, '╔'+'═'*(W-2)+'╗', bcp)
+    p(2,   0, '╠'+'═'*(W-2)+'╣', bcp)
+    side = (P(2)|curses.A_BOLD) if hit else P(5)
+    for r in range(AT, GR): p(r,0,'║',side); p(r,W-1,'║',side)
+    p(GR,  0, '╠'+'═'*(W-2)+'╣', bcp)
+    p(H-1, 0, '╚'+'═'*(W-2)+'╝', bcp)
 
     # ── HUD row 1 (three-box layout) ──────────────────────────────────────────
     p(1, 0, '║', P(5)|curses.A_BOLD); p(1, W-1, '║', P(5)|curses.A_BOLD)
@@ -818,11 +834,13 @@ def draw_game(scr, game, H, W, tick):
         bc=int(b['x']) + sx_off; br=int(b['y']) + sy_off
         if AT<=br<GR and 1<=bc<W-1:
             if b.get('beam'):
-                # Charge beam bullet — thick golden bolt
+                # Charge beam — pulses through green → gold → magenta to look
+                # alive and emphasise its power-state.
                 blen = b.get('len', 1)
-                p(br, bc, '◉', P(4)|curses.A_BOLD)
+                pulse = [P(3), P(4), P(6), P(4)][(tick // 2) % 4]
+                p(br, bc, '◉', pulse|curses.A_BOLD)
                 for dx in range(1, min(blen, W-bc-1)):
-                    p(br, bc+dx, '═', P(4)|curses.A_BOLD)
+                    p(br, bc+dx, '═', pulse|curses.A_BOLD)
             elif b.get('heavy'):
                 # Power-2 center bolt — heavier glyph, gold tint
                 p(br, bc, '━▶', P(4)|curses.A_BOLD)
@@ -855,6 +873,13 @@ def draw_game(scr, game, H, W, tick):
         for i, row in enumerate(fr):
             r=ex.y-1+i; c=ex.x-1
             if AT<=r<GR and 1<=c<W-2: p(r, c, row, P(4)|curses.A_BOLD)
+
+    # ── Floating score popups — drift up + fade with ttl ──────────────────────
+    for pop in game.popups:
+        pr = int(pop['y']); pc = int(pop['x'])
+        if AT<=pr<GR and 1<=pc<W-len(pop['txt'])-1:
+            attr = P(4)|curses.A_BOLD if pop['ttl'] > 8 else P(4)|curses.A_DIM
+            p(pr, pc, pop['txt'], attr)
 
     # ── Wave/event message box ────────────────────────────────────────────────
     if game.msg_t > 0:

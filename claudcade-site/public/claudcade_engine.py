@@ -515,10 +515,23 @@ class Renderer:
         by  = (self.H - bh) // 2
         bx  = (self.W - bw) // 2
 
-        # Dim backdrop behind the panel for contrast
+        # Full-screen scrim — dim ░ overlay outside the panel area only,
+        # so the gameplay 'reads' as paused/blurred but the panel itself
+        # stays clean.
+        for r in range(self.H - 1):
+            if by - 1 <= r <= by + bh:
+                # Same row as panel: only dim left/right of it.
+                if bx - 2 > 0:
+                    self.text(r, 0, '░' * (bx - 1), color=NEUTRAL, dim=True)
+                if bx + bw + 1 < self.W - 1:
+                    self.text(r, bx + bw + 1, '░' * (self.W - bx - bw - 2),
+                              color=NEUTRAL, dim=True)
+            else:
+                self.text(r, 0, '░' * (self.W - 1), color=NEUTRAL, dim=True)
+        # Solid panel-area backdrop (clear what was beneath the panel).
         for r in range(bh + 2):
-            self.text(by + r, bx - 1, ' ' * (bw + 2),
-                      color=NEUTRAL, dim=True)
+            self.text(by + r - 1, bx - 1, ' ' * (bw + 2),
+                      color=NEUTRAL)
 
         # Double-line frame using box() with double=True
         self.box(by, bx, bh, bw, color=SELECT, double=True)

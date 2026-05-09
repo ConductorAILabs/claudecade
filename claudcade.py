@@ -357,19 +357,32 @@ def _p(scr, H, W, r, c, s, a=0):
         pass
 
 # ── MAIN SCREEN ────────────────────────────────────────────────────────────────
+# Background-star positions are deterministic per (H,W); cached so we don't
+# re-roll random + reseed the global RNG every frame (was 60+ syscalls/sec).
+_STAR_CACHE: dict[tuple[int, int], list[tuple[int, int, str]]] = {}
+
+def _bg_stars(H: int, W: int) -> list[tuple[int, int, str]]:
+    key = (H, W)
+    if key not in _STAR_CACHE:
+        rng = random.Random(999)
+        glyphs = ['·', '·', '·', '+', '*']
+        _STAR_CACHE[key] = [
+            (rng.randint(1, max(1, H-2)),
+             rng.randint(1, max(1, W-2)),
+             rng.choice(glyphs))
+            for _ in range(40)
+        ]
+    return _STAR_CACHE[key]
+
 def draw_main(scr, H, W, tick, cursor):
     P = curses.color_pair
     scr.erase()
 
     # ── Animated background stars ──────────────────────────────────────────
-    random.seed(999)
-    for _ in range(40):
-        r = random.randint(1, H-2)
-        c = random.randint(1, W-2)
-        ch = random.choice(['·', '·', '·', '+', '*'])
+    dim = P(5)|curses.A_DIM
+    for r, c, ch in _bg_stars(H, W):
         if (tick // 8 + r * 3 + c) % 11 == 0:
-            _p(scr, H, W, r, c, ch, P(5)|curses.A_DIM)
-    random.seed()
+            _p(scr, H, W, r, c, ch, dim)
 
     # ── Outer border ────────────────────────────────────────────────────────
     _p(scr, H, W, 0,   0, '╔'+'═'*(W-2)+'╗', P(5)|curses.A_BOLD)
@@ -472,6 +485,7 @@ def draw_main(scr, H, W, tick, cursor):
     ART_X = DET_X + 3
     frames = g.get('frames') or [g.get('art', [])]
     art    = frames[(tick // 6) % len(frames)] if frames else []
+    cs     = g.get('coming_soon')
     if art:
         aw    = max(len(l) for l in art) + 2
         ah    = len(art) + 2
@@ -481,8 +495,16 @@ def draw_main(scr, H, W, tick, cursor):
             for r in range(1, ah-1):
                 _p(scr, H, W, ART_Y+r, ART_X-2, '│', P(5)|curses.A_DIM)
                 _p(scr, H, W, ART_Y+r, ART_X-2+aw+1, '│', P(5)|curses.A_DIM)
+            sprite_attr = (P(5)|curses.A_DIM) if cs else (P(gcp)|curses.A_BOLD)
             for i, line in enumerate(art):
-                _p(scr, H, W, ART_Y+1+i, ART_X, line, P(gcp)|curses.A_BOLD)
+                _p(scr, H, W, ART_Y+1+i, ART_X, line, sprite_attr)
+            # Coming-soon: overlay a centered LOCKED badge over the sprite art
+            # so the previews read as clearly unselectable.
+            if cs:
+                badge = ' ✦ LOCKED ✦ '
+                bx = ART_X + (aw - 2 - len(badge)) // 2
+                by = ART_Y + ah // 2
+                _p(scr, H, W, by, bx, badge, P(5)|curses.A_BOLD|curses.A_REVERSE)
 
     # Description
     DESC_X = DET_X + 2
@@ -587,8 +609,19 @@ def run():
         if _launch_script is None:
             print('\n  Thanks for playing — Claudcade\n')
             break
+        # Rename the tmux window to the launching game so it's obvious which
+        # game is running when switching between tmux windows. Restored to
+        # CLAUDCADE on return. Best-effort: no-op outside tmux.
+        game_name = next((g['name'] for g in GAMES
+                          if g.get('script') == _launch_script), _launch_script)
+        if os.environ.get('TMUX'):
+            subprocess.run(['tmux', 'rename-window', game_name],
+                           check=False, capture_output=True)
         script = os.path.join(script_dir, _launch_script)
         subprocess.run([sys.executable, script], cwd=script_dir)
+        if os.environ.get('TMUX'):
+            subprocess.run(['tmux', 'rename-window', 'CLAUDCADE'],
+                           check=False, capture_output=True)
 
 if __name__ == '__main__':
     run()
