@@ -425,20 +425,23 @@ def draw_main(scr, H, W, tick, cursor):
     _p(scr, H, W, PANEL_Y+1, 2, '─'*(LIST_W-2), P(5)|curses.A_DIM)
 
     # One row per game so all 7 fit comfortably in a standard 24-row terminal.
+    # Every game uses its assigned color — coming-soon games are still in
+    # color, just marked with a star prefix in the genre column.
     for i, g in enumerate(GAMES):
         gy = PANEL_Y + 2 + i
         if gy >= H-4: break
         sel = (i == cursor)
         cs  = g.get('coming_soon')
         prefix = '▶ ' if sel else '  '
-        if cs:
-            name_a  = (P(5)|curses.A_BOLD|curses.A_REVERSE) if sel else (P(5)|curses.A_DIM)
-            genre_a = P(5)|curses.A_DIM
-        else:
-            name_a  = (P(g['color'])|curses.A_BOLD|curses.A_REVERSE) if sel else (P(g['color'])|curses.A_BOLD)
-            genre_a = P(7) if sel else (P(5)|curses.A_DIM)
+        gcp = g['color']
+        name_a  = (P(gcp)|curses.A_BOLD|curses.A_REVERSE) if sel else (P(gcp)|curses.A_BOLD)
+        genre_a = P(7) if sel else (P(5)|curses.A_DIM)
         _p(scr, H, W, gy,   2, prefix + g['name'][:17], name_a)
-        _p(scr, H, W, gy,  21, f'[{g["genre"]:7}]',    genre_a)
+        # Coming-soon games get a small ✦ marker in the genre column to flag them.
+        genre_text = f'[{g["genre"]:7}]'
+        if cs:
+            _p(scr, H, W, gy, 19, '✦', P(gcp)|curses.A_BOLD)
+        _p(scr, H, W, gy,  21, genre_text, genre_a)
 
     # ── Game detail (right panel) ────────────────────────────────────────────
     g   = GAMES[cursor]
