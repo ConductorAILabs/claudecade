@@ -1,8 +1,8 @@
 """Main game loop and state machine for Final Claudesy."""
 import curses, time, json, os, random
 
-from .data     import STORY, ENCOUNTER_GROUPS
-from .entities import Party, EnemyInstance
+from .data     import STORY
+from .entities import Party
 from .battle   import Battle
 from .explore  import WorldMap, TownScreen, DungeonScreen, PartyMenu
 from .ui       import safe_add, box, center, setup_colors
@@ -24,7 +24,6 @@ def draw_title(scr, H, W, tick, has_save, ng_plus_available=False):
     P = curses.color_pair
     scr.erase()
 
-    # Bold border with decorative pattern
     safe_add(scr, 0, 0, '╔' + '═'*(W-2) + '╗', P(5)|curses.A_BOLD)
     safe_add(scr, H-1, 0, '╚' + '═'*(W-2) + '╝', P(5)|curses.A_BOLD)
     for r in range(1, H-1):
@@ -41,7 +40,6 @@ def draw_title(scr, H, W, tick, has_save, ng_plus_available=False):
             safe_add(scr, r, c, ch, P(5)|curses.A_DIM)
     random.seed()
 
-    # Title art with color cycling
     tr = max(2, H//2 - 7)
     colors = [4, 1, 6, 4, 1]  # magenta, red, cyan cycle
     for i, line in enumerate(TITLE_ART):
@@ -50,12 +48,10 @@ def draw_title(scr, H, W, tick, has_save, ng_plus_available=False):
         attr = P(colors[color_idx])|curses.A_BOLD
         safe_add(scr, tr+i, col, line, attr)
 
-    # Subtitle with decorative separators
     sep = '▓▒░░▒▓'
     sub = f'{sep} A TERMINAL JRPG {sep}'
     center(scr, tr+6, sub, W, P(6)|curses.A_BOLD)
 
-    # Menu options with blinking effect
     if (tick // 20) % 2 == 0:
         center(scr, H//2+2, '╔════════════════════╗', W, P(4))
         center(scr, H//2+3, '  [ SPACE ] New Game  ', W, P(4)|curses.A_BOLD)
@@ -70,7 +66,6 @@ def draw_title(scr, H, W, tick, has_save, ng_plus_available=False):
             center(scr, H//2+y_offset+1, '  [ N ] NewGame+ — keep levels  ', W, P(6)|curses.A_BOLD)
             center(scr, H//2+y_offset+2, '╚═══════════════════════════════╝', W, P(6))
 
-    # Control hint
     ctrl = '║ WASD:Move  J/Space:Confirm  Q/ESC:Back  M:Menu ║'
     center(scr, H-3, ctrl, W, P(5))
     scr.refresh()
@@ -80,14 +75,12 @@ def draw_story(scr, H, W, lines, tick):
     P = curses.color_pair
     scr.erase()
 
-    # Bold decorative border
     safe_add(scr, 0, 0, '╔' + '═'*(W-2) + '╗', P(5)|curses.A_BOLD)
     safe_add(scr, H-1, 0, '╚' + '═'*(W-2) + '╝', P(5)|curses.A_BOLD)
     for r in range(1, H-1):
         safe_add(scr, r, 0, '║', P(5)|curses.A_BOLD)
         safe_add(scr, r, W-1, '║', P(5)|curses.A_BOLD)
 
-    # Decorative header
     header = '▓ STORY ▓'
     center(scr, 1, header, W, P(6)|curses.A_BOLD)
     safe_add(scr, 2, 0, '╠' + '═'*(W-2) + '╣', P(5)|curses.A_BOLD)
@@ -142,7 +135,6 @@ def main(scr):
         if 27 in keys and state not in ('BATTLE','BATTLE_RESULT','STORY','TITLE'):
             if state in ('TOWN','DUNGEON','WORLD'):
                 menu   = PartyMenu(party)
-                prev   = state
                 state  = 'MENU'
 
         # ── State logic ────────────────────────────────────────────────────────

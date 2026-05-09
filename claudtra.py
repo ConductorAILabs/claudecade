@@ -2,12 +2,11 @@
 """Claudtra — Side-Scrolling Action · ESC to quit"""
 from __future__ import annotations
 
-import curses, time, random
-from claudcade_engine import Engine, Renderer, Scene, setup_colors, at_safe
+import curses, random
+from claudcade_engine import Engine, Renderer, Scene, at_safe
 from claudcade_engine import draw_how_to_play as _engine_how_to_play
+from claudcade_engine import BulletDict, PlatformDict
 from claudcade_scores import player_label, submit_async
-
-INTRO, PLAY, GAME_OVER, PAUSE, HOW_TO_PLAY = range(5)
 
 CONTROLS = [
     'A / D           Move left / right',
@@ -211,7 +210,6 @@ class Enemy:
 
     def tick_anim(self):
         self.at += 1
-        # Unified animation rate (was 8 — felt sluggish vs player's 5/7)
         if self.at >= 6:
             self.at = 0
             sp = GRUNT if self.etype == 'grunt' else HEAVY
@@ -284,7 +282,9 @@ class World:
     def __init__(self):
         self.cam_x = 0.0
         self.player = Player()
-        self.enemies = []; self.bullets = []; self.platforms = []
+        self.enemies = []
+        self.bullets:   list[BulletDict]   = []
+        self.platforms: list[PlatformDict] = []
         # Short-lived FX:
         # flashes  = muzzle-flash sprites: {'wx','y','dir','ttl'}
         # particles= death dust + hit sparks: {'wx','y','vx','vy','ttl','ch'}
@@ -671,7 +671,6 @@ def draw_gameover(scr, H, W, score, tick, sub_result=None):
             s = stars[rng.randint(0, len(stars)-1)]
             p(r, (c + (tick//4)) % (W-4) + 2, s, P(5)|curses.A_DIM)
 
-    # Color-banded decoration (top section)
     color_band = [P(1)|curses.A_BOLD, P(4)|curses.A_BOLD,
                   P(3)|curses.A_BOLD, P(6)|curses.A_BOLD]
     for bi in range(2):
@@ -709,7 +708,6 @@ def draw_gameover(scr, H, W, score, tick, sub_result=None):
 
     mr = mr + len(go_header) + 1
 
-    # Score box with decorative borders
     sc_lines = [
         '╔════════════════════════════╗',
         f'║  FINAL SCORE:  {score:07d}   ║',
@@ -719,11 +717,9 @@ def draw_gameover(scr, H, W, score, tick, sub_result=None):
         color = P(1)|curses.A_BOLD if i == 1 else P(5)|curses.A_BOLD
         p(mr+i, (W-len(ln))//2, ln, color)
 
-    # Player label with decorative brackets
     pl = player_label()
     p(mr+4, (W-len(pl)-4)//2, f'◄  {pl}  ►', P(4)|curses.A_BOLD)
 
-    # Rank / submitting with visual badges
     if sub_result and sub_result[0]:
         rank = sub_result[0].get('rank')
         if rank:
@@ -742,13 +738,11 @@ def draw_gameover(scr, H, W, score, tick, sub_result=None):
     elif sub_result and sub_result[0] is None:
         p(mr+5, (W-26)//2, '  Submitting score...  ', P(5)|curses.A_DIM)
 
-    # Color-banded decoration (bottom section)
     for bi in range(2):
         band_row = H - 5 + bi
         if band_row < H - 1:
             p(band_row, 1, '═'*(W-2), color_band[(3-bi) % len(color_band)])
 
-    # Blinking prompt with more visual prominence
     if (tick//18) % 2 == 0:
         msg = '▸ SPACE = Play Again  │  ESC = Quit ◂'
         p(H-3, (W-len(msg))//2, msg, P(4)|curses.A_BOLD)

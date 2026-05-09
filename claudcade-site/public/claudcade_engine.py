@@ -54,7 +54,7 @@ import math
 import random
 import time
 from pathlib import Path
-from typing import Callable, TypedDict
+from typing import Callable, Literal, TypedDict
 
 
 # ── TypedDicts ─────────────────────────────────────────────────────────────────
@@ -103,7 +103,7 @@ class _FadeState(TypedDict):
     to:     str
     ticks:  int
     t:      int
-    phase:  str  # 'out' or 'in'
+    phase:  Literal['out', 'in']
 
 
 # ── Color constants ────────────────────────────────────────────────────────────

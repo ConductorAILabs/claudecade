@@ -2,11 +2,11 @@
 """C-TYPE: Space Shooter · ESC to quit"""
 from __future__ import annotations
 
-import curses, time, random, math
-from claudcade_engine import Engine, Renderer, Scene, setup_colors, at_safe
+import curses, random, math
+from claudcade_engine import Engine, Renderer, Scene, at_safe
 from claudcade_engine import draw_how_to_play as _engine_how_to_play
+from claudcade_engine import StarDict
 from claudcade_scores import player_label, submit_async
-INTRO, PLAY, GAME_OVER, PAUSE, HOW_TO_PLAY = range(5)
 
 CONTROLS = [
     'WASD / Arrows   Move',
@@ -146,9 +146,7 @@ BOSS_FRAMES = [
 ]
 
 class Explosion:
-    # Five-frame decay (peak → settling → mid → fade → ghost) reads as a
-    # smoother burst than the previous four; the second frame eases the
-    # transition between the bright core and the sparser mid-stage.
+    # Five-frame decay: peak → settling → mid → fade → ghost.
     FRAMES = [
         ['▓█▓', '█◉█', '▓█▓'],
         ['▓◈▓', '◈★◈', '▓◈▓'],
@@ -563,8 +561,11 @@ def _make_ctype_stars(H, W, count=100):
 
     Includes a few slow far-background landmarks (planets, moons) that drift
     almost imperceptibly — gives a strong sense of depth without crowding.
+
+    Each entry is a `claudcade_engine.StarDict` (keys: x, y, spd, ch, cp),
+    so the result is consumable by `Renderer.stars()` and `scroll_stars()`.
     """
-    result = []
+    result: list[StarDict] = []
     # (speed, char, color_pair) tiers — slowest = smallest/dimmest
     tiers = [
         (0.2, '∙', 5),   # far: tiny dot,  white dim
@@ -668,10 +669,7 @@ def draw_game(scr, game, H, W, tick):
     # ── HUD row 1 (three-box layout) ──────────────────────────────────────────
     p(1, 0, '║', P(5)|curses.A_BOLD); p(1, W-1, '║', P(5)|curses.A_BOLD)
 
-    # Decorative edges
     p(1, 1, '▓▒░', P(5)|curses.A_DIM); p(1, W-4, '░▒▓', P(5)|curses.A_DIM)
-
-    # Game title — centered on screen with decorative box
     p(1, 5, '◈ C-TYPE ◈', P(4)|curses.A_BOLD)
 
     # ── HUD BOX 1: LIVES (left section, green) ────────────────────────────────

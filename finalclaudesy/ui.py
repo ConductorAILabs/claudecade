@@ -1,15 +1,13 @@
 """Shared curses drawing helpers."""
 import curses
-from claudcade_engine import setup_colors
+from claudcade_engine import setup_colors, at_safe
 
 
 def safe_add(scr, y, x, text, attr=0):
+    # Thin shim around the engine's at_safe — reads (H, W) from the screen so
+    # call sites don't have to thread them through every helper.
     H, W = scr.getmaxyx()
-    if y < 0 or y >= H - 1 or x < 0 or x >= W: return
-    try:
-        scr.addstr(y, x, text[:max(0, W - x)], attr)
-    except curses.error:
-        pass
+    at_safe(scr, H, W, y, x, text, attr)
 
 
 def box(scr, y, x, h, w, title='', cp=5):

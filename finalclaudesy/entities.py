@@ -1,6 +1,6 @@
 """Character, EnemyInstance, and Party classes."""
 import random
-from .data import EQUIPMENT, SPELLS, PARTY_DEFS, ENEMIES as ENEMY_DATA, ITEMS
+from .data import EQUIPMENT, PARTY_DEFS, ENEMIES as ENEMY_DATA, ITEMS
 
 
 class Character:

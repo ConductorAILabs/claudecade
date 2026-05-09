@@ -1,8 +1,8 @@
 """Turn-based battle system."""
-import curses, random, math
-from .data    import SPELLS, ITEMS, ENEMIES as ENEMY_DATA
+import curses, random
+from .data    import SPELLS, ITEMS
 from .entities import EnemyInstance, Character, Party
-from .ui       import safe_add, box, bar, menu_list, center
+from .ui       import safe_add, bar, center
 
 # ── Damage formulas ────────────────────────────────────────────────────────────
 def _phys(attacker_atk, defender_def, variance=0.15):
@@ -219,7 +219,6 @@ class Battle:
 
         # Message log
         self.log: list[str] = []
-        self._anim_timer    = 0
         self._phase_msg     = ''
         self._phase_timer   = 0
 
@@ -572,12 +571,11 @@ class Battle:
         enemy_area_h = H - 16
         enemy_area_h = max(8, enemy_area_h)
 
-        # ── Top border with bold block-font header ──
         safe_add(scr, 0, 0, '╔' + '═'*(W-2) + '╗', P(5)|curses.A_BOLD)
         battle_header = '█ B A T T L E █'
         safe_add(scr, 0, (W-len(battle_header))//2, battle_header, P(2)|curses.A_BOLD)
 
-        # ── Enemy area with visual boxes ──
+        # ── Enemy area ──
         safe_add(scr, 1, 0, '╠' + '═'*(W-2) + '╣', P(2)|curses.A_BOLD)
         safe_add(scr, 1, 2, '▓ ENEMIES ▓', P(2)|curses.A_BOLD)
 
@@ -592,15 +590,13 @@ class Battle:
                 ko_text = '▓▓ K O ▓▓'
                 safe_add(scr, ey_off + len(sprite)//2, max(ex, (ex_each-len(ko_text))//2+ex-2), ko_text, P(2)|curses.A_BOLD)
                 continue
-            # Boss name flash + idle pulse so the sprite breathes (was static).
-            # Per-enemy phase offset so a row of enemies doesn't pulse in lockstep.
+            # Per-enemy phase offset so a row of enemies pulses out of lockstep.
             phase  = (tick + i * 11) % 40
             bobble = 1 if phase < 20 else 0
             attr   = curses.A_BOLD if phase < 30 else curses.A_DIM
             cp     = P(e.color) | attr
             for si, row in enumerate(sprite):
                 safe_add(scr, ey_off + si, ex + bobble, row, cp)
-            # Name + HP bar with better formatting
             ny = ey_off + len(sprite) + 1
             name_box = f'┤ {e.name[:ex_each-4]} ├'
             safe_add(scr, ny, ex, name_box[:ex_each], P(2)|curses.A_BOLD)
@@ -609,7 +605,6 @@ class Battle:
             bar(scr, ny+1, ex, e.hp, e.max_hp, hp_w, hp_cp)
             hp_text = f'[{e.hp:>4}/{e.max_hp:<4}]'
             safe_add(scr, ny+2, max(ex, ex+max(0,(hp_w-len(hp_text))//2)), hp_text[:hp_w], P(2)|curses.A_BOLD)
-            # Status with better styling
             if e.status:
                 s_str = '║ ' + ' '.join(f'{k.upper()[:2]}' for k in e.status) + ' ║'
                 safe_add(scr, ny+3, ex, s_str[:ex_each-2], P(6)|curses.A_BOLD)
@@ -619,7 +614,7 @@ class Battle:
         safe_add(scr, div_y, 0, '╠' + '═'*(W-2) + '╣', P(3)|curses.A_BOLD)
         safe_add(scr, div_y, 2, '▓ PARTY ▓', P(3)|curses.A_BOLD)
 
-        # ── Party status with visual improvements ──
+        # ── Party status ──
         py = div_y + 1
         for mi, m in enumerate(self.party.members):
             mx = 1
@@ -632,18 +627,15 @@ class Battle:
             cur_mark = '██' if is_cur else '░░'
             label = f'{cur_mark} {m.name:<8} Lv{m.level:<3}'
             safe_add(scr, py + mi, mx, label, name_attr)
-            # HP bar with block fill
             bx = mx + 22
             hp_cp = 3 if m.hp > m.max_hp * 0.5 else (4 if m.hp > m.max_hp * 0.25 else 2)
             safe_add(scr, py+mi, bx-5, '▓HP▓', P(3)|curses.A_BOLD)
             bar(scr, py+mi, bx-1, m.hp, m.max_hp, 12, hp_cp)
             safe_add(scr, py+mi, bx+12, f'{m.hp:>4}/{m.max_hp}', P(3))
-            # MP bar with block fill
             mpx = bx + 22
             safe_add(scr, py+mi, mpx-5, '▓MP▓', P(8)|curses.A_BOLD)
             bar(scr, py+mi, mpx-1, m.mp, m.max_mp, 10, 8)
             safe_add(scr, py+mi, mpx+12, f'{m.mp:>3}/{m.max_mp}', P(8))
-            # Status with block styling
             sx = mpx + 18
             if not m.alive:
                 safe_add(scr, py+mi, sx, '▓KO▓', P(2)|curses.A_BOLD)
@@ -658,7 +650,7 @@ class Battle:
         safe_add(scr, div2_y, 0, '╠' + '═'*(W-2) + '╣', P(1)|curses.A_BOLD)
         safe_add(scr, div2_y, 2, '▓ ACTIONS ▓', P(1)|curses.A_BOLD)
 
-        # ── Action menu with visual prominence ──
+        # ── Action menu ──
         kind, actor = self._current_actor()
         act_y = div2_y + 1
 
@@ -668,7 +660,6 @@ class Battle:
             opts = self._menu_options(actor)
             turn_label = f'█ {actor.name}\'s Turn █'
             safe_add(scr, act_y, 2, turn_label, P(actor.color)|curses.A_BOLD)
-            # Draw action menu with borders
             for i, opt in enumerate(opts[:8]):
                 prefix = '▶' if i == self._act_cursor else ' '
                 label = f'{prefix} {opt}'
@@ -707,7 +698,7 @@ class Battle:
                 cp = P(7)|curses.A_BOLD if i == self._target_cursor else P(5)
                 safe_add(scr, act_y+1+i, 4, label, cp)
 
-        # ── Message log with visual styling ──
+        # ── Message log ──
         log_x   = W // 2
         log_y   = act_y
         log_h   = H - act_y - 2
@@ -725,7 +716,6 @@ class Battle:
         P = curses.color_pair
         scr.erase()
 
-        # Bold border
         safe_add(scr, 0, 0, '╔' + '═'*(W-2) + '╗', P(5)|curses.A_BOLD)
         safe_add(scr, H-1, 0, '╚' + '═'*(W-2) + '╝', P(5)|curses.A_BOLD)
         for r in range(1, H-1):

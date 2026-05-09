@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """CLAUDE FIGHTER — ESC to quit back to Claude"""
-import curses, time, random
-from claudcade_engine import Engine, Renderer, Scene, setup_colors
+import curses, random
+from claudcade_engine import Engine, Renderer, Scene, at_safe
 from claudcade_engine import draw_how_to_play as _engine_how_to_play
 from claudcade_scores import submit_async
-INTRO, SELECT, COUNTDOWN, FIGHT, PAUSE, HOW_TO_PLAY = range(6)
 
 CONTROLS = [
     'A / D           Move left / right',
@@ -455,10 +454,10 @@ class Game:
         if self.p1w>=NEED or self.p2w>=NEED: return False
         self.rnd+=1; self._new(); self.show(f'  ROUND {self.rnd}  ',90); return True
 def make_put(scr, H, W):
-    def put(r,c,s,a=0):
-        try:
-            if 0<=r<H-1 and 0<=c<W: scr.addstr(r,c,s[:W-c],a)
-        except curses.error: pass
+    # Bounds-safe addstr closure. Delegates to engine's at_safe so behaviour
+    # matches ctype/claudtra/finalclaudesy.
+    def put(r, c, s, a=0):
+        at_safe(scr, H, W, r, c, s, a)
     return put
 def draw_intro(scr, H, W, tick):
     put=make_put(scr,H,W)
@@ -575,7 +574,6 @@ _BIG = {
 def _big_text(text):
     """Render text using 4-row tall big characters. Returns list of 4 strings."""
     chars = [_BIG.get(c, _BIG[' ']) for c in text.upper()]
-    w = max((len(r) for ch in chars for r in ch), default=4)
     rows = []
     for line_i in range(4):
         row = '  '.join(ch[line_i] if line_i < len(ch) else ' '*4 for ch in chars)
@@ -840,7 +838,6 @@ class StageSelectScene(Scene):
     def draw(self, r, tick):
         H, W = self.engine.H, self.engine.W
         scr = r._scr
-        P = curses.color_pair
         scr.erase()
         r.outer_border()
         r.center(1, '★  CHOOSE YOUR STAGE  ★', curses.color_pair(4)|curses.A_BOLD)
@@ -851,7 +848,6 @@ class StageSelectScene(Scene):
         for i, st in enumerate(STAGES):
             cx = start + i * (bw + gap)
             sel = (i == self.sel_stage)
-            cp = P(st['cp']) | curses.A_BOLD if sel else P(5)
             top = '╔'+'═'*(bw-2)+'╗' if sel else '┌'+'─'*(bw-2)+'┐'
             bot = '╚'+'═'*(bw-2)+'╝' if sel else '└'+'─'*(bw-2)+'┘'
             side = '║' if sel else '│'
@@ -872,13 +868,7 @@ class StageSelectScene(Scene):
 
 class CountdownScene(Scene):
     def on_enter(self):
-        # Payload may be int (legacy: char only, default stage 0) or
-        # tuple (char, stage_idx).
-        if isinstance(self.payload, tuple) and len(self.payload) == 2:
-            self.p1_char, self.stage_idx = self.payload
-        else:
-            self.p1_char = self.payload if isinstance(self.payload, int) else 0
-            self.stage_idx = 0
+        self.p1_char, self.stage_idx = self.payload
         self.phase = 3
         self.timer = FPS
 
@@ -900,12 +890,7 @@ class CountdownScene(Scene):
 
 class FightScene(Scene):
     def on_enter(self):
-        # Payload: (p1_char, p2_char, stage_idx) tuple
-        self.stage_idx = 0
-        if isinstance(self.payload, tuple) and len(self.payload) == 3:
-            self.p1_char, self.p2_char, self.stage_idx = self.payload
-        elif isinstance(self.payload, tuple) and len(self.payload) == 2:
-            self.p1_char, self.p2_char = self.payload
+        self.p1_char, self.p2_char, self.stage_idx = self.payload
         self.game   = Game(self.p1_char, self.p2_char, self.stage_idx)
         self.game.show(f'  ROUND {self.game.rnd}  ', 75)
         self.paused = False
