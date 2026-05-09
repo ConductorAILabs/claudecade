@@ -46,10 +46,12 @@ if [ $RC -ne 0 ]; then
 fi
 
 # Step 2: send keys to that window — bash will execute python interactively,
-# so curses gets a proper TTY context.
+# so curses gets a proper TTY context. Trailing `; exit` closes the window
+# when the game ends instead of dropping the user at a bash prompt in
+# ~/claudecade (which is confusing — they think they "moved" directories).
 echo "[ACTION] Sending launch command to new window..."
 tmux send-keys -t "${SESSION}:CLAUDCADE" \
-  "clear && cd ~/claudecade && python3 claudcade.py" Enter
+  "clear && cd ~/claudecade && python3 claudcade.py; exit" Enter
 
 # Step 3: switch focus
 tmux select-window -t "${SESSION}:CLAUDCADE"
