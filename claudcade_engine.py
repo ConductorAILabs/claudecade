@@ -225,12 +225,24 @@ class Input:
     @property
     def pause(self)   -> bool: return self.pressed(27)
 
+    # Frames of "stickiness" applied to recently-seen keys. Terminal key
+    # auto-repeat is unreliable across emulators (some delay 250ms+ between
+    # repeats), so a key is treated as still held for this many frames after
+    # its last actual press. Makes single taps produce smooth movement.
+    _REPEAT_GRACE = 4
+
+    # Class-level age tracker: key -> frames since last seen.
+    _key_age: dict[int, int] = {}
+
     @classmethod
     def _poll(cls, scr: curses.window) -> 'Input':
         """Poll one frame of input. Rotates class-level _last so just_pressed /
-        just_released always have the prior frame to compare against."""
+        just_released always have the prior frame to compare against. Recently-
+        seen keys remain in inp.keys for _REPEAT_GRACE frames to compensate
+        for unreliable terminal auto-repeat."""
         inp = cls()
         inp._prev = cls._last
+        seen_this_frame: set[int] = set()
         while True:
             k = scr.getch()
             if k == -1:
@@ -248,7 +260,17 @@ class Input:
                 except curses.error:
                     pass
             else:
-                inp.keys.add(k)
+                seen_this_frame.add(k)
+
+        # Age all tracked keys by one frame, drop expired ones.
+        cls._key_age = {k: a + 1 for k, a in cls._key_age.items()
+                        if a + 1 < cls._REPEAT_GRACE}
+        # Reset age for keys actually seen this frame.
+        for k in seen_this_frame:
+            cls._key_age[k] = 0
+        # inp.keys = every key still within the grace window.
+        inp.keys = set(cls._key_age.keys())
+
         cls._last = inp
         return inp
 

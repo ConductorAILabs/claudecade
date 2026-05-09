@@ -225,12 +225,24 @@ class Input:
     @property
     def pause(self)   -> bool: return self.pressed(27)
 
+    # Frames of "stickiness" applied to recently-seen keys. Terminal key
+    # auto-repeat is unreliable across emulators (some delay 250ms+ between
+    # repeats), so a key is treated as still held for this many frames after
+    # its last actual press. Makes single taps produce smooth movement.
+    _REPEAT_GRACE = 4
+
+    # Class-level age tracker: key -> frames since last seen.
+    _key_age: dict[int, int] = {}
+
     @classmethod
     def _poll(cls, scr: curses.window) -> 'Input':
         """Poll one frame of input. Rotates class-level _last so just_pressed /
-        just_released always have the prior frame to compare against."""
+        just_released always have the prior frame to compare against. Recently-
+        seen keys remain in inp.keys for _REPEAT_GRACE frames to compensate
+        for unreliable terminal auto-repeat."""
         inp = cls()
         inp._prev = cls._last
+        seen_this_frame: set[int] = set()
         while True:
             k = scr.getch()
             if k == -1:
@@ -248,7 +260,17 @@ class Input:
                 except curses.error:
                     pass
             else:
-                inp.keys.add(k)
+                seen_this_frame.add(k)
+
+        # Age all tracked keys by one frame, drop expired ones.
+        cls._key_age = {k: a + 1 for k, a in cls._key_age.items()
+                        if a + 1 < cls._REPEAT_GRACE}
+        # Reset age for keys actually seen this frame.
+        for k in seen_this_frame:
+            cls._key_age[k] = 0
+        # inp.keys = every key still within the grace window.
+        inp.keys = set(cls._key_age.keys())
+
         cls._last = inp
         return inp
 
@@ -484,53 +506,62 @@ class Renderer:
         self.text(self.H - 2, 1, controls.center(self.W - 2)[:self.W - 2], color)
 
     def pause_overlay(self, game_name: str, controls: list[str]) -> None:
-        """Draw a floating pause menu overlay on top of the current scene."""
-        bw  = max(46, max((len(c) for c in controls), default=0) + 14)
-        bh  = len(controls) + 9
+        """Draw a floating pause menu overlay on top of the current scene.
+        Layout: dim backdrop, double-line frame, centered title with side
+        decorations, controls table, two button rows at the bottom.
+        """
+        bw  = max(50, max((len(c) for c in controls), default=0) + 18)
+        bh  = len(controls) + 11
         by  = (self.H - bh) // 2
         bx  = (self.W - bw) // 2
-        for r in range(bh + 1):
-            try:
-                self._scr.addstr(by + r + 1, bx + 2,
-                                 '▒' * bw, curses.color_pair(NEUTRAL) | curses.A_DIM)
-            except curses.error:
-                pass
-        self.box(by, bx, bh, bw, color=SELECT)
-        shade = '▓▒░' + '░' * (bw - 6) + '░▒▓'
-        try:
-            attr = curses.color_pair(SELECT) | curses.A_DIM
-            self._scr.addstr(by + 1,      bx + 1, shade, attr)
-            self._scr.addstr(by + bh - 2, bx + 1, shade, attr)
-        except curses.error:
-            pass
-        title = f'  ||   {game_name}   PAUSED   ||  '
-        try:
-            self._scr.addstr(by + 2, bx + (bw - len(title)) // 2,
-                             title, curses.color_pair(SELECT) | curses.A_BOLD)
-            self._scr.addstr(by + 3, bx + 1, '─' * (bw - 2), curses.color_pair(SELECT))
-            self._scr.addstr(by + 4, bx + 3, 'CONTROLS', curses.color_pair(SELECT) | curses.A_BOLD)
-        except curses.error:
-            pass
+
+        # Dim backdrop behind the panel for contrast
+        for r in range(bh + 2):
+            self.text(by + r, bx - 1, ' ' * (bw + 2),
+                      color=NEUTRAL, dim=True)
+
+        # Double-line frame using box() with double=True
+        self.box(by, bx, bh, bw, color=SELECT, double=True)
+
+        # Title bar with side decorations (no `||` clutter)
+        title = f'  {game_name}  ·  PAUSED  '
+        deco  = '═' * 4
+        full  = f'{deco}{title}{deco}'
+        tx    = bx + (bw - len(full)) // 2
+        self.text(by + 1, tx,                       deco,  color=SELECT, bold=True)
+        self.text(by + 1, tx + len(deco),           title, color=GOLD,   bold=True)
+        self.text(by + 1, tx + len(deco) + len(title), deco, color=SELECT, bold=True)
+
+        # Section divider under title
+        self.text(by + 2, bx + 1, '─' * (bw - 2), color=SELECT)
+
+        # CONTROLS heading
+        self.text(by + 3, bx + 3, '◆ CONTROLS', color=GOLD, bold=True)
+
+        # Controls table — keys in CYAN, descriptions in WHITE
         for i, ctrl in enumerate(controls):
             parts = ctrl.split(None, 1)
             key   = parts[0]
             rest  = parts[1] if len(parts) > 1 else ''
-            try:
-                self._scr.addstr(by + 5 + i, bx + 5,
-                                 key,  curses.color_pair(SELECT) | curses.A_BOLD)
-                self._scr.addstr(by + 5 + i, bx + 21,
-                                 rest, curses.color_pair(SELECT))
-            except curses.error:
-                pass
-        r = by + 5 + len(controls)
-        try:
-            self._scr.addstr(r,     bx + 1, '─' * (bw - 2), curses.color_pair(SELECT))
-            self._scr.addstr(r + 1, bx + 5, '[ R ]  Resume',
-                             curses.color_pair(GOOD) | curses.A_BOLD)
-            self._scr.addstr(r + 2, bx + 5, '[ Q ]  Quit',
-                             curses.color_pair(ENEMY) | curses.A_BOLD)
-        except curses.error:
-            pass
+            row   = by + 5 + i
+            self.text(row, bx + 5,  key,  color=PLAYER, bold=True)
+            self.text(row, bx + 22, rest, color=NEUTRAL)
+
+        # Bottom button row
+        rb = by + 5 + len(controls) + 1
+        self.text(rb,     bx + 1, '─' * (bw - 2), color=SELECT)
+
+        # Resume button — green, boxed
+        rb_y = rb + 1
+        self.text(rb_y, bx + 4,  '┌─────────────┐', color=GOOD, bold=True)
+        self.text(rb_y + 1, bx + 4,  '│ [R] Resume  │', color=GOOD, bold=True)
+        self.text(rb_y + 2, bx + 4,  '└─────────────┘', color=GOOD, bold=True)
+
+        # Quit button — red, boxed
+        rb_x2 = bx + bw - 19
+        self.text(rb_y, rb_x2,  '┌─────────────┐', color=ENEMY, bold=True)
+        self.text(rb_y + 1, rb_x2,  '│ [Q] Quit    │', color=ENEMY, bold=True)
+        self.text(rb_y + 2, rb_x2,  '└─────────────┘', color=ENEMY, bold=True)
 
     def gameover_screen(self, title: str = "GAME  OVER",
                         score_line: str = "", player_label: str = "",
