@@ -827,8 +827,8 @@ def draw_game(scr, game, H, W, tick):
                 # Power-2 center bolt — heavier glyph, gold tint
                 p(br, bc, '━▶', P(4)|curses.A_BOLD)
             else:
-                # Normal bullet — slim cyan dart
-                p(br, bc, '─▶', P(1)|curses.A_BOLD)
+                # Normal bullet — green dart (good guys = green)
+                p(br, bc, '─▶', P(3)|curses.A_BOLD)
 
     # ── Particles (hit sparks) ────────────────────────────────────────────────
     for pt in game.particles:

@@ -441,10 +441,10 @@ def draw_intro(scr, H, W, tick):
     gframe = (tick // 10) % 2
     for i, row in enumerate(PSP['run'][pframe]):
         p(ty+i, 4, row, P(1)|curses.A_BOLD)
-    # Bullet in middle when tick phase right
+    # Bullet in middle when tick phase right (green = player projectile)
     if (tick // 8) % 5 == 0:
         bullet_col = 4 + SW + 1 + (tick % 8)
-        p(ty + 2, min(bullet_col, W-8), '━►', P(4)|curses.A_BOLD)
+        p(ty + 2, min(bullet_col, W-8), '━►', P(3)|curses.A_BOLD)
     for i, row in enumerate(GRUNT['walk'][gframe]):
         p(ty+i, W-SW-5, row, P(2)|curses.A_BOLD)
 
@@ -603,12 +603,13 @@ def draw_game(scr, world, H, W, tick):
             if AT <= r < GR: p(r, max(1,c0), row, cp)
 
     # ── Bullets ────────────────────────────────────────────────────────────
+    # Color convention: GREEN for player ('good guys'), RED for enemies.
     for b in world.bullets:
         c0 = sc(b['wx']); br = brow(b['y'])
         if 1 <= c0 < W-2 and AT <= br < GR:
             if b['owner'] == 'player':
                 sprite = '━►'
-                cp = P(4)|curses.A_BOLD
+                cp = P(3)|curses.A_BOLD
             else:
                 sprite = '◄━'
                 cp = P(2)|curses.A_BOLD
