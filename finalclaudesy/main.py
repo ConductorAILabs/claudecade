@@ -114,6 +114,7 @@ def main(scr):
     result_timer = 0
     tick       = 0
     nxt        = time.perf_counter()
+    _key_age: dict[int, int] = {}   # sticky-input age tracker
 
     has_save = os.path.exists(SAVE_PATH)
 
@@ -126,13 +127,22 @@ def main(scr):
         tick += 1
 
         H, W = scr.getmaxyx()
-        keys = set()
+        # Sticky input: a key remains in `keys` for 4 frames after its last
+        # actual press. Compensates for unreliable terminal key auto-repeat
+        # so single taps produce smooth movement (mirrors claudcade_engine).
+        seen_now = set()
         while True:
             k = scr.getch()
             if k == -1: break
-            keys.add(k)
+            seen_now.add(k)
+        _key_age = {k: a + 1 for k, a in _key_age.items() if a + 1 < 4}
+        for k in seen_now:
+            _key_age[k] = 0
+        keys = set(_key_age.keys())
 
-        if 27 in keys and state not in ('BATTLE','BATTLE_RESULT','STORY','TITLE'):
+        # ESC or M opens party menu when exploring (M matches documented controls).
+        if (27 in keys or ord('m') in keys or ord('M') in keys) and \
+           state not in ('BATTLE','BATTLE_RESULT','STORY','TITLE'):
             if state in ('TOWN','DUNGEON','WORLD'):
                 menu   = PartyMenu(party)
                 state  = 'MENU'
