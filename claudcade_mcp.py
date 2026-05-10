@@ -39,12 +39,31 @@ GAMES: dict[str, str] = {
 # ── Static content (mirrors mcp.js so the local stdio server has feature parity)
 
 SLASH_COMMAND_CONTENT = """\
-Launch the Claudecade arcade full-screen in a new tmux window.
+Launch the Claudecade arcade in a new tmux window.
 
-1. Verify the arcade is installed: run `ls ~/claudecade/claudcade.py 2>/dev/null`
-   - If missing, download it: run `curl -L https://starlit-macaron-113a83.netlify.app/claudcade.zip -o /tmp/claudcade.zip && unzip -q /tmp/claudcade.zip -d ~/claudecade && rm /tmp/claudcade.zip`
-2. Launch in a new full-screen tmux window: run `tmux new-window -n CLAUDCADE "cd ~/claudecade && python3 claudcade.py"`
-3. Tell the user: "Claudecade is running in the CLAUDCADE tmux window. Arrow keys to pick a game, Enter to launch it full-screen. Switch back here with tmux prefix + number."
+The send-keys pattern is required: `tmux new-window CMD` runs the command in
+a non-interactive context where Python's curses fails to initialise.
+
+1. Verify the arcade is installed:
+   ```bash
+   ls ~/claudecade/claudcade.py 2>/dev/null
+   ```
+   If missing, download it:
+   ```bash
+   curl -L https://starlit-macaron-113a83.netlify.app/claudcade.zip -o /tmp/claudcade.zip && unzip -q /tmp/claudcade.zip -d ~/claudecade && rm /tmp/claudcade.zip
+   ```
+
+2. Find the user's attached tmux session, create a new window, and send the
+   launch command interactively so curses gets a real TTY:
+   ```bash
+   SESSION=$(tmux list-clients -F '#{session_name}' 2>/dev/null | head -1)
+   [ -z "$SESSION" ] && SESSION=$(tmux list-sessions -F '#{session_activity} #{session_name}' 2>/dev/null | sort -rn | head -1 | awk '{print $2}')
+   tmux new-window -t "${SESSION}:" -n CLAUDCADE
+   tmux send-keys -t "${SESSION}:CLAUDCADE" "clear && cd ~/claudecade && python3 claudcade.py; exit" Enter
+   tmux select-window -t "${SESSION}:CLAUDCADE"
+   ```
+
+3. Tell the user: "Claudecade is running in the CLAUDCADE tmux window. Arrow keys to pick a game, Enter to launch it full-screen. Switch back here with tmux prefix + p."
 """
 
 SETUP_INSTRUCTIONS = """\
