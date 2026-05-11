@@ -875,30 +875,34 @@ def draw_main(scr, H, W, tick, cursor):
     gcp = g['color']
 
     # Block-font game title — centered horizontally in the detail panel.
+    # Starts 2 rows below PANEL_Y so it has visual breathing room from the
+    # main CLAUDECADE title above the divider (was crammed back-to-back).
     title_key = g.get('title_key', g['name'].lower().replace(' ', ''))
+    TITLE_Y = PANEL_Y + 2
     if title_key in GAME_TITLES:
-        ART_Y = PANEL_Y
+        ART_Y = TITLE_Y
         title_lines = GAME_TITLES[title_key]
         for i, line in enumerate(title_lines):
             if ART_Y + i < H - 4:
                 trimmed = line[:DET_W-2] if len(line) > DET_W-2 else line
-                # Center within the detail panel (DET_X to DET_X+DET_W).
                 tx = DET_X + max(1, (DET_W - len(trimmed)) // 2)
                 _p(scr, H, W, ART_Y+i, tx, trimmed, P(gcp)|curses.A_BOLD)
         ART_Y += len(title_lines)
     else:
-        ART_Y = PANEL_Y
+        ART_Y = TITLE_Y
         gt   = f'★  {g["name"]}  —  {g["subtitle"]}  ★'
         _p(scr, H, W, ART_Y, DET_X+1, gt[:DET_W-2], P(gcp)|curses.A_BOLD)
         ART_Y += 1
 
-    _p(scr, H, W, ART_Y, DET_X+1, '═'*(DET_W-2), P(gcp)|curses.A_DIM)
+    # Single-line subtitle + thin divider under the block-font title.
+    sub = f'·  {g["subtitle"]}  ·'
+    _p(scr, H, W, ART_Y,   DET_X + max(1, (DET_W - len(sub)) // 2), sub, P(gcp)|curses.A_DIM)
+    _p(scr, H, W, ART_Y+1, DET_X+1, '─'*(DET_W-2), P(5)|curses.A_DIM)
 
-    # Game preview — live demo (one simulation step per UI frame for the
-    # selected game). Falls back to the static `frames` data if no demo is
-    # registered for this title_key.
-    ART_Y = ART_Y + 2
-    ART_X = DET_X + 3
+    # Game preview — live demo (one simulation step per UI frame). Centered
+    # horizontally within the detail panel. Falls back to static `frames` if
+    # no demo class is registered for this title_key.
+    ART_Y = ART_Y + 3
     demo = DEMOS.get(title_key)
     if demo is not None:
         art = demo.render()
@@ -909,33 +913,37 @@ def draw_main(scr, H, W, tick, cursor):
     if art:
         aw    = max(len(l) for l in art) + 2
         ah    = len(art) + 2
+        # Center the box horizontally in the detail panel.
+        box_x = DET_X + max(2, (DET_W - (aw + 2)) // 2)
+        ART_X = box_x + 2
         if ART_Y + ah < H - 6:
-            _p(scr, H, W, ART_Y,      ART_X-2, '┌'+'─'*aw+'┐', P(5)|curses.A_DIM)
-            _p(scr, H, W, ART_Y+ah-1, ART_X-2, '└'+'─'*aw+'┘', P(5)|curses.A_DIM)
+            _p(scr, H, W, ART_Y,      box_x, '┌'+'─'*aw+'┐', P(5)|curses.A_DIM)
+            _p(scr, H, W, ART_Y+ah-1, box_x, '└'+'─'*aw+'┘', P(5)|curses.A_DIM)
             for r in range(1, ah-1):
-                _p(scr, H, W, ART_Y+r, ART_X-2, '│', P(5)|curses.A_DIM)
-                _p(scr, H, W, ART_Y+r, ART_X-2+aw+1, '│', P(5)|curses.A_DIM)
+                _p(scr, H, W, ART_Y+r, box_x,        '│', P(5)|curses.A_DIM)
+                _p(scr, H, W, ART_Y+r, box_x+aw+1,   '│', P(5)|curses.A_DIM)
             sprite_attr = (P(5)|curses.A_DIM) if cs else (P(gcp)|curses.A_BOLD)
             for i, line in enumerate(art):
                 _p(scr, H, W, ART_Y+1+i, ART_X, line, sprite_attr)
-            # Coming-soon: overlay a centered LOCKED badge over the sprite art
-            # so the previews read as clearly unselectable.
             if cs:
                 badge = ' ✦ LOCKED ✦ '
-                bx = ART_X + (aw - 2 - len(badge)) // 2
+                bx = box_x + 1 + (aw - len(badge)) // 2
                 by = ART_Y + ah // 2
                 _p(scr, H, W, by, bx, badge, P(5)|curses.A_BOLD|curses.A_REVERSE)
+            # CRITICAL: advance ART_Y past the box so the description below
+            # doesn't overdraw it (was the cause of "demos not showing up").
+            ART_Y += ah + 1
 
     # Description
     DESC_X = DET_X + 2
-    _p(scr, H, W, ART_Y,   DESC_X, g['subtitle'], P(gcp)|curses.A_BOLD)
-    _p(scr, H, W, ART_Y+1, DESC_X, '─'*max(0, DET_W-2), P(5)|curses.A_DIM)
+    _p(scr, H, W, ART_Y,   DESC_X, 'ABOUT', P(gcp)|curses.A_BOLD)
+    _p(scr, H, W, ART_Y,   DESC_X+8, '─'*max(0, DET_W-10), P(5)|curses.A_DIM)
     for i, line in enumerate(g['desc']):
-        if ART_Y+2+i < H-5:
-            _p(scr, H, W, ART_Y+2+i, DESC_X, f'• {line}', P(5))
+        if ART_Y+1+i < H-5:
+            _p(scr, H, W, ART_Y+1+i, DESC_X, f'• {line}', P(5))
 
     # Controls
-    CTRL_Y = ART_Y + len(g['desc']) + 3
+    CTRL_Y = ART_Y + len(g['desc']) + 2
     if CTRL_Y < H - 5:
         _p(scr, H, W, CTRL_Y, DET_X+2, 'CONTROLS', P(5)|curses.A_BOLD)
         _p(scr, H, W, CTRL_Y, DET_X+12, '─'*max(0, DET_W-12), P(5)|curses.A_DIM)
