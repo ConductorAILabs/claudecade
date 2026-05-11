@@ -10,18 +10,6 @@ def safe_add(scr, y, x, text, attr=0):
     at_safe(scr, H, W, y, x, text, attr)
 
 
-def box(scr, y, x, h, w, title='', cp=5):
-    P = curses.color_pair(cp)
-    safe_add(scr, y,     x,     '╔' + '═'*(w-2) + '╗', P)
-    safe_add(scr, y+h-1, x,     '╚' + '═'*(w-2) + '╝', P)
-    for r in range(1, h-1):
-        safe_add(scr, y+r, x,     '║', P)
-        safe_add(scr, y+r, x+w-1, '║', P)
-    if title:
-        t = f' {title} '
-        safe_add(scr, y, x + (w - len(t)) // 2, t, P | curses.A_BOLD)
-
-
 def bar(scr, y, x, current, maximum, width, cp_fill=3, cp_empty=5):
     if maximum <= 0: ratio = 0.0
     else: ratio = max(0.0, min(1.0, current / maximum))

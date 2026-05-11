@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Claudcade — The Claude Terminal Arcade Launcher"""
 import curses, time, random, subprocess, os, sys
-from claudcade_engine import setup_colors
+from claudcade_engine import setup_colors, at_safe
 
 # ── TITLE ART (CLAUDECADE in block font) ───────────────────────────────────────
 TITLE = [
@@ -349,12 +349,7 @@ GAMES = [
 ]
 
 # ── DRAWING HELPERS ────────────────────────────────────────────────────────────
-def _p(scr, H, W, r, c, s, a=0):
-    try:
-        if 0 <= r < H-1 and 0 <= c < W:
-            scr.addstr(r, c, s[:max(0, W-c)], a)
-    except curses.error:
-        pass
+_p = at_safe
 
 # ── MAIN SCREEN ────────────────────────────────────────────────────────────────
 # Background-star positions are deterministic per (H,W); cached so we don't

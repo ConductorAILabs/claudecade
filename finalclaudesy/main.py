@@ -5,7 +5,7 @@ from .data     import STORY
 from .entities import Party
 from .battle   import Battle
 from .explore  import WorldMap, TownScreen, DungeonScreen, PartyMenu
-from .ui       import safe_add, box, center, setup_colors
+from .ui       import safe_add, center, setup_colors
 from claudcade_scores import submit_async
 
 FPS      = 30
@@ -327,15 +327,6 @@ def main(scr):
             if menu.result == 'close':
                 menu  = None
                 state = 'WORLD'
-
-        elif state == 'GAME_OVER':
-            scr.erase()
-            box(scr, 0, 0, H, W, '', 2)
-            center(scr, H//2-1, 'G A M E   O V E R', W, curses.color_pair(2)|curses.A_BOLD)
-            center(scr, H//2+1, '[ SPACE ] Return to title', W, curses.color_pair(5))
-            scr.refresh()
-            if ord(' ') in keys:
-                state = 'TITLE'; party = None
 
         # ESC at the title screen quits the game.
         if 27 in keys and state == 'TITLE':
