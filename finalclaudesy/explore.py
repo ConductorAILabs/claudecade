@@ -10,30 +10,20 @@ TILE_COLOR = {
     '~': 8, '^': 5, '.': 3, 'T': 3, 'A': 4, 'E': 4, 'C': 4,
     '1': 2, '2': 2, '3': 2,
 }
+# Single quiet glyph per tile — high contrast between walkable space (blank-ish)
+# and walls (solid). Landmarks pop because everything around them is calm.
 TILE_CHAR  = {
-    '~': '~', '^': '^', '.': '.', 'T': 'T',
+    '~': '~',   # water, quiet wave
+    '^': '^',   # mountain wall
+    '.': ' ',   # walkable grass — blank for breathing room
+    'T': 't',   # forest — lowercase t reads as foliage, dim color
     'A': 'A', 'E': 'E', 'C': 'C',
     '1': '1', '2': '2', '3': '3',
 }
-# Per-tile texture variants — picked deterministically from (x,y) so terrain
-# looks varied without flickering. Landmark tiles (towns, dungeons, mountains)
-# stay fixed so the player can identify them.
-TILE_VARIANTS = {
-    '.': '.,\'·░',
-    'T': 'T♣Y♠',
-    '~': '~≈∽⌒',
-}
 
 def _tile_glyph(tile: str, x: int, y: int, tick: int) -> str:
-    """Pick a textured glyph for terrain tiles, animated for water."""
-    variants = TILE_VARIANTS.get(tile)
-    if not variants: return TILE_CHAR.get(tile, tile)
-    if tile == '~':
-        # Water shimmers — phase shifts every ~30 ticks
-        idx = (x * 7 + y * 13 + tick // 30) % len(variants)
-    else:
-        idx = (x * 31 + y * 17) % len(variants)
-    return variants[idx]
+    """Return the single glyph for a tile. No variants — keeps the map calm."""
+    return TILE_CHAR.get(tile, tile)
 
 # ── World map ──────────────────────────────────────────────────────────────────
 class WorldMap:
@@ -90,17 +80,21 @@ class WorldMap:
         P = curses.color_pair
         scr.erase()
 
-        # viewport centered on player
-        vw = W - 2
-        vh = H - 6
-        vx0 = max(0, min(MAP_W - vw, self.x - vw // 2))
-        vy0 = max(0, min(MAP_H - vh, self.y - vh // 2))
+        # Reserve top/bottom rows for header and HUD; center the viewport
+        # block horizontally inside the available terminal width.
+        hud_h = 3                      # divider + 2 lines of party info
+        vh    = max(6, H - hud_h - 3)  # map area height
+        vw    = min(MAP_W, W - 4)      # map area width, capped to actual map
+        vx0   = max(0, min(MAP_W - vw, self.x - vw // 2))
+        vy0   = max(0, min(MAP_H - vh, self.y - vh // 2))
+        off_x = max(0, (W - vw) // 2)  # horizontal centering of the viewport
 
-        safe_add(scr, 0, 0, '╔'+'═'*(W-2)+'╗', P(5)|curses.A_BOLD)
-        safe_add(scr, 1, 1, '█████ WORLD MAP █████', P(5)|curses.A_BOLD)
-        gx = f'Gold: {self.party.gold}g'
-        safe_add(scr, 1, W-len(gx)-4, gx, P(4)|curses.A_BOLD)
-        safe_add(scr, 2, 0, '╠'+'═'*(W-2)+'╣', P(5)|curses.A_BOLD)
+        # Header — single line, no heavy borders
+        title = 'WORLD MAP'
+        center(scr, 0, title, W, P(6)|curses.A_BOLD)
+        gx = f'Gold: {self.party.gold}'
+        safe_add(scr, 0, W - len(gx) - 2, gx, P(4)|curses.A_BOLD)
+        safe_add(scr, 1, 0, '─' * W, P(5)|curses.A_DIM)
 
         for vy in range(vh):
             for vx in range(vw):
@@ -109,28 +103,32 @@ class WorldMap:
                 ch     = _tile_glyph(tile, mx, my, tick)
                 cp_n   = TILE_COLOR.get(tile, 5)
                 attr   = curses.color_pair(cp_n)
-                if tile in ('^', 'T'): attr |= curses.A_BOLD
-                # Faint dim on plain grass texture variants for depth
-                if tile == '.' and ch in ('░', '·'): attr |= curses.A_DIM
+                # Mountains bold (hard wall), water dim (visual rest),
+                # forests dim (softer than landmarks), landmarks bold+reverse.
+                if tile == '^': attr |= curses.A_BOLD
+                elif tile == '~': attr |= curses.A_DIM
+                elif tile == 'T': attr |= curses.A_DIM
+                elif tile in TILE_TOWNS or tile in TILE_DUNGEONS:
+                    attr |= curses.A_BOLD | curses.A_REVERSE
                 if mx == self.x and my == self.y:
                     attr = P(1)|curses.A_BOLD; ch = '@'
-                safe_add(scr, 1 + vy, 1 + vx, ch, attr)
+                safe_add(scr, 2 + vy, off_x + vx, ch, attr)
 
-        hud_y = H - 4
-        safe_add(scr, hud_y, 0, '╠' + '═'*(W-2) + '╣', P(3)|curses.A_BOLD)
-        safe_add(scr, hud_y, 2, '▓ PARTY ▓', P(3)|curses.A_BOLD)
+        # HUD — single divider, party in three centered columns
+        hud_y = H - hud_h - 1
+        safe_add(scr, hud_y, 0, '─' * W, P(5)|curses.A_DIM)
+        col_w = W // 3
         for i, m in enumerate(self.party.members):
-            mx = 2 + i * (W // 3)
-            alive_attr = P(m.color)|curses.A_BOLD if m.alive else P(5)
-            safe_add(scr, hud_y+1, mx, f'{m.name} Lv{m.level}', alive_attr)
-            hp_bar = f'HP:█{m.hp:>3}/{m.max_hp:<3}█'
-            mp_bar = f'MP:█{m.mp:>3}/{m.max_mp:<3}█'
-            safe_add(scr, hud_y+2, mx, hp_bar, P(3))
-            safe_add(scr, hud_y+3, mx, mp_bar, P(8))
+            label = f'{m.name} Lv{m.level}'
+            hp    = f'HP {m.hp:>3}/{m.max_hp:<3}   MP {m.mp:>3}/{m.max_mp:<3}'
+            alive_attr = P(m.color)|curses.A_BOLD if m.alive else P(5)|curses.A_DIM
+            cx_label = i * col_w + max(0, (col_w - len(label)) // 2)
+            cx_stat  = i * col_w + max(0, (col_w - len(hp)) // 2)
+            safe_add(scr, hud_y + 1, cx_label, label, alive_attr)
+            safe_add(scr, hud_y + 2, cx_stat,  hp,    P(3))
 
-        safe_add(scr, H-1, 0, '╚' + '═'*(W-2) + '╝', P(5)|curses.A_BOLD)
-        ctrl = '║ WASD:Move  T:Town/Dungeon  M:Menu  S:Save ║'
-        safe_add(scr, hud_y+3, (W-len(ctrl))//2, ctrl[:W], P(5)|curses.A_BOLD)
+        ctrl = 'WASD: Move    M: Menu    Q/ESC: Title'
+        center(scr, H - 1, ctrl, W, P(5)|curses.A_DIM)
         scr.refresh()
 
 
@@ -255,94 +253,102 @@ class TownScreen:
     def draw(self, scr: 'curses.window', H: int, W: int, tick: int) -> None:
         P = curses.color_pair
         scr.erase()
-        safe_add(scr, 0, 0, '╔' + '═'*(W-2) + '╗', P(4)|curses.A_BOLD)
-        town_header = f'▓ {self.name} ▓'
-        safe_add(scr, 0, (W-len(town_header))//2, town_header, P(4)|curses.A_BOLD)
-        safe_add(scr, 1, 0, '╠' + '═'*(W-2) + '╣', P(4)|curses.A_BOLD)
-        safe_add(scr, 2, 2, self.data['desc'], P(5))
 
+        # Header — name centered on top line, single divider below
+        center(scr, 0, self.name.upper(), W, P(4)|curses.A_BOLD)
+        safe_add(scr, 1, 0, '─' * W, P(5)|curses.A_DIM)
+
+        # Description (or transient message)
         if self._msg_timer > 0:
             self._msg_timer -= 1
-            safe_add(scr, 2, 2, self._msg[:W-4], P(4)|curses.A_BOLD)
+            center(scr, 2, self._msg[:W-4], W, P(4)|curses.A_BOLD)
+        else:
+            center(scr, 2, self.data['desc'], W, P(5))
 
         if self._state == 'MAIN':
-            safe_add(scr, 4, 2, '╔════════════════════╗', P(5)|curses.A_BOLD)
-            safe_add(scr, 4, 5, '▓ MENU ▓', P(5)|curses.A_BOLD)
-            for i, opt in enumerate(self.MAIN_OPTS):
-                prefix = '▶' if i == self._cursor else ' '
-                label = f'{prefix} {opt}'
-                cp = P(7)|curses.A_BOLD if i == self._cursor else P(5)
-                safe_add(scr, 5+i, 4, label, cp)
-            safe_add(scr, 5+len(self.MAIN_OPTS), 2, '╚════════════════════╝', P(5)|curses.A_BOLD)
-
+            self._draw_main(scr, H, W)
         elif self._state == 'NPC':
-            npcs  = self.data['npcs']
-            npc   = npcs[self._npc_idx]
-            lines = npc['lines']
-            safe_add(scr, 4, 2, '╔' + '═'*(W-6) + '╗', P(1)|curses.A_BOLD)
-            npc_header = f'█ {npc["name"]} █'
-            safe_add(scr, 4, (W-len(npc_header))//2, npc_header, P(1)|curses.A_BOLD)
-            safe_add(scr, 5, 2, '╠' + '═'*(W-6) + '╣', P(1)|curses.A_BOLD)
-            line = lines[min(self._npc_line, len(lines)-1)]
-            safe_add(scr, 6, 4, line, P(5))
-            safe_add(scr, 12, 2, '╚' + '═'*(W-6) + '╝', P(1)|curses.A_BOLD)
-            safe_add(scr, 13, 4, '▒ [SPACE] next / [Q] back ▒', P(5)|curses.A_BOLD)
-
+            self._draw_npc(scr, H, W)
         elif self._state == 'SHOP':
             self._draw_shop(scr, H, W)
 
-        status_y = H - 5
-        safe_add(scr, status_y, 0, '╠' + '═'*(W-2) + '╣', P(3)|curses.A_BOLD)
-        safe_add(scr, status_y, 2, '▓ PARTY STATUS ▓', P(3)|curses.A_BOLD)
+        # Party HUD — single divider, three centered columns
+        status_y = H - 4
+        safe_add(scr, status_y, 0, '─' * W, P(5)|curses.A_DIM)
+        col_w = W // 3
         for i, m in enumerate(self.party.members):
-            mx = 2 + i*(W//3)
-            safe_add(scr, status_y+1, mx, f'{m.name} Lv{m.level}', P(m.color)|curses.A_BOLD)
-            safe_add(scr, status_y+2, mx, f'█HP:{m.hp:>3}/{m.max_hp}█', P(3))
-            safe_add(scr, status_y+3, mx, f'█MP:{m.mp:>3}/{m.max_mp}█ G:{self.party.gold}', P(8))
-        safe_add(scr, H-1, 0, '╚' + '═'*(W-2) + '╝', P(5)|curses.A_BOLD)
+            label = f'{m.name} Lv{m.level}'
+            stat  = f'HP {m.hp:>3}/{m.max_hp}   MP {m.mp:>3}/{m.max_mp}'
+            cx_label = i * col_w + max(0, (col_w - len(label)) // 2)
+            cx_stat  = i * col_w + max(0, (col_w - len(stat)) // 2)
+            safe_add(scr, status_y+1, cx_label, label, P(m.color)|curses.A_BOLD)
+            safe_add(scr, status_y+2, cx_stat,  stat,  P(3))
+        # Gold sits at the top-right, not on the divider line
+        gx = f'Gold: {self.party.gold}'
+        safe_add(scr, 0, W - len(gx) - 2, gx, P(4)|curses.A_BOLD)
         scr.refresh()
+
+    def _draw_main(self, scr, H, W):
+        P = curses.color_pair
+        # Centered menu list
+        list_h = len(self.MAIN_OPTS)
+        start_y = max(5, (H - list_h - 8) // 2)
+        for i, opt in enumerate(self.MAIN_OPTS):
+            prefix = '> ' if i == self._cursor else '  '
+            label = f'{prefix}{opt}'
+            cp = P(7)|curses.A_BOLD if i == self._cursor else P(5)
+            center(scr, start_y + i, label, W, cp)
+
+    def _draw_npc(self, scr, H, W):
+        P = curses.color_pair
+        npcs  = self.data['npcs']
+        npc   = npcs[self._npc_idx]
+        lines = npc['lines']
+        center(scr, 4, f'-- {npc["name"]} --', W, P(1)|curses.A_BOLD)
+        line = lines[min(self._npc_line, len(lines)-1)]
+        center(scr, 6, line[:W-4], W, P(5))
+        center(scr, H-6, '[SPACE] next  /  [Q] back', W, P(5)|curses.A_DIM)
 
     def _draw_shop(self, scr, H, W):
         P = curses.color_pair
-        safe_add(scr, 4, 2, '╔══════════════════════╗', P(4)|curses.A_BOLD)
-        safe_add(scr, 4, 5, '▓ CATEGORIES ▓', P(4)|curses.A_BOLD)
+        # Categories on the left column
+        cat_x = max(2, W // 4 - 12)
+        center(scr, 4, 'SHOP', W, P(4)|curses.A_BOLD)
+        gx = f'Gold: {self.party.gold}'
+        safe_add(scr, 4, W - len(gx) - 2, gx, P(4)|curses.A_BOLD)
+
         for i, cat in enumerate(self._shop_cats):
-            prefix = '▶' if (i == self._shop_cat and self._shop_state == 'CATEGORY') else ' '
-            label = f'{prefix} {cat}'
-            cp = P(7)|curses.A_BOLD if (i == self._shop_cat and self._shop_state == 'CATEGORY') else P(4)
-            safe_add(scr, 5+i, 4, label, cp)
-        safe_add(scr, 5+len(self._shop_cats), 2, '╚══════════════════════╝', P(4)|curses.A_BOLD)
+            active = (i == self._shop_cat and self._shop_state == 'CATEGORY')
+            prefix = '> ' if active else '  '
+            label = f'{prefix}{cat}'
+            cp = P(7)|curses.A_BOLD if active else P(4)
+            safe_add(scr, 6+i, cat_x, label, cp)
 
-        gold_display = f'█ Gold: {self.party.gold}g █'
-        safe_add(scr, 4, 26, gold_display, P(4)|curses.A_BOLD)
-
+        # Items area on the right
+        list_x = max(cat_x + 16, W // 2 - 10)
         if self._shop_state == 'BUY' and self._shop_items:
             from .data import ITEMS, EQUIPMENT
-            safe_add(scr, 8, 2, '╔' + '═'*(W-6) + '╗', P(4)|curses.A_BOLD)
-            safe_add(scr, 8, (W-10)//2, '▓ BUY ▓', P(4)|curses.A_BOLD)
-            safe_add(scr, 9, 2, '╠' + '═'*(W-6) + '╣', P(4)|curses.A_BOLD)
-            for i, item in enumerate(self._shop_items[:H-20]):
+            safe_add(scr, 6, list_x, 'BUY', P(4)|curses.A_BOLD)
+            for i, item in enumerate(self._shop_items[:H-14]):
                 d = ITEMS.get(item) or EQUIPMENT.get(item, {})
                 price = d.get('price', 0)
                 desc  = d.get('desc', '')
-                prefix = '▶' if i == self._shop_cursor else ' '
-                label = f'{prefix} {item:<20} {price:>5}g  {desc}'
+                prefix = '> ' if i == self._shop_cursor else '  '
+                label = f'{prefix}{item:<18} {price:>5}g  {desc}'
                 cp = P(7)|curses.A_BOLD if i == self._shop_cursor else P(5)
-                safe_add(scr, 10+i, 4, label[:W-8], cp)
+                safe_add(scr, 7+i, list_x, label[:W-list_x-2], cp)
 
         elif self._shop_state == 'SELL':
             inv = [(n,c) for n,c in self.party.items.items()]
-            safe_add(scr, 8, 2, '╔' + '═'*(W-6) + '╗', P(4)|curses.A_BOLD)
-            safe_add(scr, 8, (W-18)//2, '▓ SELL (half price) ▓', P(4)|curses.A_BOLD)
-            safe_add(scr, 9, 2, '╠' + '═'*(W-6) + '╣', P(4)|curses.A_BOLD)
+            safe_add(scr, 6, list_x, 'SELL (half price)', P(4)|curses.A_BOLD)
             from .data import ITEMS
-            for i, (name, cnt) in enumerate(inv[:H-20]):
+            for i, (name, cnt) in enumerate(inv[:H-14]):
                 d    = ITEMS.get(name, {})
                 sell = d.get('price', 10) // 2
-                prefix = '▶' if i == self._shop_cursor else ' '
-                label = f'{prefix} {name:<20} x{cnt:<3}  sell:{sell}g'
+                prefix = '> ' if i == self._shop_cursor else '  '
+                label = f'{prefix}{name:<18} x{cnt:<3}  sell:{sell}g'
                 cp = P(7)|curses.A_BOLD if i == self._shop_cursor else P(4)
-                safe_add(scr, 10+i, 4, label[:W-8], cp)
+                safe_add(scr, 7+i, list_x, label[:W-list_x-2], cp)
 
 
 # ── Dungeon ────────────────────────────────────────────────────────────────────
@@ -414,58 +420,57 @@ class DungeonScreen:
     def draw(self, scr: 'curses.window', H: int, W: int, tick: int) -> None:
         P = curses.color_pair
         scr.erase()
-        safe_add(scr, 0, 0, '╔' + '═'*(W-2) + '╗', P(2)|curses.A_BOLD)
-        dungeon_header = f'█ {self.dname} █'
-        safe_add(scr, 0, (W-len(dungeon_header))//2, dungeon_header, P(2)|curses.A_BOLD)
-        safe_add(scr, 1, 0, '╠' + '═'*(W-2) + '╣', P(2)|curses.A_BOLD)
+
+        # Header — name centered, single divider
+        center(scr, 0, self.dname.upper(), W, P(2)|curses.A_BOLD)
+        safe_add(scr, 1, 0, '─' * W, P(5)|curses.A_DIM)
 
         dh = len(self.dmap)
         dw = len(self.dmap[0]) if dh else 0
         scale = 2   # each tile is 2 chars wide
+        map_h = H - 7    # leave room for log + party HUD + footer
         off_x = max(1, (W  - dw * scale) // 2)
-        off_y = max(1, (H  - dh   - 8)   // 2 + 1)
+        off_y = max(2, (map_h - dh) // 2 + 2)
 
         for r, row in enumerate(self.dmap):
             for c, ch in enumerate(row):
                 sx = off_x + c * scale
                 sy = off_y + r
-                if sy >= H-7 or sx >= W-1: continue
+                if sy >= H-5 or sx >= W-1: continue
                 if c == self.px and r == self.py:
                     safe_add(scr, sy, sx, '@ ', P(1)|curses.A_BOLD)
                     continue
                 pos = (c, r)
                 if ch == '#':
-                    safe_add(scr, sy, sx, '██', P(5))
+                    safe_add(scr, sy, sx, '##', P(5)|curses.A_DIM)
                 elif ch == '.':
                     safe_add(scr, sy, sx, '  ', 0)
                 elif ch == 'S':
-                    safe_add(scr, sy, sx, '▲ ', P(3))
+                    safe_add(scr, sy, sx, '. ', P(3)|curses.A_DIM)
                 elif ch == 'B':
-                    attr = P(2)|curses.A_BOLD
-                    if (tick//8)%2 == 0: attr |= curses.A_BLINK
-                    safe_add(scr, sy, sx, '!! ', attr)
+                    safe_add(scr, sy, sx, 'B ', P(2)|curses.A_BOLD)
                 elif ch == 'C':
                     if pos in self.chests_opened:
-                        safe_add(scr, sy, sx, '□ ', P(5))
+                        safe_add(scr, sy, sx, '. ', P(5)|curses.A_DIM)
                     else:
-                        safe_add(scr, sy, sx, '■ ', P(4)|curses.A_BOLD)
+                        safe_add(scr, sy, sx, '$ ', P(4)|curses.A_BOLD)
 
-        log_y = H - 7
-        safe_add(scr, log_y, 0, '╠' + '═'*(W-2) + '╣', P(5)|curses.A_BOLD)
-        safe_add(scr, log_y, 2, '▓ LOG ▓', P(5)|curses.A_BOLD)
-        for i, line in enumerate(self.log[-2:]):
-            safe_add(scr, log_y+1+i, 2, line[:W-4], P(5))
+        # Log line — single line at the bottom area
+        log_y = H - 4
+        safe_add(scr, log_y, 0, '─' * W, P(5)|curses.A_DIM)
+        if self.log:
+            center(scr, log_y - 1, self.log[-1][:W-4], W, P(5))
 
-        hud_y = H - 4
-        safe_add(scr, hud_y, 0, '╠' + '═'*(W-2) + '╣', P(3)|curses.A_BOLD)
-        safe_add(scr, hud_y, 2, '▓ PARTY ▓', P(3)|curses.A_BOLD)
+        # Party HUD — single row of three centered HP readouts
+        col_w = W // 3
         for i, m in enumerate(self.party.members):
-            mx = 2 + i*(W//3)
-            alive_attr = P(m.color)|curses.A_BOLD if m.alive else P(5)
-            safe_add(scr, hud_y+1, mx, f'{m.name} █ {m.hp:>3}/{m.max_hp}',
-                     alive_attr)
-        safe_add(scr, H-2, 2, '▒ WASD:Move  Q:Exit  ██=Chest  !!=Boss ▒', P(5)|curses.A_BOLD)
-        safe_add(scr, H-1, 0, '╚'+'═'*(W-2)+'╝', P(5)|curses.A_BOLD)
+            label = f'{m.name}  HP {m.hp:>3}/{m.max_hp}'
+            alive_attr = P(m.color)|curses.A_BOLD if m.alive else P(5)|curses.A_DIM
+            cx = i * col_w + max(0, (col_w - len(label)) // 2)
+            safe_add(scr, log_y + 1, cx, label, alive_attr)
+
+        ctrl = 'WASD: Move    Q/ESC: Exit    $=Chest    B=Boss'
+        center(scr, H - 1, ctrl, W, P(5)|curses.A_DIM)
         scr.refresh()
 
 
@@ -598,26 +603,29 @@ class PartyMenu:
     def draw(self, scr, H, W, tick):
         P = curses.color_pair
         scr.erase()
-        safe_add(scr, 0, 0, '╔' + '═'*(W-2) + '╗', P(5)|curses.A_BOLD)
-        menu_header = '█ M E N U █'
-        safe_add(scr, 0, (W-len(menu_header))//2, menu_header, P(5)|curses.A_BOLD)
-        safe_add(scr, 1, 0, '╠' + '═'*(W-2) + '╣', P(5)|curses.A_BOLD)
 
-        tx = 2
-        for i, tab in enumerate(self.TABS):
+        # Header — centered title, gold on the right
+        center(scr, 0, 'MENU', W, P(5)|curses.A_BOLD)
+        gx = f'Gold: {self.party.gold}'
+        safe_add(scr, 0, W - len(gx) - 2, gx, P(4)|curses.A_BOLD)
+        safe_add(scr, 1, 0, '─' * W, P(5)|curses.A_DIM)
+
+        # Tabs centered as a single row
+        tab_labels = [f'[ {t} ]' for t in self.TABS]
+        total = sum(len(t) for t in tab_labels) + 2 * (len(tab_labels) - 1)
+        tx = max(0, (W - total) // 2)
+        for i, lbl in enumerate(tab_labels):
             attr = P(7)|curses.A_BOLD|curses.A_REVERSE if i == self._tab else P(6)
-            tab_str = f'[ {tab} ]'
-            safe_add(scr, 2, tx, tab_str, attr)
-            tx += len(tab_str) + 2
+            safe_add(scr, 2, tx, lbl, attr)
+            tx += len(lbl) + 2
 
         if self._msg_t > 0:
             self._msg_t -= 1
-            safe_add(scr, 3, 2, self._msg[:W-4], P(4)|curses.A_BOLD)
+            center(scr, 3, self._msg[:W-4], W, P(4)|curses.A_BOLD)
 
-        safe_add(scr, 3, W-24, f'█ Gold: {self.party.gold}g █', P(4)|curses.A_BOLD)
+        safe_add(scr, 4, 0, '─' * W, P(5)|curses.A_DIM)
 
         tab = self.TABS[self._tab]
-
         if tab == 'Status':
             self._draw_status(scr, H, W)
         elif tab == 'Equipment':
@@ -625,93 +633,98 @@ class PartyMenu:
         elif tab == 'Items':
             self._draw_items(scr, H, W)
         elif tab == 'Save':
-            save_prompt = '█ Press ENTER to save game █'
-            center(scr, H//2, save_prompt, W, P(4)|curses.A_BOLD)
-
-        safe_add(scr, H-1, 0, '╚'+'═'*(W-2)+'╝', P(5)|curses.A_BOLD)
+            center(scr, H//2, 'Press ENTER to save game', W, P(4)|curses.A_BOLD)
         scr.refresh()
 
     def _draw_status(self, scr, H, W):
         P = curses.color_pair
         m = self.party.members[self._cursor]
-        safe_add(scr, 3, 2, '╔══════════════════╗', P(5)|curses.A_BOLD)
-        safe_add(scr, 3, 5, '▓ PARTY ▓', P(5)|curses.A_BOLD)
+        # Left column — character list
+        lx = max(2, W // 4 - 10)
+        safe_add(scr, 6, lx, 'PARTY', P(5)|curses.A_BOLD)
         for i, mm in enumerate(self.party.members):
             attr = P(7)|curses.A_BOLD if i == self._cursor else P(mm.color)
-            prefix = '▶' if i==self._cursor else ' '
-            safe_add(scr, 4+i, 4, f'{prefix} {mm.name}', attr)
-        safe_add(scr, 7, 2, '╚══════════════════╝', P(5)|curses.A_BOLD)
-        bx = 22
-        safe_add(scr, 3,  bx, f'█ {m.name} the {m.cls} █', P(m.color)|curses.A_BOLD)
-        safe_add(scr, 4,  bx, f'Level: {m.level}   EXP: {m.exp}/{m.exp_to_next()}', P(5))
-        safe_add(scr, 5,  bx, f'█ HP:  {m.hp:>4}/{m.max_hp:<4}█', P(3)|curses.A_BOLD)
-        safe_add(scr, 6,  bx, f'█ MP:  {m.mp:>4}/{m.max_mp:<4}█', P(8)|curses.A_BOLD)
-        safe_add(scr, 7,  bx, f'ATK: {m.atk}   DEF: {m.defense}', P(5))
-        safe_add(scr, 8,  bx, f'MAG: {m.mag}   SPD: {m.spd}', P(5))
-        safe_add(scr, 9,  bx, f'Weapon:    {m.weapon or "—"}', P(5))
-        safe_add(scr, 10, bx, f'Armor:     {m.armor  or "—"}', P(5))
-        safe_add(scr, 11, bx, f'Accessory: {m.acc    or "—"}', P(5))
-        spells_str = ', '.join(m.spells) if m.spells else '—'
-        safe_add(scr, 12, bx, f'Spells: {spells_str[:W-bx-4]}', P(6)|curses.A_BOLD)
+            prefix = '> ' if i == self._cursor else '  '
+            safe_add(scr, 8+i, lx, f'{prefix}{mm.name}', attr)
+        # Right column — stat block
+        bx = max(lx + 14, W // 2 - 6)
+        safe_add(scr, 6,  bx, f'{m.name} the {m.cls}', P(m.color)|curses.A_BOLD)
+        safe_add(scr, 7,  bx, f'Level {m.level}   EXP {m.exp}/{m.exp_to_next()}', P(5))
+        safe_add(scr, 8,  bx, f'HP  {m.hp:>4}/{m.max_hp:<4}', P(3)|curses.A_BOLD)
+        safe_add(scr, 9,  bx, f'MP  {m.mp:>4}/{m.max_mp:<4}', P(8)|curses.A_BOLD)
+        safe_add(scr, 10, bx, f'ATK {m.atk:<3}  DEF {m.defense:<3}', P(5))
+        safe_add(scr, 11, bx, f'MAG {m.mag:<3}  SPD {m.spd:<3}', P(5))
+        safe_add(scr, 13, bx, f'Weapon    {m.weapon or "-"}', P(5))
+        safe_add(scr, 14, bx, f'Armor     {m.armor  or "-"}', P(5))
+        safe_add(scr, 15, bx, f'Accessory {m.acc    or "-"}', P(5))
+        spells_str = ', '.join(m.spells) if m.spells else '-'
+        safe_add(scr, 17, bx, f'Spells: {spells_str[:W-bx-4]}', P(6)|curses.A_BOLD)
 
     def _draw_equip(self, scr, H, W):
         P = curses.color_pair
         from .data import EQUIPMENT
         chars = self.party.members
-        safe_add(scr, 3, 2, '╔════════════════════╗', P(5)|curses.A_BOLD)
-        safe_add(scr, 3, 5, '▓ CHARACTER ▓', P(5)|curses.A_BOLD)
+
+        # Three columns: CHARACTER, SLOT, EQUIPMENT. Fixed widths keep them
+        # from running into each other regardless of terminal size.
+        lx = 4
+        sx = lx + 16
+        ix = sx + 14
+
+        safe_add(scr, 6, lx, 'CHARACTER', P(5)|curses.A_BOLD)
         for i, m in enumerate(chars):
             attr = P(7)|curses.A_BOLD if i == self._equip_char and self._equip_state != 'CHAR' else P(m.color)
-            prefix = '▶' if i == self._equip_char else ' '
-            safe_add(scr, 4+i, 4, f'{prefix} {m.name}', attr)
-        safe_add(scr, 7, 2, '╚════════════════════╝', P(5)|curses.A_BOLD)
+            prefix = '> ' if i == self._equip_char else '  '
+            safe_add(scr, 8+i, lx, f'{prefix}{m.name:<10}', attr)
 
         if self._equip_state in ('EQUIP_CHOOSE','ITEM_LIST'):
-            char = chars[self._equip_char]
             slots = ['Weapon','Armor','Accessory']
-            safe_add(scr, 3, 24, '╔══════════════════╗', P(5)|curses.A_BOLD)
-            safe_add(scr, 3, 27, '▓ SLOT ▓', P(5)|curses.A_BOLD)
+            safe_add(scr, 6, sx, 'SLOT', P(5)|curses.A_BOLD)
             for i, sl in enumerate(slots):
-                prefix = '▶' if i == self._equip_slot else ' '
+                prefix = '> ' if i == self._equip_slot else '  '
                 attr = P(7)|curses.A_BOLD if i == self._equip_slot else P(5)
-                safe_add(scr, 4+i, 26, f'{prefix} {sl}', attr)
-            safe_add(scr, 7, 24, '╚══════════════════╝', P(5)|curses.A_BOLD)
+                safe_add(scr, 8+i, sx, f'{prefix}{sl:<10}', attr)
+
         if self._equip_state == 'ITEM_LIST':
             items = getattr(self, '_equip_items', [])
             char  = chars[self._equip_char]
-            safe_add(scr, 8, 2, '╔' + '═'*(W-6) + '╗', P(5)|curses.A_BOLD)
-            safe_add(scr, 8, (W-16)//2, '▓ EQUIPMENT ▓', P(5)|curses.A_BOLD)
-            safe_add(scr, 9, 2, '╠' + '═'*(W-6) + '╣', P(5)|curses.A_BOLD)
-            for i, nm in enumerate(items[:H-20]):
+            safe_add(scr, 6, ix, 'EQUIPMENT', P(5)|curses.A_BOLD)
+            for i, nm in enumerate(items[:H-12]):
                 d = EQUIPMENT.get(nm, {})
-                prefix = '▶' if i == self._cursor else ' '
+                prefix = '> ' if i == self._cursor else '  '
                 if nm == '[Remove]':
-                    label = f'{prefix} [Remove current]'
+                    label = f'{prefix}[Remove current]'
                 else:
                     delta = char.stat_preview(nm)
                     parts = [f'{k}:{("+" if v>=0 else "")}{v}' for k,v in delta.items() if v != 0]
-                    label = f'{prefix} {nm:<20} {d.get("price",0):>5}g  {" ".join(parts)}'
+                    label = f'{prefix}{nm:<18} {d.get("price",0):>5}g  {" ".join(parts)}'
                 attr = P(7)|curses.A_BOLD if i == self._cursor else P(5)
-                safe_add(scr, 10+i, 4, label[:W-8], attr)
+                safe_add(scr, 8+i, ix, label[:W-ix-2], attr)
 
     def _draw_items(self, scr, H, W):
         P = curses.color_pair
         from .data import ITEMS
         avail = [(n,c) for n,c in self.party.items.items()]
-        safe_add(scr, 3, 2, '╔' + '═'*(W//2-4) + '╗', P(4)|curses.A_BOLD)
-        safe_add(scr, 3, W//2-8, '▓ ITEMS ▓', P(4)|curses.A_BOLD)
-        safe_add(scr, 4, 2, '╠' + '═'*(W//2-4) + '╣', P(4)|curses.A_BOLD)
-        for i, (name, cnt) in enumerate(avail[:H-16]):
+        # Layout: items list takes left ~55% when target column is showing,
+        # full width otherwise. Truncate item labels so they never spill
+        # into the target column.
+        targeting = self._item_state == 'TARGET'
+        lx        = max(2, W // 8)
+        list_end  = (W // 2 + 4) if targeting else (W - 4)
+        list_w    = max(20, list_end - lx - 2)
+
+        safe_add(scr, 6, lx, 'ITEMS', P(4)|curses.A_BOLD)
+        for i, (name, cnt) in enumerate(avail[:H-10]):
             d     = ITEMS.get(name, {})
-            prefix = '▶' if i == self._item_cursor else ' '
-            label = f'{prefix} {name:<18} x{cnt:<3}  {d.get("desc","")}'
+            prefix = '> ' if i == self._item_cursor else '  '
+            label = f'{prefix}{name:<14} x{cnt:<3}  {d.get("desc","")}'
             attr  = P(7)|curses.A_BOLD if i == self._item_cursor else P(4)
-            safe_add(scr, 5+i, 4, label[:W//2-4], attr)
-        if self._item_state == 'TARGET':
-            safe_add(scr, 3, W//2+2, '╔' + '═'*22 + '╗', P(5)|curses.A_BOLD)
-            safe_add(scr, 3, W//2+8, '▓ USE ON ▓', P(5)|curses.A_BOLD)
-            safe_add(scr, 4, W//2+2, '╠' + '═'*22 + '╣', P(5)|curses.A_BOLD)
+            safe_add(scr, 8+i, lx, label[:list_w], attr)
+
+        if targeting:
+            tx = list_end + 2
+            safe_add(scr, 6, tx, 'USE ON', P(5)|curses.A_BOLD)
             for i, m in enumerate(self.party.members):
-                prefix = '▶' if i == self._item_target else ' '
+                prefix = '> ' if i == self._item_target else '  '
                 attr = P(7)|curses.A_BOLD if i == self._item_target else P(m.color)
-                safe_add(scr, 5+i, W//2+4, f'{prefix} {m.name} HP:{m.hp}', attr)
+                safe_add(scr, 8+i, tx, f'{prefix}{m.name}  HP {m.hp}'[:W-tx-1], attr)
