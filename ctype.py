@@ -180,7 +180,11 @@ class Player:
         self.x  = float(8)
         self.y  = float(self.GR - AT) // 2 + AT
         self.lives   = LIVES
-        self.power   = 0
+        # Start at power 1 so the player has a 3-row bullet spread immediately.
+        # Power 0 (single middle bullet) made early waves frustrating because
+        # the player had to perfectly align each enemy row, and enemies on the
+        # first wave reach the ship before vertical movement can intercept.
+        self.power   = 1
         self.speed   = P_SPD
         self.invuln  = 0
         self.shoot_cd= 0
@@ -458,8 +462,11 @@ class Game:
                 if beam:
                     hit = (ex <= W and abs(b['y'] - (ey + eh//2)) <= eh//2 + 1)
                 else:
+                    # Vertical tolerance widened from +/-1 to +/-2 so bullets
+                    # connect when the player is close to but not exactly on
+                    # the enemy row.
                     hit = (ex - 2 <= b['x'] <= ex + ew + 1 and
-                           ey - 1 <= b['y'] <= ey + eh + 1)
+                           ey - 2 <= b['y'] <= ey + eh + 2)
                 if hit:
                     if not beam: b['dead'] = True
                     killed = e.take_hit(dmg if beam else 1)
@@ -843,11 +850,13 @@ def draw_game(scr, game, H, W, tick):
                 for dx in range(1, min(blen, W-bc-1)):
                     p(br, bc+dx, '═', pulse|curses.A_BOLD)
             elif b.get('heavy'):
-                # Power-2 center bolt — heavier glyph, gold tint
-                p(br, bc, '━▶', P(4)|curses.A_BOLD)
+                # Power-2 center bolt — chunky block + arrow, gold tint
+                p(br, bc, '█▶', P(4)|curses.A_BOLD)
             else:
-                # Normal bullet — green dart (good guys = green)
-                p(br, bc, '─▶', P(3)|curses.A_BOLD)
+                # Normal bullet — big green dot + arrow, much more visible
+                # than the old thin dash so projectiles read clearly against
+                # the background starfield.
+                p(br, bc, '●▶', P(3)|curses.A_BOLD)
 
     # ── Particles (hit sparks) ────────────────────────────────────────────────
     for pt in game.particles:

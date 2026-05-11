@@ -463,8 +463,8 @@ GAMES = [
 # stepped/rendered — switching selection pauses the previous and resumes the
 # new one from wherever it left off.
 
-DEMO_H = 4
-DEMO_W = 18
+DEMO_H = 6
+DEMO_W = 32
 
 
 class _Demo:
@@ -501,256 +501,421 @@ class _Demo:
 
 
 class _CtypeDemo(_Demo):
+    # Power-2 player sprite (3 rows, 7 cols) reused from ctype.py — keeps the
+    # demo visually identical to the game's own intro screen.
+    SHIP = [
+        '◢█╱═══╲',
+        '◈══●▶▷▶',
+        '◣█╲═══╱',
+    ]
+
     def __init__(self) -> None:
         super().__init__()
-        # Seed in-flight bullets + an approaching enemy so the panel is busy
-        # immediately on first reveal rather than building up over a second.
-        self.bullets: list[list[int]] = [[7, 1], [11, 1]]
-        self.enemies: list[list[int]] = [[DEMO_W - 1, 1]]
+        # Seeded mid-action: bullets streaming, enemies entering, a star field.
+        self.bullets: list[list[int]] = [[12, 2], [16, 1], [20, 3], [24, 2]]
+        self.enemies: list[list[int]] = [[26, 1], [30, 3]]
         self.hits: list[list[int]] = []
+        self.star_off = 0
 
     def step(self) -> None:
         for b in self.bullets: b[0] += 1
         self.bullets = [b for b in self.bullets if b[0] < DEMO_W]
-        if self.t % 4 == 0:
-            self.bullets.append([5, 1])
+        # Fire from one of three barrels every few ticks (rows 1, 2, 3 cover
+        # the ship body — matches the in-game power-1 spread).
+        if self.t % 3 == 0:
+            self.bullets.append([9, self.rng.choice([1, 2, 3])])
         if self.t % 2 == 0:
             for e in self.enemies: e[0] -= 1
-            self.enemies = [e for e in self.enemies if e[0] > 4]
-        if self.t % 10 == 0 and len(self.enemies) < 3:
-            self.enemies.append([DEMO_W - 1, self.rng.randrange(0, 3)])
+            self.enemies = [e for e in self.enemies if e[0] > 9]
+        if self.t % 6 == 0 and len(self.enemies) < 4:
+            self.enemies.append([DEMO_W - 1, self.rng.randrange(1, 4)])
         for b in self.bullets[:]:
             for e in self.enemies[:]:
-                if b[1] == e[1] and abs(b[0] - e[0]) <= 1:
+                if b[1] == e[1] and abs(b[0] - e[0]) <= 2:
                     self.hits.append([e[0], e[1], 0])
                     if b in self.bullets: self.bullets.remove(b)
                     if e in self.enemies: self.enemies.remove(e)
                     break
         for h in self.hits: h[2] += 1
         self.hits = [h for h in self.hits if h[2] < 3]
+        if self.t % 2 == 0:
+            self.star_off = (self.star_off + 1) % 7
 
     def draw(self, c: list[list[str]]) -> None:
-        self._put(c, 0, 2, '▲')
-        self._put(c, 1, 0, '═►')
-        self._put(c, 2, 2, '▼')
-        for b in self.bullets: self._put(c, b[1], b[0], '·')
-        for e in self.enemies: self._put(c, e[1], e[0], '◆')
-        for h in self.hits:    self._put(c, h[1], h[0], '✦' if h[2] < 2 else '✧')
+        # Parallax background stars on rows 0 and 5
+        for col in range(DEMO_W):
+            if (col + self.star_off) % 7 == 0:
+                self._put(c, 0, col, '·')
+            if (col + self.star_off * 2) % 9 == 0:
+                self._put(c, 5, col, '·')
+        # Player ship at left
+        for i, row in enumerate(self.SHIP):
+            self._put(c, 1+i, 1, row)
+        # Bullets
+        for b in self.bullets:
+            self._put(c, b[1], b[0], '●▶')
+        # Enemies
+        for e in self.enemies:
+            self._put(c, e[1], e[0], '◆')
+        # Hit sparks
+        for h in self.hits:
+            self._put(c, h[1], h[0], '✦' if h[2] < 2 else '✧')
 
 
 class _ClaudtraDemo(_Demo):
     def __init__(self) -> None:
         super().__init__()
-        self.shot_x = 8       # shot already in flight
-        self.enemy_x = 13
+        # Multiple shots in flight; staggered enemies in two rows.
+        self.shots: list[int] = [10, 16, 22]
+        self.enemies: list[list[int]] = [[28, 3], [30, 2]]
         self.leg = 0
+        self.bg_off = 0
 
     def step(self) -> None:
         if self.t % 2 == 0: self.leg ^= 1
-        if self.shot_x < 0:
-            if self.t % 7 == 0: self.shot_x = 5
-        else:
-            self.shot_x += 1
-            if self.shot_x >= self.enemy_x - 1:
-                self.enemy_x = DEMO_W - 1
-                self.shot_x = -1
-            elif self.shot_x >= DEMO_W:
-                self.shot_x = -1
-        if self.t % 4 == 0 and self.enemy_x > 9:
-            self.enemy_x -= 1
+        # Shots advance
+        for i in range(len(self.shots)):
+            self.shots[i] += 1
+        self.shots = [s for s in self.shots if s < DEMO_W]
+        if self.t % 4 == 0:
+            self.shots.append(6)
+        # Enemies advance
+        if self.t % 3 == 0:
+            for e in self.enemies: e[0] -= 1
+            self.enemies = [e for e in self.enemies if e[0] > 7]
+        if self.t % 8 == 0 and len(self.enemies) < 3:
+            self.enemies.append([DEMO_W - 1, self.rng.choice([2, 3])])
+        # Background scrolls left, suggesting forward motion
+        if self.t % 3 == 0:
+            self.bg_off = (self.bg_off + 1) % 6
 
     def draw(self, c: list[list[str]]) -> None:
-        self._put(c, 0, 2, '╭─╮')
-        self._put(c, 1, 2, '│·│')
-        self._put(c, 2, 2, '╰┬╯')
-        self._put(c, 3, 2, '╱╲' if self.leg == 0 else '╲╱')
-        if self.shot_x >= 0:
-            self._put(c, 1, self.shot_x, '═►')
-            if self.shot_x >= self.enemy_x - 2:
-                self._put(c, 1, self.enemy_x, '✦'); return
-        self._put(c, 1, self.enemy_x, '◆')
+        # Distant hills (row 0)
+        hills = '  ╱╲      ╱──╲       ╱╲       ╱──╲   '
+        for col in range(DEMO_W):
+            ch = hills[(col + self.bg_off) % len(hills)]
+            if ch != ' ': self._put(c, 0, col, ch)
+        # Ground line
+        self._put(c, 5, 0, '═' * DEMO_W)
+        # Runner sprite (4 rows tall)
+        self._put(c, 1, 2, '╭─╮')
+        self._put(c, 2, 2, '│·│')
+        self._put(c, 3, 2, '╰┬╯')
+        self._put(c, 4, 2, '╱╲' if self.leg == 0 else '╲╱')
+        # Projectile stream from gun (row 3 — body level)
+        for s in self.shots:
+            self._put(c, 3, s, '═►')
+        # Enemies
+        for e in self.enemies:
+            self._put(c, e[1], e[0], '◆')
 
 
 class _FightDemo(_Demo):
-    step_every = 4
+    step_every = 3
 
     def __init__(self) -> None:
         super().__init__()
-        self.atk = 0          # 0 = left attacks, 1 = right attacks
-        self.phase = 2        # start mid-extend so action is visible immediately
+        # 7-phase sequence per attacker: neutral, wind, extend, impact-1,
+        # impact-2 (peak), recover, post — then attacker swaps.
+        self.atk = 0
+        self.phase = 2
         self.phase_t = 0
 
     def step(self) -> None:
         self.phase_t += 1
-        if self.phase_t >= 3:
+        if self.phase_t >= 2:
             self.phase_t = 0
             self.phase += 1
-            if self.phase > 4:
+            if self.phase > 6:
                 self.phase = 0
                 self.atk ^= 1
 
     def draw(self, c: list[list[str]]) -> None:
-        self._put(c, 0, 2,  '◯')
-        self._put(c, 0, 13, '◯')
-        self._put(c, 2, 2,  '╱╲')
-        self._put(c, 2, 13, '╱╲')
-        body_l, body_r = ' ╱│╲', ' ╱│╲'
+        # Arena floor
+        self._put(c, 5, 0, '─' * DEMO_W)
+        # Crowd dots above arena
+        for col in (3, 9, 17, 23, 29):
+            self._put(c, 0, col, '·')
+
+        # Left fighter at cols 4-8, right fighter at cols 23-27. 4 rows tall.
+        # Head row
+        self._put(c, 1, 5, '◯')
+        self._put(c, 1, 25, '◯')
+        # Feet
+        self._put(c, 4, 4, '╱╲')
+        self._put(c, 4, 25, '╱╲')
+
+        body_l = ' ╱│╲'   # neutral
+        body_r = ' ╱│╲'
+        # Left attack sequence
         if self.atk == 0:
-            if self.phase == 2:   body_l = ' ╱│═►'
+            if self.phase == 2:   body_l = ' ╱│══►'
             elif self.phase == 3:
-                body_l = ' ╱│════►'; body_r = '  ╲╱│'
-                self._put(c, 1, 12, '✦')
-            elif self.phase == 4: body_r = '  ╲╱│'
+                body_l = ' ╱│═════►'
+                self._put(c, 2, 21, '✦')
+                body_r = '  ╲╱│'
+            elif self.phase == 4:
+                self._put(c, 2, 22, '✧')
+                self._put(c, 1, 22, '*')
+                body_r = '  ╲╱│'
+            elif self.phase >= 5:
+                body_r = '  ╲╱│'
         else:
-            if self.phase == 2:   body_r = '◀═│╲'
+            if self.phase == 2:   body_r = '◄══│╲ '
             elif self.phase == 3:
-                body_r = '◀════│╲'; body_l = '│╲╱'
-                self._put(c, 1, 5,  '✦')
-            elif self.phase == 4: body_l = '│╲╱'
-        self._put(c, 1, 1,  body_l)
-        self._put(c, 1, 12, body_r)
+                body_r = '◄═════│╲'
+                self._put(c, 2, 10, '✦')
+                body_l = '│╲╱  '
+            elif self.phase == 4:
+                self._put(c, 2,  9, '✧')
+                self._put(c, 1,  9, '*')
+                body_l = '│╲╱  '
+            elif self.phase >= 5:
+                body_l = '│╲╱  '
+        self._put(c, 2, 4,  body_l)
+        self._put(c, 2, 23, body_r)
+        # Legs
+        self._put(c, 3, 5,  '╱╲')
+        self._put(c, 3, 25, '╱╲')
 
 
 class _SuperClaudioDemo(_Demo):
     def __init__(self) -> None:
         super().__init__()
-        self.jump_t = -1
-        self.coin_x = 12          # coin already approaching
-        self.collected = False
-        self.spawn_cool = 0
+        self.hero_x = 4
+        self.jump_t = -1            # >= 0 while airborne (counts up over 8 steps)
+        # A train of pickups + an enemy approaching from the right
+        self.coins: list[list[int]] = [[14, 2], [20, 1], [26, 2]]
+        self.enemy_x = DEMO_W - 1
+        self.collected: list[int] = []   # x positions of recent grabs
 
     def step(self) -> None:
-        if self.coin_x >= 0:
-            if self.t % 2 == 0: self.coin_x -= 1
-            if self.coin_x < 0:
-                self.collected = False
-                self.spawn_cool = 8
-        elif self.spawn_cool > 0:
-            self.spawn_cool -= 1
-            if self.spawn_cool == 0:
-                self.coin_x = DEMO_W - 1
-        if self.coin_x == 8 and self.jump_t < 0:
-            self.jump_t = 0
+        # Coins drift left
+        if self.t % 2 == 0:
+            for coin in self.coins: coin[0] -= 1
+        self.coins = [coin for coin in self.coins if coin[0] >= 2]
+        if self.t % 5 == 0 and len(self.coins) < 4:
+            self.coins.append([DEMO_W - 1, self.rng.choice([1, 2])])
+        # Enemy advances slower
+        if self.t % 4 == 0 and self.enemy_x > 8:
+            self.enemy_x -= 1
+        if self.enemy_x <= 8:
+            # Hero stomps -> respawn enemy far right
+            self.enemy_x = DEMO_W - 1
+            if self.jump_t < 0:
+                self.jump_t = 0
+        # Trigger jump when coin row 1 is close
+        for coin in self.coins:
+            if coin[1] == 1 and coin[0] in (8, 9) and self.jump_t < 0:
+                self.jump_t = 0
+                break
         if self.jump_t >= 0:
             self.jump_t += 1
-            if self.jump_t >= 6: self.jump_t = -1
-        if self.jump_t in (2, 3) and self.coin_x in range(4, 7):
-            self.collected = True
-            self.coin_x = -1
+            if self.jump_t >= 8: self.jump_t = -1
+        # Collect coins the hero passes through
+        hero_row = 1 if self.jump_t >= 0 else 2
+        for coin in self.coins[:]:
+            if coin[0] in (self.hero_x, self.hero_x+1) and coin[1] == hero_row:
+                self.collected.append(coin[0])
+                self.coins.remove(coin)
+        # Sparkles fade
+        self.collected = [x-1 for x in self.collected if x > 2]
 
     def draw(self, c: list[list[str]]) -> None:
-        self._put(c, 3, 0, '▓' * DEMO_W)
+        # Sky stars
+        if self.t % 5 == 0: pass
+        for col in (5, 11, 19, 25):
+            self._put(c, 0, col, '·')
+        # Ground tiles
+        self._put(c, 5, 0, '▓' * DEMO_W)
+        # Hero — airborne vs grounded
         if self.jump_t >= 0:
-            self._put(c, 0, 3, '◯')
-            self._put(c, 1, 2, '╱│╲')
-            self._put(c, 2, 3, '▼')
+            self._put(c, 0, self.hero_x, '◯')
+            self._put(c, 1, self.hero_x-1, '╱│╲')
+            self._put(c, 2, self.hero_x, '▼')
         else:
-            self._put(c, 0, 3, '★')
-            self._put(c, 1, 3, '◯')
-            self._put(c, 2, 2, '╱│╲')
-        if self.coin_x >= 0:
-            row = 0 if self.t % 2 == 0 else 1
-            self._put(c, row, self.coin_x, '◆')
-        elif self.collected:
-            self._put(c, 1, 5, '✦')
+            self._put(c, 1, self.hero_x, '★')
+            self._put(c, 2, self.hero_x, '◯')
+            self._put(c, 3, self.hero_x-1, '╱│╲')
+            self._put(c, 4, self.hero_x-1, '╱ ╲')
+        # Coins
+        for coin in self.coins:
+            self._put(c, coin[1], coin[0], '◆')
+        # Enemy approaching
+        if self.enemy_x < DEMO_W:
+            self._put(c, 4, self.enemy_x, '@')
+        # Recent-collection sparkles
+        for x in self.collected:
+            self._put(c, 1, x, '✦')
 
 
 class _ClaudturismoDemo(_Demo):
     step_every = 2
 
+    # Top-down car art (3 rows). Bigger than the old single-line version.
+    CAR = [
+        '╭─◉─╮',
+        '│███│',
+        '╰─◉─╯',
+    ]
+    RIVAL = [
+        '╭─◆─╮',
+        '│▒▒▒│',
+        '╰─◆─╯',
+    ]
+
     def __init__(self) -> None:
         super().__init__()
         self.dash = 0
+        self.rival_y = 1     # rival drifts left-right
+        self.rival_t = 0
 
     def step(self) -> None:
         self.dash = (self.dash + 1) % 4
+        self.rival_t += 1
+        if self.rival_t >= 6:
+            self.rival_t = 0
+            self.rival_y = 1 if self.rival_y == 0 else 0
 
     def draw(self, c: list[list[str]]) -> None:
+        # Road edges
         for r in range(DEMO_H):
-            self._put(c, r, 1, '║')
-            self._put(c, r, DEMO_W - 2, '║')
-        mid = DEMO_W // 2
-        for i in range(DEMO_H):
-            if (i + self.dash) % 2 == 0:
-                self._put(c, i, mid, '│')
-        self._put(c, 0, 6, '╭───╮')
-        self._put(c, 1, 6, '│◉═◉│')
-        self._put(c, 2, 6, '╰───╯')
+            self._put(c, r, 0,         '║')
+            self._put(c, r, DEMO_W-1,  '║')
+        # Center lane dashes (animated)
+        mid_l = DEMO_W // 2 - 4
+        mid_r = DEMO_W // 2 + 4
+        for r in range(DEMO_H):
+            if (r + self.dash) % 2 == 0:
+                self._put(c, r, mid_l, '│')
+                self._put(c, r, mid_r, '│')
+        # Rival car ahead (cols mid-2 to mid+2 roughly), 3 rows tall.
+        rival_x = mid_l + 6 + self.rival_y
+        for i, row in enumerate(self.RIVAL):
+            self._put(c, i, rival_x, row)
+        # Player car at the bottom-center (3 rows tall, ends at row 5)
+        car_x = mid_l + 6
+        for i, row in enumerate(self.CAR):
+            self._put(c, 3+i, car_x, row)
 
 
 class _ClaudemonDemo(_Demo):
     step_every = 4
 
+    # Two creatures facing each other — battle scene.
+    LEFT = [
+        ' ╭───╮  ',
+        ' │◉ ◉│  ',
+        ' ╰─◡─╯  ',
+        '  ╱╲    ',
+    ]
+    RIGHT = [
+        '  ╭───╮ ',
+        '  │● ●│ ',
+        '  ╰─◠─╯ ',
+        '   ╱╲   ',
+    ]
+
     def __init__(self) -> None:
         super().__init__()
-        self.wig = 0
+        self.bounce = 0
         self.blink = 0
-        self.sparkles: list[list[int]] = [[2, 0, 0], [14, 1, 1], [3, 2, 2]]
+        self.sparkles: list[list[int]] = [[4, 0, 0], [22, 0, 1], [14, 5, 2]]
 
     def step(self) -> None:
-        self.wig = (self.wig + 1) % 4
+        self.bounce = (self.bounce + 1) % 4
         if self.t % 6 == 0: self.blink = 2
         if self.blink > 0:  self.blink -= 1
-        if self.t % 3 == 0 and len(self.sparkles) < 3:
+        if self.t % 2 == 0 and len(self.sparkles) < 5:
             self.sparkles.append([
                 self.rng.randrange(0, DEMO_W),
-                self.rng.randrange(0, DEMO_H - 1),
+                self.rng.randrange(0, DEMO_H),
                 0,
             ])
         for s in self.sparkles: s[2] += 1
         self.sparkles = [s for s in self.sparkles if s[2] < 4]
 
     def draw(self, c: list[list[str]]) -> None:
-        dx = 1 if self.wig in (1, 2) else 0
-        base = 5 + dx
+        # VS banner across top
+        self._put(c, 0, DEMO_W // 2 - 1, 'VS')
+        # Background sparkles
         for s in self.sparkles:
             self._put(c, s[1], s[0], '✦' if s[2] < 2 else '✧')
-        self._put(c, 0, base, '╭───╮')
-        eyes = '│─ ─│' if self.blink > 0 else '│◉ ◉│'
-        self._put(c, 1, base, eyes)
-        mouth = '╰─◠─╯' if self.wig in (0, 2) else '╰─◡─╯'
-        self._put(c, 2, base, mouth)
-        self._put(c, 3, base + 2, '╱╲')
+        # Bounce alternates by 1 row to look alive
+        ly = 1 + (1 if self.bounce in (1, 2) else 0)
+        ry = 1 + (1 if self.bounce in (3, 0) else 0)
+        # Eyes blink on the LEFT creature
+        left = list(self.LEFT)
+        if self.blink > 0:
+            left[1] = ' │─ ─│  '
+        for i, row in enumerate(left):
+            self._put(c, ly + i - 1, 4, row)
+        for i, row in enumerate(self.RIGHT):
+            self._put(c, ry + i - 1, DEMO_W - 12, row)
 
 
 class _FinalClaudesyDemo(_Demo):
-    step_every = 4
+    step_every = 3
+
+    HERO = [
+        '  ◯  ',
+        ' ╱│╲ ',
+        '  │  ',
+        ' ╱ ╲ ',
+    ]
 
     def __init__(self) -> None:
         super().__init__()
-        self.phase = 2          # start with slash already launching
-        self.slash_x = 7
-        self.enemy_x = 14
+        # Phases: 0-1 idle, 2 wind, 3-5 slash-travel, 6 impact, 7 spell, 8-9 recover
+        self.phase = 2
+        self.slash_x = 9
+        self.enemy_x = 24
+        self.spell_t = -1
 
     def step(self) -> None:
         self.phase += 1
         if self.phase == 2:
-            self.slash_x = 5
+            self.slash_x = 8
         elif self.phase in (3, 4, 5):
             self.slash_x += 2
         elif self.phase == 6:
             self.slash_x = -1
-        elif self.phase >= 9:
+        elif self.phase == 7:
+            self.spell_t = 0
+        elif self.phase == 8:
+            self.spell_t = 1
+        elif self.phase >= 10:
             self.phase = 0
+            self.spell_t = -1
 
     def draw(self, c: list[list[str]]) -> None:
-        self._put(c, 0, 3, '◯')
+        # Hero on the left
+        for i, row in enumerate(self.HERO):
+            self._put(c, 1 + i, 2, row)
+        # Sword arc on the wind-up
         if self.phase in (1, 2):
-            self._put(c, 1, 2, '╱│╲')
-        else:
-            self._put(c, 1, 2, '╱│ ')
-        self._put(c, 2, 3, '│')
-        self._put(c, 3, 2, '╱ ╲')
+            self._put(c, 1, 6, '╲')
+            self._put(c, 2, 7, '═')
+        # Slash flying right
         if 0 <= self.slash_x < DEMO_W:
-            self._put(c, 1, self.slash_x, '═►')
+            self._put(c, 2, self.slash_x, '═══►')
+        # Enemy at right
+        enemy_row = 2
         if self.phase < 6:
-            self._put(c, 1, self.enemy_x, '◆')
+            self._put(c, enemy_row, self.enemy_x, '◆')
+            self._put(c, enemy_row+1, self.enemy_x-1, '╱╲')
         elif self.phase == 6:
-            self._put(c, 1, self.enemy_x, '✦')
-        elif self.phase == 7:
-            self._put(c, 1, self.enemy_x, '✧')
-        else:
-            self._put(c, 1, self.enemy_x, '◆')
+            self._put(c, enemy_row, self.enemy_x, '✦')
+        elif self.phase >= 7 and self.spell_t >= 0:
+            # Spell shockwave radiating from enemy position
+            r = self.spell_t
+            for dy in range(-r, r+1):
+                for dx in range(-r, r+1):
+                    if abs(dy) + abs(dx) == r:
+                        ch = '·' if r == 1 else '✧'
+                        self._put(c, enemy_row + dy, self.enemy_x + dx, ch)
+        # Floor line
+        self._put(c, 5, 0, '─' * DEMO_W)
 
 
 DEMOS: dict[str, _Demo] = {
