@@ -5,6 +5,8 @@ Converts the ANSI Shadow ASCII art (with box-drawing chars) to TTF/OTF.
 Each box-drawing character is rendered as the appropriate sub-pixel shape.
 """
 
+from pathlib import Path
+
 from fontTools.fontBuilder import FontBuilder
 from fontTools.pens.ttGlyphPen import TTGlyphPen
 
@@ -533,7 +535,7 @@ def main():
                 usWinAscent=ASCENT, usWinDescent=DESCENT)
     fb.setupPost()
 
-    out = "/Users/jeffmiddleton/Desktop/claudegames/claudcade-site/ClaudecadeShadow-Regular.ttf"
+    out = str(Path(__file__).parent / "ClaudecadeShadow-Regular.ttf")
     fb.font.save(out)
     print(f"Font built: {out}")
     print(f"Glyphs: {len(glyph_order)}")

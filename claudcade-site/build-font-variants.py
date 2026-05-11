@@ -18,7 +18,7 @@ from pathlib import Path
 from fontTools.fontBuilder import FontBuilder
 from fontTools.pens.ttGlyphPen import TTGlyphPen
 
-ROOT = Path('/Users/jeffmiddleton/Desktop/claudegames/claudcade-site')
+ROOT = Path(__file__).parent
 
 # ── Load the SHADOW GLYPHS + sub-pixel renderer from build-font.py ────────────
 spec = importlib.util.spec_from_file_location('build_font', ROOT / 'build-font.py')
