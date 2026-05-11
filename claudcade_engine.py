@@ -56,7 +56,6 @@ import time
 from pathlib import Path
 from typing import Callable, Literal, TypedDict
 
-
 # ── TypedDicts ─────────────────────────────────────────────────────────────────
 
 class StarDict(TypedDict):
@@ -235,7 +234,7 @@ class Input:
     _key_age: dict[int, int] = {}
 
     @classmethod
-    def _poll(cls, scr: curses.window) -> 'Input':
+    def _poll(cls, scr: curses.window) -> Input:
         """Poll one frame of input. Rotates class-level _last so just_pressed /
         just_released always have the prior frame to compare against. Recently-
         seen keys remain in inp.keys for _REPEAT_GRACE frames to compensate
@@ -629,7 +628,7 @@ class Scene:
         self.engine.fade_to("gameover")    scene switch with fade transition
     """
 
-    engine: 'Engine'
+    engine: Engine
     payload: object | None = None
 
     def on_enter(self) -> None: pass
@@ -684,7 +683,7 @@ class Engine:
         self._seed = seed
         self.rng = random.Random(seed)
 
-    def scene(self, name: str, s: Scene) -> 'Engine':
+    def scene(self, name: str, s: Scene) -> Engine:
         """Register a scene. Returns self for chaining."""
         s.engine = self
         self._scenes[name] = s

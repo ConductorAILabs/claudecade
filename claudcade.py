@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 """Claudcade — The Claude Terminal Arcade Launcher"""
-import curses, time, random, subprocess, os, sys
-from claudcade_engine import setup_colors, at_safe
+import curses
+import os
+import random
+import subprocess
+import sys
+import time
+
+from claudcade_engine import at_safe, setup_colors
 
 # ── TITLE ART (CLAUDECADE in block font) ───────────────────────────────────────
 TITLE = [
@@ -590,7 +596,7 @@ def run():
     while True:
         try:
             curses.wrapper(arcade_main)
-        except curses.error as e:
+        except curses.error:
             print('\n  ERROR: Curses terminal support failed')
             print('  This usually means you\'re not in a proper interactive terminal.\n')
             print('  To play Claudcade, run it in a tmux session:')

@@ -2,10 +2,11 @@
 """Claudtra — Side-Scrolling Action · ESC to quit"""
 from __future__ import annotations
 
-import curses, random
-from claudcade_engine import Engine, Renderer, Scene, at_safe
+import curses
+import random
+
+from claudcade_engine import BulletDict, Engine, PlatformDict, Renderer, Scene, at_safe
 from claudcade_engine import draw_how_to_play as _engine_how_to_play
-from claudcade_engine import BulletDict, PlatformDict
 from claudcade_scores import player_label, submit_async
 
 CONTROLS = [
@@ -403,7 +404,7 @@ _p = at_safe
 
 def draw_intro(scr, H, W, tick):
     P = curses.color_pair; scr.erase()
-    p = lambda r,c,s,a=0: _p(scr,H,W,r,c,s,a)
+    def p(r, c, s, a=0): _p(scr, H, W, r, c, s, a)
 
     # Outer border
     p(0,   0, '╔'+'═'*(W-2)+'╗', P(5)|curses.A_BOLD)
@@ -473,7 +474,7 @@ def draw_intro(scr, H, W, tick):
 
 def draw_game(scr, world, H, W, tick):
     P = curses.color_pair; scr.erase()
-    p = lambda r,c,s,a=0: _p(scr,H,W,r,c,s,a)
+    def p(r, c, s, a=0): _p(scr, H, W, r, c, s, a)
     pl  = world.player
     cam = world.cam_x
     AT  = 3        # top of play area (row index)
@@ -675,7 +676,7 @@ def draw_game(scr, world, H, W, tick):
 
 def draw_gameover(scr, H, W, score, tick, sub_result=None):
     P = curses.color_pair; scr.erase()
-    p = lambda r,c,s,a=0: _p(scr,H,W,r,c,s,a)
+    def p(r, c, s, a=0): _p(scr, H, W, r, c, s, a)
 
     # Outer border
     p(0,   0, '╔'+'═'*(W-2)+'╗', P(5)|curses.A_BOLD)

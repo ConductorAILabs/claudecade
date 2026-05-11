@@ -16,7 +16,7 @@ those generate fixed-width frames by construction.
 import ast
 import os
 import sys
-from typing import Iterator
+from collections.abc import Iterator
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 

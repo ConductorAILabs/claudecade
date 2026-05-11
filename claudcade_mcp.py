@@ -14,7 +14,11 @@ Add to ~/.claude/settings.json:
 """
 from __future__ import annotations
 
-import json, sys, urllib.request, urllib.parse, urllib.error
+import json
+import sys
+import urllib.error
+import urllib.parse
+import urllib.request
 from typing import Any
 
 # JSON-RPC payloads carry arbitrary nested JSON; the wire format is the only

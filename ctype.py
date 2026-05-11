@@ -2,10 +2,12 @@
 """C-TYPE: Space Shooter · ESC to quit"""
 from __future__ import annotations
 
-import curses, random, math
-from claudcade_engine import Engine, Renderer, Scene, at_safe
+import curses
+import math
+import random
+
+from claudcade_engine import Engine, Renderer, Scene, StarDict, at_safe
 from claudcade_engine import draw_how_to_play as _engine_how_to_play
-from claudcade_engine import StarDict
 from claudcade_scores import player_label, submit_async
 
 CONTROLS = [
@@ -613,7 +615,7 @@ _p = at_safe
 
 def draw_intro(scr, H, W, tick):
     P = curses.color_pair; scr.erase()
-    p = lambda r,c,s,a=0: _p(scr,H,W,r,c,s,a)
+    def p(r, c, s, a=0): _p(scr, H, W, r, c, s, a)
 
     # ── Outer border ──────────────────────────────────────────────────────────
     p(0,   0, '╔'+'═'*(W-2)+'╗', P(5)|curses.A_BOLD)
@@ -666,7 +668,7 @@ def draw_intro(scr, H, W, tick):
 
 def draw_game(scr, game, H, W, tick):
     P = curses.color_pair; scr.erase()
-    p = lambda r,c,s,a=0: _p(scr,H,W,r,c,s,a)
+    def p(r, c, s, a=0): _p(scr, H, W, r, c, s, a)
     pl = game.player
     GR = game.GR
 
@@ -694,7 +696,7 @@ def draw_game(scr, game, H, W, tick):
     p(1, 18, lives_box, P(2)|curses.A_BOLD)
 
     # ── HUD BOX 2: SCORE (center section, yellow) ────────────────────────────
-    score_s = f'┌ SCORE ┐'
+    score_s = '┌ SCORE ┐'
     score_val = f'{game.score:08d}'
     score_box = f'{score_val}'
     score_pos = (W - len(score_val)) // 2
@@ -703,7 +705,7 @@ def draw_game(scr, game, H, W, tick):
 
     # ── HUD BOX 3: POWER + WAVE + BOMBS (right section, cyan) ────────────────
     pwr_pips = '▰' * (pl.power + 1) + '▱' * (2 - pl.power)
-    bombs_s = f'◆' * pl.bombs + '◇' * max(0, BOMBS_PER_LIFE - pl.bombs)
+    bombs_s = '◆' * pl.bombs + '◇' * max(0, BOMBS_PER_LIFE - pl.bombs)
 
     wave_info = f'WAVE:{game.wave:02d}'
     if game.boss_mode:
@@ -914,7 +916,7 @@ GAMEOVER_ART = [
 
 def draw_gameover(scr, H, W, score, wave, tick, sub_result=None):
     P=curses.color_pair; scr.erase()
-    p=lambda r,c,s,a=0: _p(scr,H,W,r,c,s,a)
+    def p(r, c, s, a=0): _p(scr, H, W, r, c, s, a)
 
     # ── Outer border ──────────────────────────────────────────────────────────
     p(0,   0, '╔'+'═'*(W-2)+'╗', P(5)|curses.A_BOLD)

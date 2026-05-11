@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """CLAUDE FIGHTER — ESC to quit back to Claude"""
-import curses, random
+import curses
+import random
+
 from claudcade_engine import Engine, Renderer, Scene, at_safe
 from claudcade_engine import draw_how_to_play as _engine_how_to_play
 from claudcade_scores import submit_async

@@ -4,6 +4,7 @@
 import zipfile
 from pathlib import Path
 
+
 def build_claudcade():
     """Create claudcade.zip from game files."""
     root = Path(__file__).parent
