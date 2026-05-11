@@ -16,7 +16,14 @@
  *
  * @typedef {{ game: GameId, entries: string, top_score: string }} StatRow
  *
- * @typedef {{ scores: ScoreRow[], stats: StatRow[] }} LeaderboardResponse
+ * @typedef {{
+ *   scores: ScoreRow[],
+ *   stats:  StatRow[],
+ *   range:  'today'|'week'|'month'|'all',
+ *   total:  number,
+ *   limit:  number,
+ *   offset: number
+ * }} LeaderboardResponse
  *
  * @typedef {{ success: true, id: number, rank: number }} SubmitOkResponse
  * @typedef {{ game: GameId, player_name?: string, score: number, extra?: string }} SubmitBody
