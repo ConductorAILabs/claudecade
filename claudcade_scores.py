@@ -132,12 +132,9 @@ def submit_score(game: str, score: int, extra: str = "") -> SubmitResult:
         pass  # offline / server down → return local-only result
     return result
 
-# A 1-element mutable container used by submit_async() to publish the result
-# from the worker thread back to the caller. Shape: [None] before the thread
-# completes, [SubmitResult] after. Callers create it as `_sub = [None]` and
-# read `_sub[0]` once non-None.
-ResultBox = list  # list[SubmitResult | None] — kept loose so existing `[None]` literals type-check
-
+# submit_async() publishes its result back to the caller via a 1-element
+# mutable list. Callers create it as `_sub = [None]` and read `_sub[0]`
+# once non-None — typed loosely so existing `[None]` literals type-check.
 def submit_async(game: str, score: int, extra: str,
                  result_box: list[SubmitResult | None]) -> threading.Thread:
     """Fire-and-forget submission. Puts result dict into result_box[0]."""

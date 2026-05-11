@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Build claudcade.zip with all game files."""
 
-import os
 import zipfile
 from pathlib import Path
 

@@ -476,7 +476,6 @@ def _build_map():
 WORLD_MAP   = _build_map()
 MAP_H       = len(WORLD_MAP)
 MAP_W       = len(WORLD_MAP[0])
-PLAYER_START = (13, 7)   # (col/x, row/y)
 
 WALKABLE = set('.TAECtT123')
 ENCOUNTER_CHANCE = {'.': 0.02, 'T': 0.06}
