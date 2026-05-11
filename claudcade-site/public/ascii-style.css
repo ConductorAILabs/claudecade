@@ -118,6 +118,17 @@ pre {
   color: #cccccc;
 }
 
+/* Install block: shrink-to-fit + centered as a unit, but content inside
+   stays left-aligned. Otherwise the parent's text-align:center centers
+   every line individually and shatters multi-line code (JSON, curl, etc).
+   Width:auto overrides the base `pre { width: 100% }` rule. */
+.docs.install-block {
+  text-align: left;
+  display: table;
+  width: auto;
+  margin: 1rem auto;
+}
+
 .docs:first-of-type {
   margin-top: 1.5rem;
 }

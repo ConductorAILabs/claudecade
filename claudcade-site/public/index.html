@@ -196,104 +196,120 @@ WASD MOVE | SPACE CONFIRM | M MENU
 ╚═╝  ╚═╝ ╚═════╝  ╚══╝╚══╝        ╚═╝    ╚═════╝     ╚═╝╚═╝  ╚═══╝╚══════╝   ╚═╝   ╚═╝  ╚═╝╚══════╝╚══════╝
 </pre>
 
-<pre class="docs">
+<pre class="docs install-block">
 ══════════════════════════════════════════════════════════════════════════════
-  §1   INSTALL                                                          p.01  
+  §1   INSTALL                                                          p.01
 ══════════════════════════════════════════════════════════════════════════════
 
 
 
-  ▸  Two ways to get Claudcade running. Pick whichever fits the day.
 
-◆ ─ ◇ ─ ◆ ─ ◇ ◆ ─ ◇ ─ ◆ ─ ◇ ◆ ─ ◇ ─ ◆ ─ ◇ ◆ ─ ◇ ─ ◆ ─ ◇ ◆ ─ ◇ ─ ◆ ─ ◇ ◆ ─ ◇ ─ 
-
-  §1.1   AUTO INSTALL   ·   recommended
-
-──────────────────────────────────────────────────────────────────────────────
+  Two paths.  Pick one.
 
 
 
-  Uses Claude Code itself to install. Point Claude at the MCP, ask it
-
-  to set you up, done.
 
 
 
-┌─[ 1 ]─ CONFIGURE   merge into ~/.claude/settings.json ─────────────────────┐
-│                                                                            │
-│    {                                                                       │
-│      "mcpServers": {                                                       │
-│        "claudcade": {                                                      │
-│          "type": "http",                                                   │
-│          "url":  "https://starlit-macaron-113a83.netlify.app/api/mcp"      │
-│        }                                                                   │
-│      }                                                                     │
-│    }                                                                       │
-│                                                                            │
-└────────────────────────────────────────────────────────────────────────────┘
 
-┌─[ 2 ]─ LAUNCH      open tmux + claude ─────────────────────────────────────┐
-│                                                                            │
-│    $ tmux                                                                  │
-│    $ claude                                                                │
-│                                                                            │
-└────────────────────────────────────────────────────────────────────────────┘
-
-┌─[ 3 ]─ INSTALL     ask Claude in the prompt ───────────────────────────────┐
-│                                                                            │
-│    > set me up with Claudcade                                              │
-│                                                                            │
-│    Claude calls  claudcade_setup  and downloads the games.                 │
-│                                                                            │
-└────────────────────────────────────────────────────────────────────────────┘
-
-┌─[ 4 ]─ PLAY        anywhere, any time ─────────────────────────────────────┐
-│                                                                            │
-│    > /claudcade                                                            │
-│                                                                            │
-│    Arrow keys pick a game. Enter launches it full-screen.                  │
-│                                                                            │
-└────────────────────────────────────────────────────────────────────────────┘
-
-◆ ─ ◇ ─ ◆ ─ ◇ ◆ ─ ◇ ─ ◆ ─ ◇ ◆ ─ ◇ ─ ◆ ─ ◇ ◆ ─ ◇ ─ ◆ ─ ◇ ◆ ─ ◇ ─ ◆ ─ ◇ ◆ ─ ◇ ─ 
-
-  §1.2   MANUAL INSTALL   ·   no Claude Code required
-
-──────────────────────────────────────────────────────────────────────────────
+  ──  A.   WITH CLAUDE CODE   ───────────────────────────────────  recommended
 
 
 
-┌─ one-liner curl + unzip ───────────────────────────────────────────────────┐
-│                                                                            │
-│    curl -L https://starlit-macaron-113a83.netlify.app/claudcade.zip \      │
-│         -o /tmp/claudcade.zip \                                            │
-│      && unzip -q /tmp/claudcade.zip -d ~/claudecade \                      │
-│      && rm /tmp/claudcade.zip                                              │
-│                                                                            │
-└────────────────────────────────────────────────────────────────────────────┘
 
-┌─ launch the arcade menu ───────────────────────────────────────────────────┐
-│                                                                            │
-│    cd ~/claudecade && python3 claudcade.py                                 │
-│                                                                            │
-└────────────────────────────────────────────────────────────────────────────┘
+  1.   Add this to  ~/.claude/settings.json
 
-┌─ or run a single game directly ────────────────────────────────────────────┐
-│                                                                            │
-│    python3 ctype.py             ◆  space shooter                           │
-│    python3 claudtra.py          ◆  run & gun                               │
-│    python3 fight.py             ◆  1v1 fighting                            │
-│    python3 finalclaudesy.py     ◆  JRPG                                    │
-│                                                                            │
-└────────────────────────────────────────────────────────────────────────────┘
 
-┏━ NOTE   ·   requirements ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃                                                                            ┃
-┃    ▸  Python 3.10+   ·   curses (built into stdlib)                        ┃
-┃    ▸  tmux   recommended for full-screen play                              ┃
-┃    ▸  macOS   ·   Linux   ·   WSL                                          ┃
-┃                                                                            ┃
-┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+           {
+             "mcpServers": {
+               "claudcade": {
+                 "type": "http",
+                 "url":  "https://starlit-macaron-113a83.netlify.app/api/mcp"
+               }
+             }
+           }
+
+
+
+
+  2.   Open Claude inside a tmux session
+
+
+           tmux
+           claude
+
+
+
+
+  3.   Tell Claude to install it
+
+
+           set me up with Claudcade
+
+
+
+
+  4.   Play any time
+
+
+           /claudcade
+
+
+
+
+
+
+
+  ──  B.   WITHOUT CLAUDE CODE   ────────────────────────────────────  manual
+
+
+
+
+  1.   Download and unzip the games
+
+
+           curl -L https://starlit-macaron-113a83.netlify.app/claudcade.zip \
+                -o /tmp/claudcade.zip
+           unzip -q /tmp/claudcade.zip -d ~/claudecade
+
+
+
+
+  2.   Launch the arcade
+
+
+           cd ~/claudecade && python3 claudcade.py
+
+
+
+
+  3.   Or play one game directly
+
+
+           python3 ctype.py            ·   space shooter
+           python3 claudtra.py         ·   run & gun
+           python3 fight.py            ·   1v1 fighting
+           python3 superclaudio.py     ·   side-scroll platformer
+           python3 claudturismo.py     ·   top-down racing
+           python3 claudemon.py        ·   creature RPG
+           python3 finalclaudesy.py    ·   epic JRPG
+
+
+
+
+
+
+
+  ──  REQUIREMENTS   ─────────────────────────────────────────────────────────
+
+
+
+
+       Python 3.10+        ·       built-in curses        ·       no pip install
+
+       macOS               ·       Linux                  ·       WSL  +  tmux
+
+
 </pre>
 
 <pre class="section-head">

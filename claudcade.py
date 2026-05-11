@@ -871,34 +871,45 @@ def draw_main(scr, H, W, tick, cursor):
     g   = GAMES[cursor]
     gcp = g['color']
 
-    # Block-font game title — centered horizontally in the detail panel.
-    # Starts 2 rows below PANEL_Y so it has visual breathing room from the
-    # main CLAUDECADE title above the divider (was crammed back-to-back).
+    # Block-font game title — centered horizontally on the FULL screen so
+    # it sits directly under the main CLAUDECADE title (also full-screen
+    # centered), giving the two headers a shared vertical axis. The title
+    # naturally clears the left list panel because it's narrower than the
+    # gap from the panel edge to the screen edge.
     title_key = g.get('title_key', g['name'].lower().replace(' ', ''))
     TITLE_Y = PANEL_Y + 2
     if title_key in GAME_TITLES:
         ART_Y = TITLE_Y
         title_lines = GAME_TITLES[title_key]
+        max_w = max(len(line) for line in title_lines)
         for i, line in enumerate(title_lines):
             if ART_Y + i < H - 4:
+                # Cap each line to detail-panel width so a stray oversized
+                # title can't bleed into the list panel.
                 trimmed = line[:DET_W-2] if len(line) > DET_W-2 else line
-                tx = DET_X + max(1, (DET_W - len(trimmed)) // 2)
+                # Center the whole title block (not each line individually)
+                # using the widest line as the reference for left edge.
+                left = (W - max_w) // 2 + (max_w - len(trimmed)) // 2
+                tx = max(DET_X + 1, left)
                 _p(scr, H, W, ART_Y+i, tx, trimmed, P(gcp)|curses.A_BOLD)
         ART_Y += len(title_lines)
     else:
         ART_Y = TITLE_Y
         gt   = f'★  {g["name"]}  —  {g["subtitle"]}  ★'
-        _p(scr, H, W, ART_Y, DET_X+1, gt[:DET_W-2], P(gcp)|curses.A_BOLD)
+        _p(scr, H, W, ART_Y, max(DET_X+1, (W - len(gt)) // 2), gt[:DET_W-2], P(gcp)|curses.A_BOLD)
         ART_Y += 1
 
-    # Single-line subtitle + thin divider under the block-font title.
+    # Inline subtitle + thin divider under the block-font title. Subtitle is
+    # screen-centered (matches title centering); divider stays inside the
+    # detail panel to keep the panel split visually intact.
     sub = f'·  {g["subtitle"]}  ·'
-    _p(scr, H, W, ART_Y,   DET_X + max(1, (DET_W - len(sub)) // 2), sub, P(gcp)|curses.A_DIM)
+    _p(scr, H, W, ART_Y,   max(DET_X+1, (W - len(sub)) // 2), sub, P(gcp)|curses.A_DIM)
     _p(scr, H, W, ART_Y+1, DET_X+1, '─'*(DET_W-2), P(5)|curses.A_DIM)
 
     # Game preview — live demo (one simulation step per UI frame). Centered
-    # horizontally within the detail panel. Falls back to static `frames` if
-    # no demo class is registered for this title_key.
+    # horizontally on the FULL screen so it shares the same vertical axis
+    # as the main title and the game title above. Falls back to static
+    # `frames` if no demo class is registered for this title_key.
     ART_Y = ART_Y + 3
     demo = DEMOS.get(title_key)
     if demo is not None:
@@ -910,8 +921,9 @@ def draw_main(scr, H, W, tick, cursor):
     if art:
         aw    = max(len(l) for l in art) + 2
         ah    = len(art) + 2
-        # Center the box horizontally in the detail panel.
-        box_x = DET_X + max(2, (DET_W - (aw + 2)) // 2)
+        # Center the box horizontally on the full screen, but clamp to the
+        # detail panel so it never crosses the list-panel split.
+        box_x = max(DET_X + 1, (W - (aw + 2)) // 2)
         ART_X = box_x + 2
         if ART_Y + ah < H - 6:
             _p(scr, H, W, ART_Y,      box_x, '┌'+'─'*aw+'┐', P(5)|curses.A_DIM)
