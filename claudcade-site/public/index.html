@@ -21,16 +21,6 @@
 
 <pre class="divider">═══════════════════════════════════════════════════════════════════════════════</pre>
 
-<div id="update-banner" style="display: none; padding: 1rem; background: #2a2a2a; margin: 1rem 0; border: 1px solid #4a4a4a; text-align: center;">
-  <span id="update-status" style="color: #cccccc;"></span>
-</div>
-
-<button id="update-btn" style="display: block; margin: 1rem auto; padding: 0.5rem 2rem; background: #333; color: #0f0; border: 1px solid #0f0; cursor: pointer; font-family: monospace; font-weight: bold; transition: all 0.2s;">
-  [ UPDATE GAMES ]
-</button>
-
-<pre class="divider">═══════════════════════════════════════════════════════════════════════════════</pre>
-
 <pre class="game-card" data-game="ctype">
  ██████╗       ████████╗██╗   ██╗██████╗ ███████╗
 ██╔════╝       ╚══██╔══╝╚██╗ ██╔╝██╔══██╗██╔════╝
@@ -604,36 +594,6 @@ WASD MOVE | SPACE CONFIRM | M MENU
 
   loadBoard();
   setInterval(loadBoard, 30000);
-
-  // Update button
-  const updateBtn = document.getElementById('update-btn');
-  const updateBanner = document.getElementById('update-banner');
-  const updateStatus = document.getElementById('update-status');
-
-  updateBtn.addEventListener('click', async () => {
-    updateBtn.disabled = true;
-    updateBtn.style.opacity = '0.5';
-    updateStatus.textContent = 'Building...';
-    updateBanner.style.display = 'block';
-
-    try {
-      const res = await fetch('/api/rebuild', { method: 'POST' });
-      if (!res.ok) throw new Error('Build failed');
-      const data = await res.json();
-      updateStatus.textContent = 'Games updated! Refresh your download.';
-      updateStatus.style.color = '#0f0';
-      setTimeout(() => {
-        updateBanner.style.display = 'none';
-        updateBtn.disabled = false;
-        updateBtn.style.opacity = '1';
-      }, 3000);
-    } catch (err) {
-      updateStatus.textContent = 'Update failed: ' + err.message;
-      updateStatus.style.color = '#f00';
-      updateBtn.disabled = false;
-      updateBtn.style.opacity = '1';
-    }
-  });
 
   // Glitch + scanline pulse on game-card hover. Stores frame on first hover.
   document.querySelectorAll('.game-card').forEach(card => {
