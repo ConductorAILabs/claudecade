@@ -182,7 +182,7 @@ def tool_get_leaderboard(game: str = "", limit: int = 10) -> str:
         data   = get_json("/api/leaderboard" + qs)
         scores = data.get("scores", [])
         stats  = data.get("stats", [])
-    except Exception as e:
+    except (urllib.error.URLError, OSError, ValueError) as e:
         return f"Error fetching leaderboard: {e}"
 
     if not scores:
@@ -219,7 +219,7 @@ def tool_submit_score(game: str, player_name: str, score: int, extra: str = "") 
         rank = res.get("rank", "?")
         return (f"Score submitted! {player_name} · {GAMES[game]}\n"
                 f"Score: {score:,}  ·  Global rank: #{rank}")
-    except Exception as e:
+    except (urllib.error.URLError, OSError, ValueError) as e:
         return f"Submission failed: {e}"
 
 def tool_setup() -> str:
