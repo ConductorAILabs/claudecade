@@ -267,11 +267,9 @@ def main(scr):
             if battle.result:
                 if battle.result == 'win':
                     battle_msgs = battle.battle_end_rewards()
-                    # Submit score for boss kills
                     total_lv = sum(m.level for m in party.members)
                     submit_async('finalclaudesy', total_lv * 1000 + party.gold,
                                  f'Lv {max(m.level for m in party.members)}', [None])
-                    # Check for boss defeat story
                     boss = next((e for e in battle.enemies if e.boss), None)
                     if boss:
                         bname = boss.name

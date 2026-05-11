@@ -251,7 +251,6 @@ class Fighter:
     def __init__(self, name, x, cp, char_def, char_idx=0, is_p2=False, is_ai=False):
         self.name=name; self.x=float(x); self.y=0.0; self.vy=0.0
         self.cp=cp; self.is_p2=is_p2; self.is_ai=is_ai
-        # Use per-character sprite tables; fall back to generic if index missing
         idx = char_idx % len(CHAR_SPRITES_P1)
         self.sp = CHAR_SPRITES_P2[idx] if is_p2 else CHAR_SPRITES_P1[idx]
         self.power=char_def['power']; self.speed=char_def['speed']
@@ -470,11 +469,9 @@ def draw_intro(scr, H, W, tick):
         put(r,0,'║',P(5)); put(r,W-1,'║',P(5))
 
     start_row=max(1,(H-len(TITLE_ART))//2-1)
-    # Color cycle: cyan -> yellow -> magenta -> cyan
-    colors = [6, 3, 5]  # 6=cyan, 3=yellow, 5=magenta
+    colors = [6, 3, 5]  # cyan, yellow, magenta
     for i,line in enumerate(TITLE_ART):
         col=max(1,(W-len(line))//2)
-        # Cycle colors through the block-font title (13 lines)
         color_idx = (i + (tick // 8)) % len(colors)
         attr = P(colors[color_idx]) | curses.A_BOLD
         put(start_row+i,col,line,attr)
@@ -755,7 +752,6 @@ def draw_fight(scr, g, W, H):
             put(AT - 1, col, tag, P(color)|curses.A_BOLD|curses.A_REVERSE)
 
     # ── control bar ──────────────────────────────────────────────────────────
-    # Box-styled control bar with clear sections
     ctrl_parts = [
         'MOVE: A/D',
         'JUMP: SPC',

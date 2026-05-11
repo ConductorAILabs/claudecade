@@ -709,7 +709,6 @@ def draw_game(scr, game, H, W, tick):
     if game.boss_mode:
         wave_info += ' ★BOSS★'
 
-    # Build right-side HUD: PWR indicator, WAVE, and BOMBS
     right_hud = f'┌PWR:{pwr_pips}┐ ┌{wave_info}┐ ┌BOMBS:{bombs_s}┐'
     p(1, W - len(right_hud) - 4, right_hud, P(3)|curses.A_BOLD)
 

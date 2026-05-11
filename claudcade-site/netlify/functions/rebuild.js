@@ -24,7 +24,6 @@ exports.handler = async (event) => {
   }
 
   try {
-    // Run the build script safely
     const buildScript = path.join(__dirname, '../../build-claudcade.py');
     const { stdout, stderr } = await execFileAsync('python3', [buildScript]);
 

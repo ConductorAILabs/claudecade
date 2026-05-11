@@ -10,7 +10,6 @@ def build_claudcade():
     root = Path(__file__).parent
     zip_path = root / 'claudcade-site' / 'public' / 'claudcade.zip'
 
-    # Files to include in the zip
     files_to_zip = [
         'claudcade.py',
         'claudcade_engine.py',
