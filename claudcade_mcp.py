@@ -154,7 +154,8 @@ def get_json(path: str) -> JsonObject:
     url = SITE_URL + path
     req = urllib.request.Request(url, headers={"Accept":"application/json"})
     with urllib.request.urlopen(req, timeout=8) as r:
-        return json.loads(r.read())
+        result: JsonObject = json.loads(r.read())
+        return result
 
 def post_json(path: str, data: JsonObject) -> JsonObject:
     url   = SITE_URL + path
@@ -162,7 +163,8 @@ def post_json(path: str, data: JsonObject) -> JsonObject:
     req   = urllib.request.Request(url, data=body,
                                    headers={"Content-Type":"application/json"})
     with urllib.request.urlopen(req, timeout=8) as r:
-        return json.loads(r.read())
+        result: JsonObject = json.loads(r.read())
+        return result
 
 # ── Tool implementations ───────────────────────────────────────────────────────
 

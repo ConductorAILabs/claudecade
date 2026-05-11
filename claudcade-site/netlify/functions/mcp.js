@@ -175,6 +175,7 @@ function handleListGames() {
   ].join('\n');
 }
 
+/** @param {LeaderboardArgs} args */
 async function handleLeaderboard(args) {
   const game  = args.game  || '';
   const limit = Math.min(parseInt(args.limit) || 10, 50);
@@ -220,6 +221,7 @@ async function handleLeaderboard(args) {
   return [header, divider, ...rows, '', '── Stats ──', ...statLines].join('\n');
 }
 
+/** @param {import('./_db').SubmitBody} args */
 async function handleSubmitScore(args) {
   const { game, player_name, score, extra = '' } = args;
   if (!VALID_GAMES.includes(game)) {
@@ -240,6 +242,7 @@ function handleEngineDocs() {
   return ENGINE_DOCS;
 }
 
+/** @param {ScaffoldArgs} args */
 function handleScaffold(args) {
   const { genre = 'other', title = 'My Game' } = args;
   const gameId = title.toLowerCase().replace(/\s+/g, '_');

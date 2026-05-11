@@ -123,7 +123,11 @@ def submit_score(game: str, score: int, extra: str = "") -> SubmitResult:
         with urllib.request.urlopen(req, timeout=6) as r:
             server = json.loads(r.read())
         if isinstance(server, dict):
-            result.update(server)
+            # Copy only the documented server fields into the TypedDict, so the
+            # type checker can validate them against SubmitResult's schema.
+            if "rank"    in server: result["rank"]    = int(server["rank"])
+            if "id"      in server: result["id"]      = int(server["id"])
+            if "success" in server: result["success"] = bool(server["success"])
     except (urllib.error.URLError, OSError, ValueError):
         pass  # offline / server down → return local-only result
     return result
@@ -135,7 +139,7 @@ def submit_score(game: str, score: int, extra: str = "") -> SubmitResult:
 ResultBox = list  # list[SubmitResult | None] — kept loose so existing `[None]` literals type-check
 
 def submit_async(game: str, score: int, extra: str,
-                 result_box: list) -> threading.Thread:
+                 result_box: list[SubmitResult | None]) -> threading.Thread:
     """Fire-and-forget submission. Puts result dict into result_box[0]."""
     def _run() -> None:
         result_box[0] = submit_score(game, score, extra)

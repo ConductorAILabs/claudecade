@@ -280,7 +280,7 @@ class Input:
 # scr.addstr with the same try/except + bounds check. Use this shared helper
 # to avoid duplicating the implementation across files.
 
-def at_safe(scr, H: int, W: int, row: int, col: int, s: str, attr: int = 0) -> None:
+def at_safe(scr: curses.window, H: int, W: int, row: int, col: int, s: str, attr: int = 0) -> None:
     """Bounds-safe addstr: silently no-ops outside the terminal."""
     try:
         if 0 <= row < H - 1 and 0 <= col < W:
@@ -301,7 +301,7 @@ class Renderer:
     or the raw pair integers 1-8.
     """
 
-    def __init__(self, scr: curses.window, H: int, W: int):
+    def __init__(self, scr: curses.window, H: int, W: int) -> None:
         self._scr = scr
         self.H = H
         self.W = W
@@ -661,7 +661,7 @@ class Engine:
         engine.run("menu")
     """
 
-    def __init__(self, title: str, fps: int = 30, seed: int | None = None):
+    def __init__(self, title: str, fps: int = 30, seed: int | None = None) -> None:
         self.title    = title
         self.fps      = fps
         self.H        = 0
@@ -830,7 +830,9 @@ class Engine:
                 self._profile_data.append((t1 - t0, t2 - t1))
 
     def _tick_fade(self, scr: curses.window, inp: Input) -> None:
-        f     = self._fade
+        f = self._fade
+        if f is None:
+            return  # _loop() only calls us when _fade is set, but narrow for type checker
         frac  = f['t'] / max(1, f['ticks'])
         chars = '█▓▒░ '
         f['t'] += 1
@@ -896,7 +898,7 @@ class AnimSprite:
         sprite.set_state('die', on_complete=lambda: self.remove())
     """
 
-    def __init__(self, states: dict[str, list[list[str]]], ticks_per_frame: int = 8):
+    def __init__(self, states: dict[str, list[list[str]]], ticks_per_frame: int = 8) -> None:
         self.states          = states
         self.ticks_per_frame = ticks_per_frame
         self.state           = next(iter(states))
@@ -1152,7 +1154,7 @@ class Audio:
         audio.play('assets/hit.wav')  # background; missing file is a no-op
     """
 
-    def __init__(self, enabled: bool = True):
+    def __init__(self, enabled: bool = True) -> None:
         import shutil
         import subprocess
         self.enabled = enabled
@@ -1216,14 +1218,15 @@ class GameSave:
     def __init__(self, name: str) -> None:
         self._path = Path.home() / f'.claudcade_{name}_save.json'
 
-    def save(self, data: dict) -> None:
+    def save(self, data: dict[str, object]) -> None:
         self._path.write_text(json.dumps(data, indent=2))
 
-    def load(self) -> dict | None:
+    def load(self) -> dict[str, object] | None:
         if not self._path.exists():
             return None
         try:
-            return json.loads(self._path.read_text())
+            result = json.loads(self._path.read_text())
+            return result if isinstance(result, dict) else None
         except (OSError, json.JSONDecodeError):
             return None  # missing / unreadable / corrupt save → caller starts fresh
 
