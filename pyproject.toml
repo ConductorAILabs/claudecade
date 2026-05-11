@@ -29,6 +29,9 @@ ctype           = "ctype:main"
 claudtra        = "claudtra:main"
 fight           = "fight:main"
 finalclaudesy   = "finalclaudesy.main:run"
+superclaudio    = "superclaudio:main"
+claudturismo    = "claudturismo:main"
+claudemon       = "claudemon:main"
 
 [project.urls]
 Homepage = "https://github.com/ConductorAILabs/claudecade"
@@ -45,6 +48,9 @@ include = [
     "claudtra.py",
     "fight.py",
     "finalclaudesy.py",
+    "superclaudio.py",
+    "claudturismo.py",
+    "claudemon.py",
 ]
 
 [tool.ruff]
