@@ -459,6 +459,314 @@ GAMES = [
     },
 ]
 
+# ── LIVE PREVIEW DEMOS ─────────────────────────────────────────────────────────
+# Per-game simulators that step state each UI frame and render the result into
+# the right-panel preview box. Each demo subclasses _Demo and returns
+# DEMO_H rows of DEMO_W cells. Only the currently-highlighted game's demo is
+# stepped/rendered — switching selection pauses the previous and resumes the
+# new one from wherever it left off.
+
+DEMO_H = 4
+DEMO_W = 18
+
+
+class _Demo:
+    # Step state every Nth UI tick (UI runs at 60 FPS — step_every=3 -> 20 sim FPS).
+    step_every = 3
+
+    def __init__(self) -> None:
+        self.t = 0
+        self.ui_t = 0
+        self.rng = random.Random()
+
+    def _blank(self) -> list[list[str]]:
+        return [[' '] * DEMO_W for _ in range(DEMO_H)]
+
+    def _put(self, c: list[list[str]], r: int, col: int, s: str) -> None:
+        if not (0 <= r < DEMO_H):
+            return
+        for i, ch in enumerate(s):
+            cc = col + i
+            if 0 <= cc < DEMO_W:
+                c[r][cc] = ch
+
+    def render(self) -> list[str]:
+        if self.ui_t % self.step_every == 0:
+            self.t += 1
+            self.step()
+        self.ui_t += 1
+        canvas = self._blank()
+        self.draw(canvas)
+        return [''.join(row) for row in canvas]
+
+    def step(self) -> None: pass
+    def draw(self, c: list[list[str]]) -> None: pass
+
+
+class _CtypeDemo(_Demo):
+    def __init__(self) -> None:
+        super().__init__()
+        # Seed in-flight bullets + an approaching enemy so the panel is busy
+        # immediately on first reveal rather than building up over a second.
+        self.bullets: list[list[int]] = [[7, 1], [11, 1]]
+        self.enemies: list[list[int]] = [[DEMO_W - 1, 1]]
+        self.hits: list[list[int]] = []
+
+    def step(self) -> None:
+        for b in self.bullets: b[0] += 1
+        self.bullets = [b for b in self.bullets if b[0] < DEMO_W]
+        if self.t % 4 == 0:
+            self.bullets.append([5, 1])
+        if self.t % 2 == 0:
+            for e in self.enemies: e[0] -= 1
+            self.enemies = [e for e in self.enemies if e[0] > 4]
+        if self.t % 10 == 0 and len(self.enemies) < 3:
+            self.enemies.append([DEMO_W - 1, self.rng.randrange(0, 3)])
+        for b in self.bullets[:]:
+            for e in self.enemies[:]:
+                if b[1] == e[1] and abs(b[0] - e[0]) <= 1:
+                    self.hits.append([e[0], e[1], 0])
+                    if b in self.bullets: self.bullets.remove(b)
+                    if e in self.enemies: self.enemies.remove(e)
+                    break
+        for h in self.hits: h[2] += 1
+        self.hits = [h for h in self.hits if h[2] < 3]
+
+    def draw(self, c: list[list[str]]) -> None:
+        self._put(c, 0, 2, '▲')
+        self._put(c, 1, 0, '═►')
+        self._put(c, 2, 2, '▼')
+        for b in self.bullets: self._put(c, b[1], b[0], '·')
+        for e in self.enemies: self._put(c, e[1], e[0], '◆')
+        for h in self.hits:    self._put(c, h[1], h[0], '✦' if h[2] < 2 else '✧')
+
+
+class _ClaudtraDemo(_Demo):
+    def __init__(self) -> None:
+        super().__init__()
+        self.shot_x = 8       # shot already in flight
+        self.enemy_x = 13
+        self.leg = 0
+
+    def step(self) -> None:
+        if self.t % 2 == 0: self.leg ^= 1
+        if self.shot_x < 0:
+            if self.t % 7 == 0: self.shot_x = 5
+        else:
+            self.shot_x += 1
+            if self.shot_x >= self.enemy_x - 1:
+                self.enemy_x = DEMO_W - 1
+                self.shot_x = -1
+            elif self.shot_x >= DEMO_W:
+                self.shot_x = -1
+        if self.t % 4 == 0 and self.enemy_x > 9:
+            self.enemy_x -= 1
+
+    def draw(self, c: list[list[str]]) -> None:
+        self._put(c, 0, 2, '╭─╮')
+        self._put(c, 1, 2, '│·│')
+        self._put(c, 2, 2, '╰┬╯')
+        self._put(c, 3, 2, '╱╲' if self.leg == 0 else '╲╱')
+        if self.shot_x >= 0:
+            self._put(c, 1, self.shot_x, '═►')
+            if self.shot_x >= self.enemy_x - 2:
+                self._put(c, 1, self.enemy_x, '✦'); return
+        self._put(c, 1, self.enemy_x, '◆')
+
+
+class _FightDemo(_Demo):
+    step_every = 4
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.atk = 0          # 0 = left attacks, 1 = right attacks
+        self.phase = 2        # start mid-extend so action is visible immediately
+        self.phase_t = 0
+
+    def step(self) -> None:
+        self.phase_t += 1
+        if self.phase_t >= 3:
+            self.phase_t = 0
+            self.phase += 1
+            if self.phase > 4:
+                self.phase = 0
+                self.atk ^= 1
+
+    def draw(self, c: list[list[str]]) -> None:
+        self._put(c, 0, 2,  '◯')
+        self._put(c, 0, 13, '◯')
+        self._put(c, 2, 2,  '╱╲')
+        self._put(c, 2, 13, '╱╲')
+        body_l, body_r = ' ╱│╲', ' ╱│╲'
+        if self.atk == 0:
+            if self.phase == 2:   body_l = ' ╱│═►'
+            elif self.phase == 3:
+                body_l = ' ╱│════►'; body_r = '  ╲╱│'
+                self._put(c, 1, 12, '✦')
+            elif self.phase == 4: body_r = '  ╲╱│'
+        else:
+            if self.phase == 2:   body_r = '◀═│╲'
+            elif self.phase == 3:
+                body_r = '◀════│╲'; body_l = '│╲╱'
+                self._put(c, 1, 5,  '✦')
+            elif self.phase == 4: body_l = '│╲╱'
+        self._put(c, 1, 1,  body_l)
+        self._put(c, 1, 12, body_r)
+
+
+class _SuperClaudioDemo(_Demo):
+    def __init__(self) -> None:
+        super().__init__()
+        self.jump_t = -1
+        self.coin_x = 12          # coin already approaching
+        self.collected = False
+        self.spawn_cool = 0
+
+    def step(self) -> None:
+        if self.coin_x >= 0:
+            if self.t % 2 == 0: self.coin_x -= 1
+            if self.coin_x < 0:
+                self.collected = False
+                self.spawn_cool = 8
+        elif self.spawn_cool > 0:
+            self.spawn_cool -= 1
+            if self.spawn_cool == 0:
+                self.coin_x = DEMO_W - 1
+        if self.coin_x == 8 and self.jump_t < 0:
+            self.jump_t = 0
+        if self.jump_t >= 0:
+            self.jump_t += 1
+            if self.jump_t >= 6: self.jump_t = -1
+        if self.jump_t in (2, 3) and self.coin_x in range(4, 7):
+            self.collected = True
+            self.coin_x = -1
+
+    def draw(self, c: list[list[str]]) -> None:
+        self._put(c, 3, 0, '▓' * DEMO_W)
+        if self.jump_t >= 0:
+            self._put(c, 0, 3, '◯')
+            self._put(c, 1, 2, '╱│╲')
+            self._put(c, 2, 3, '▼')
+        else:
+            self._put(c, 0, 3, '★')
+            self._put(c, 1, 3, '◯')
+            self._put(c, 2, 2, '╱│╲')
+        if self.coin_x >= 0:
+            row = 0 if self.t % 2 == 0 else 1
+            self._put(c, row, self.coin_x, '◆')
+        elif self.collected:
+            self._put(c, 1, 5, '✦')
+
+
+class _ClaudturismoDemo(_Demo):
+    step_every = 2
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.dash = 0
+
+    def step(self) -> None:
+        self.dash = (self.dash + 1) % 4
+
+    def draw(self, c: list[list[str]]) -> None:
+        for r in range(DEMO_H):
+            self._put(c, r, 1, '║')
+            self._put(c, r, DEMO_W - 2, '║')
+        mid = DEMO_W // 2
+        for i in range(DEMO_H):
+            if (i + self.dash) % 2 == 0:
+                self._put(c, i, mid, '│')
+        self._put(c, 0, 6, '╭───╮')
+        self._put(c, 1, 6, '│◉═◉│')
+        self._put(c, 2, 6, '╰───╯')
+
+
+class _ClaudemonDemo(_Demo):
+    step_every = 4
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.wig = 0
+        self.blink = 0
+        self.sparkles: list[list[int]] = [[2, 0, 0], [14, 1, 1], [3, 2, 2]]
+
+    def step(self) -> None:
+        self.wig = (self.wig + 1) % 4
+        if self.t % 6 == 0: self.blink = 2
+        if self.blink > 0:  self.blink -= 1
+        if self.t % 3 == 0 and len(self.sparkles) < 3:
+            self.sparkles.append([
+                self.rng.randrange(0, DEMO_W),
+                self.rng.randrange(0, DEMO_H - 1),
+                0,
+            ])
+        for s in self.sparkles: s[2] += 1
+        self.sparkles = [s for s in self.sparkles if s[2] < 4]
+
+    def draw(self, c: list[list[str]]) -> None:
+        dx = 1 if self.wig in (1, 2) else 0
+        base = 5 + dx
+        for s in self.sparkles:
+            self._put(c, s[1], s[0], '✦' if s[2] < 2 else '✧')
+        self._put(c, 0, base, '╭───╮')
+        eyes = '│─ ─│' if self.blink > 0 else '│◉ ◉│'
+        self._put(c, 1, base, eyes)
+        mouth = '╰─◠─╯' if self.wig in (0, 2) else '╰─◡─╯'
+        self._put(c, 2, base, mouth)
+        self._put(c, 3, base + 2, '╱╲')
+
+
+class _FinalClaudesyDemo(_Demo):
+    step_every = 4
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.phase = 2          # start with slash already launching
+        self.slash_x = 7
+        self.enemy_x = 14
+
+    def step(self) -> None:
+        self.phase += 1
+        if self.phase == 2:
+            self.slash_x = 5
+        elif self.phase in (3, 4, 5):
+            self.slash_x += 2
+        elif self.phase == 6:
+            self.slash_x = -1
+        elif self.phase >= 9:
+            self.phase = 0
+
+    def draw(self, c: list[list[str]]) -> None:
+        self._put(c, 0, 3, '◯')
+        if self.phase in (1, 2):
+            self._put(c, 1, 2, '╱│╲')
+        else:
+            self._put(c, 1, 2, '╱│ ')
+        self._put(c, 2, 3, '│')
+        self._put(c, 3, 2, '╱ ╲')
+        if 0 <= self.slash_x < DEMO_W:
+            self._put(c, 1, self.slash_x, '═►')
+        if self.phase < 6:
+            self._put(c, 1, self.enemy_x, '◆')
+        elif self.phase == 6:
+            self._put(c, 1, self.enemy_x, '✦')
+        elif self.phase == 7:
+            self._put(c, 1, self.enemy_x, '✧')
+        else:
+            self._put(c, 1, self.enemy_x, '◆')
+
+
+DEMOS: dict[str, _Demo] = {
+    'ctype':         _CtypeDemo(),
+    'claudtra':      _ClaudtraDemo(),
+    'fight':         _FightDemo(),
+    'superclaudio':  _SuperClaudioDemo(),
+    'claudturismo':  _ClaudturismoDemo(),
+    'claudemon':     _ClaudemonDemo(),
+    'finalclaudesy': _FinalClaudesyDemo(),
+}
+
+
 # ── DRAWING HELPERS ────────────────────────────────────────────────────────────
 _p = at_safe
 
@@ -586,11 +894,17 @@ def draw_main(scr, H, W, tick, cursor):
 
     _p(scr, H, W, ART_Y, DET_X+1, '═'*(DET_W-2), P(gcp)|curses.A_DIM)
 
-    # Game sprite — animated preview using frames[(tick // 6) % len(frames)]
+    # Game preview — live demo (one simulation step per UI frame for the
+    # selected game). Falls back to the static `frames` data if no demo is
+    # registered for this title_key.
     ART_Y = ART_Y + 2
     ART_X = DET_X + 3
-    frames = g.get('frames') or [g.get('art', [])]
-    art    = frames[(tick // 6) % len(frames)] if frames else []
+    demo = DEMOS.get(title_key)
+    if demo is not None:
+        art = demo.render()
+    else:
+        frames = g.get('frames') or [g.get('art', [])]
+        art    = frames[(tick // 6) % len(frames)] if frames else []
     cs     = g.get('coming_soon')
     if art:
         aw    = max(len(l) for l in art) + 2
