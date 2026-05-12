@@ -192,7 +192,6 @@ class Player:
         # Also: shift modifiers come through curses as KEY_SLEFT/SRIGHT or via uppercase letters
         speed = RUN if running else WALK
 
-        ctrl = 1.0 if self.on_ground else AIR_CTRL
         dvx = 0.0
         if inp.left:
             dvx -= speed
@@ -201,12 +200,21 @@ class Player:
             dvx += speed
             self.facing = 1
 
-        # Smooth horizontal velocity
-        target = dvx
-        # Snappy controls — blend toward target
-        self.vx = self.vx * (1.0 - 0.6 * ctrl) + target * (0.6 * ctrl)
-        if abs(self.vx) < 0.04 and dvx == 0:
-            self.vx = 0.0
+        # Horizontal velocity update:
+        # - On the ground: snap toward input with friction so direction
+        #   changes feel responsive and you stop cleanly on release.
+        # - In the air: preserve forward momentum. If the player is holding
+        #   a direction, allow limited air control to nudge toward it; if
+        #   no key is held, keep the existing vx so a running jump traces
+        #   a real forward arc instead of going dead vertical mid-air.
+        if self.on_ground:
+            self.vx = self.vx * 0.4 + dvx * 0.6
+            if abs(self.vx) < 0.04 and dvx == 0:
+                self.vx = 0.0
+        else:
+            if dvx != 0:
+                self.vx = self.vx * (1.0 - AIR_CTRL * 0.3) + dvx * (AIR_CTRL * 0.3)
+            # else: keep self.vx — momentum carries the jump forward
 
         # Jump: variable-height. Initiate when jump just-pressed and grounded
         # (or within coyote window).

@@ -102,7 +102,7 @@ def get_frame(sp, state, af):
     return frames[af % len(frames)]
 class Player:
     def __init__(self):
-        self.wx = 5.0; self.y = 0.0; self.vy = 0.0
+        self.wx = 5.0; self.y = 0.0; self.vy = 0.0; self.vx = 0.0
         self.grounded = True; self.facing = 1
         self.state = 'idle'; self.af = 0; self.at = 0
         self.lives = LIVES; self.invuln = 0
@@ -139,11 +139,23 @@ class Player:
         if self.state == 'hurt' and self.invuln < INVULN-12: self.set('idle')
         if self.shoot_cd > 0: self.shoot_cd -= 1
 
-        vx = 0
-        if ord('a') in keys or curses.KEY_LEFT  in keys: vx = -WALK; self.facing = -1
-        if ord('d') in keys or curses.KEY_RIGHT in keys: vx =  WALK; self.facing =  1
+        # Determine the player's target horizontal velocity from input.
+        target_vx = 0
+        if ord('a') in keys or curses.KEY_LEFT  in keys: target_vx = -WALK; self.facing = -1
+        if ord('d') in keys or curses.KEY_RIGHT in keys: target_vx =  WALK; self.facing =  1
+
+        # Grounded: vx follows input directly (release = stop).
+        # Airborne: keep momentum unless the player actively steers, so a
+        # running jump traces a forward arc even if they let go of the
+        # direction key mid-flight (Mario-style).
+        if self.grounded:
+            self.vx = target_vx
+        elif target_vx != 0:
+            self.vx = target_vx
+        # else: in air with no input -> keep self.vx
+
         if self.state not in ('hurt',):
-            self.wx = max(0, self.wx + vx)
+            self.wx = max(0, self.wx + self.vx)
 
         if not self.grounded:
             self.vy -= GRAV
@@ -190,7 +202,7 @@ class Player:
         if self.state not in ('hurt', 'shoot', 'dead'):
             if not self.grounded:        self.set('jump')
             elif crouch:                 self.set('crouch')
-            elif vx != 0:                self.set('run')
+            elif target_vx != 0:         self.set('run')
             else:                        self.set('idle')
         if self.state == 'shoot' and self.shoot_cd == 0: self.set('idle')
 

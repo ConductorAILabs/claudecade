@@ -225,10 +225,14 @@ class Input:
     def pause(self)   -> bool: return self.pressed(27)
 
     # Frames of "stickiness" applied to recently-seen keys. Terminal key
-    # auto-repeat is unreliable across emulators (some delay 250ms+ between
-    # repeats), so a key is treated as still held for this many frames after
-    # its last actual press. Makes single taps produce smooth movement.
-    _REPEAT_GRACE = 4
+    # auto-repeat is unreliable across emulators — macOS Terminal and iTerm
+    # default to ~500ms before the first repeat fires, then ~30ms between
+    # subsequent repeats. At 60 FPS that ~500ms gap is 30 frames of silence
+    # after the initial press. A grace window shorter than that produces a
+    # noticeable "press, move one cell, stall for half a second, then start
+    # moving" stutter. 20 frames (333ms) covers most terminals' initial
+    # delay without making single taps feel mushy.
+    _REPEAT_GRACE = 20
 
     # Class-level age tracker: key -> frames since last seen.
     _key_age: dict[int, int] = {}
@@ -505,75 +509,34 @@ class Renderer:
         self.text(self.H - 2, 1, controls.center(self.W - 2)[:self.W - 2], color)
 
     def pause_overlay(self, game_name: str, controls: list[str]) -> None:
-        """Draw a floating pause menu overlay on top of the current scene.
-        Layout: dim backdrop, double-line frame, centered title with side
-        decorations, controls table, two button rows at the bottom.
+        """Minimal pause panel — just `PAUSED` + Resume/Quit prompts.
+
+        Earlier versions painted a full-screen ░ scrim and rendered a
+        boxed CONTROLS table on every frame, which cost ~6000+ curses
+        writes per frame and read as overdesigned. The `controls`
+        argument is preserved for caller-compat but is no longer drawn.
         """
-        bw  = max(50, max((len(c) for c in controls), default=0) + 18)
-        bh  = len(controls) + 11
-        by  = (self.H - bh) // 2
-        bx  = (self.W - bw) // 2
+        del controls  # kept for API compatibility; intentionally unused
 
-        # Full-screen scrim — dim ░ overlay outside the panel area only,
-        # so the gameplay 'reads' as paused/blurred but the panel itself
-        # stays clean.
-        for r in range(self.H - 1):
-            if by - 1 <= r <= by + bh:
-                # Same row as panel: only dim left/right of it.
-                if bx - 2 > 0:
-                    self.text(r, 0, '░' * (bx - 1), color=NEUTRAL, dim=True)
-                if bx + bw + 1 < self.W - 1:
-                    self.text(r, bx + bw + 1, '░' * (self.W - bx - bw - 2),
-                              color=NEUTRAL, dim=True)
-            else:
-                self.text(r, 0, '░' * (self.W - 1), color=NEUTRAL, dim=True)
-        # Solid panel-area backdrop (clear what was beneath the panel).
-        for r in range(bh + 2):
-            self.text(by + r - 1, bx - 1, ' ' * (bw + 2),
-                      color=NEUTRAL)
+        title = f' {game_name}  ·  PAUSED '
+        prompt = '[ R ] Resume     [ Q ] Quit'
 
-        # Double-line frame using box() with double=True
-        self.box(by, bx, bh, bw, color=SELECT, double=True)
+        bw = max(len(title), len(prompt)) + 6
+        bh = 5
+        by = max(1, (self.H - bh) // 2)
+        bx = max(1, (self.W - bw) // 2)
 
-        # Title bar with side decorations (no `||` clutter)
-        title = f'  {game_name}  ·  PAUSED  '
-        deco  = '═' * 4
-        full  = f'{deco}{title}{deco}'
-        tx    = bx + (bw - len(full)) // 2
-        self.text(by + 1, tx,                       deco,  color=SELECT, bold=True)
-        self.text(by + 1, tx + len(deco),           title, color=GOLD,   bold=True)
-        self.text(by + 1, tx + len(deco) + len(title), deco, color=SELECT, bold=True)
+        # Clear only the panel rectangle (no full-screen scrim) so the game
+        # stays visible behind the menu and we don't pay for an H*W write.
+        for r in range(bh):
+            self.text(by + r, bx, ' ' * bw, color=NEUTRAL)
 
-        # Section divider under title
-        self.text(by + 2, bx + 1, '─' * (bw - 2), color=SELECT)
+        # Single-line frame
+        self.box(by, bx, bh, bw, color=SELECT)
 
-        # CONTROLS heading
-        self.text(by + 3, bx + 3, '◆ CONTROLS', color=GOLD, bold=True)
-
-        # Controls table — keys in CYAN, descriptions in WHITE
-        for i, ctrl in enumerate(controls):
-            parts = ctrl.split(None, 1)
-            key   = parts[0]
-            rest  = parts[1] if len(parts) > 1 else ''
-            row   = by + 5 + i
-            self.text(row, bx + 5,  key,  color=PLAYER, bold=True)
-            self.text(row, bx + 22, rest, color=NEUTRAL)
-
-        # Bottom button row
-        rb = by + 5 + len(controls) + 1
-        self.text(rb,     bx + 1, '─' * (bw - 2), color=SELECT)
-
-        # Resume button — green, boxed
-        rb_y = rb + 1
-        self.text(rb_y, bx + 4,  '┌─────────────┐', color=GOOD, bold=True)
-        self.text(rb_y + 1, bx + 4,  '│ [R] Resume  │', color=GOOD, bold=True)
-        self.text(rb_y + 2, bx + 4,  '└─────────────┘', color=GOOD, bold=True)
-
-        # Quit button — red, boxed
-        rb_x2 = bx + bw - 19
-        self.text(rb_y, rb_x2,  '┌─────────────┐', color=ENEMY, bold=True)
-        self.text(rb_y + 1, rb_x2,  '│ [Q] Quit    │', color=ENEMY, bold=True)
-        self.text(rb_y + 2, rb_x2,  '└─────────────┘', color=ENEMY, bold=True)
+        # Centered title row + prompt row
+        self.text(by + 1, bx + (bw - len(title))  // 2, title,  color=GOLD,    bold=True)
+        self.text(by + 3, bx + (bw - len(prompt)) // 2, prompt, color=NEUTRAL, bold=True)
 
     def gameover_screen(self, title: str = "GAME  OVER",
                         score_line: str = "", player_label: str = "",
