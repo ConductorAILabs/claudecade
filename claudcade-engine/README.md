@@ -168,7 +168,11 @@ def update(self, inp: Input, tick: int) -> str | None:
 | `inp.confirm` | ENTER, SPACE |
 | `inp.pause` | ESC |
 | `inp.pressed(key)` | any `ord()` key code |
+| `inp.just_pressed(key)` | true only on the first frame the key went down |
+| `inp.just_released(key)` | true only on the first frame the key came back up |
 | `inp.mouse_click` | left mouse button |
+
+**Held-key handling.** Terminal auto-repeat in most emulators (macOS Terminal, iTerm, gnome-terminal) waits ~500ms before sending the first key repeat. The engine maintains a 20-frame (~333ms @ 60 FPS) "still held" grace window on every key it sees, so `inp.pressed()` returns `True` continuously while a key is physically held even during the auto-repeat gap. You can do `if inp.left: self.x -= 1` and it Just Works.
 
 ---
 
@@ -204,12 +208,12 @@ r.menu(row, col, ["New Game", "Quit"], cursor=0)
 #### Built-in screens
 
 ```python
-# Pause overlay (drawn over the current game scene)
-r.pause_overlay("MY GAME", controls=[
-    "WASD    Move",
-    "J       Shoot",
-    "ESC     Pause / Resume",
-])
+# Pause overlay (drawn over the current game scene). Minimal panel:
+# "<game> · PAUSED" plus a [ R ] Resume / [ Q ] Quit prompt, no scrim,
+# no controls table. The `controls` argument is accepted for API compat
+# but no longer rendered — show your control map in the how-to-play
+# scene or the gameover screen if you want it elsewhere.
+r.pause_overlay("MY GAME", controls=[])
 
 # Game over screen
 r.gameover_screen(
@@ -433,9 +437,16 @@ More examples coming. If you build something, open a PR and add it to `examples/
 | Game | Developer | Genre |
 |------|-----------|-------|
 | C-TYPE | Claudcade | Space shooter |
-| Claudtra | Claudcade | Platformer |
-| Claude Fighter | Claudcade | Fighting |
-| Final Claudesy | Claudcade | JRPG |
+| Claudtra | Claudcade | Run & gun platformer |
+| Claude Fighter | Claudcade | 1v1 fighting |
+| Super Claudio | Claudcade | Side-scrolling platformer |
+| Claudturismo | Claudcade | Top-down racing |
+| Claudemon | Claudcade | Turn-based creature RPG |
+| Final Claudesy | Claudcade | Epic JRPG |
+
+Every game in this list is a single-file Python source you can crack
+open right next to the engine in this repo — useful as a reference
+when you're building your own.
 
 Built something? Tag **@claudcade** — we share everything.
 
