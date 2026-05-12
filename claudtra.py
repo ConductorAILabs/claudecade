@@ -622,10 +622,12 @@ def draw_game(scr, world, H, W, tick):
         c0 = sc(b['wx']); br = brow(b['y'])
         if 1 <= c0 < W-2 and AT <= br < GR:
             if b['owner'] == 'player':
-                sprite = '━►'
+                # Big green dot + arrow — matches C-TYPE for cross-game
+                # consistency and reads cleanly against busy backgrounds.
+                sprite = '●▶'
                 cp = P(3)|curses.A_BOLD
             else:
-                sprite = '◄━'
+                sprite = '◄●'
                 cp = P(2)|curses.A_BOLD
             p(br, c0, sprite, cp)
 

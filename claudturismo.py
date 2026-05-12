@@ -35,9 +35,9 @@ BRAKE            = 28.0
 COAST            = 6.0         # passive deceleration when no throttle
 OFFROAD_DRAG     = 18.0        # extra decel off-road
 COLLIDE_PENALTY  = 0.55        # speed multiplier on collision
-STEER_SPEED      = 26.0        # screen cols per second at max steer
-RIVAL_COUNT      = 4
-OBSTACLE_COUNT   = 8
+STEER_SPEED      = 18.0        # screen cols per second at max steer
+RIVAL_COUNT      = 3
+OBSTACLE_COUNT   = 6
 
 TITLE_ART = [
     r"  ██████╗██╗      █████╗ ██╗   ██╗██████╗ ████████╗██╗   ██╗██████╗ ███╗   ███╗ ██████╗ ",
@@ -180,15 +180,20 @@ class Race:
     # ── Setup ──────────────────────────────────────────────────────────────
 
     def _seed_rivals(self) -> None:
+        # Push the first rival further down the track so the opening straight
+        # is clear and the player can settle into the steering before
+        # competing for line.
         for i in range(RIVAL_COUNT):
-            d = 40.0 + i * 40.0
+            d = 90.0 + i * 60.0
             lat = random.uniform(-ROAD_HALF_WIDTH + 3, ROAD_HALF_WIDTH - 3)
             spd = random.uniform(MAX_SPEED * 0.55, MAX_SPEED * 0.75)
             self.rivals.append(Rival(d, lat, spd))
 
     def _seed_obstacles(self) -> None:
+        # No cones / oil slicks in the first ~120m of the track for the same
+        # reason — give the player a clean opening to learn the curve.
         for _ in range(OBSTACLE_COUNT):
-            d = random.uniform(60.0, TRACK_LENGTH - 30.0)
+            d = random.uniform(120.0, TRACK_LENGTH - 30.0)
             lat = random.uniform(-ROAD_HALF_WIDTH + 2, ROAD_HALF_WIDTH - 2)
             kind = random.choice(['cone', 'cone', 'cone', 'oil'])
             self.obstacles.append(Obstacle(d, lat, kind))
