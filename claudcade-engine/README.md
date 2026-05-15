@@ -444,9 +444,10 @@ More examples coming. If you build something, open a PR and add it to `examples/
 | Claudemon | Claudcade | Turn-based creature RPG |
 | Final Claudesy | Claudcade | Epic JRPG |
 
-Every game in this list is a single-file Python source you can crack
-open right next to the engine in this repo — useful as a reference
-when you're building your own.
+Every game in this list ships its source right next to the engine in
+this repo — useful as a reference when you're building your own. Most
+are a single Python file; Final Claudesy is the only multi-file game
+(its battle / explore / data modules are large enough to split).
 
 Built something? Tag **@claudcade** — we share everything.
 
