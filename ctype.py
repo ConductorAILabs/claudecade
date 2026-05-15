@@ -465,9 +465,8 @@ class Game:
                 if beam:
                     hit = (ex <= W and abs(b['y'] - (ey + eh//2)) <= eh//2 + 1)
                 else:
-                    # Vertical tolerance widened from +/-1 to +/-2 so bullets
-                    # connect when the player is close to but not exactly on
-                    # the enemy row.
+                    # +/-2 vertical tolerance so bullets connect when the
+                    # player is near the enemy row, not exactly on it.
                     hit = (ex - 2 <= b['x'] <= ex + ew + 1 and
                            ey - 2 <= b['y'] <= ey + eh + 2)
                 if hit:

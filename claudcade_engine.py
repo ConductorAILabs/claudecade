@@ -279,9 +279,8 @@ class Input:
 
 
 # ── Bounds-safe primitive ──────────────────────────────────────────────────────
-# Many games (ctype, claudtra, finalclaudesy) use a `_p()` lambda wrapping
-# scr.addstr with the same try/except + bounds check. Use this shared helper
-# to avoid duplicating the implementation across files.
+# Shared bounds-safe addstr wrapper used across games. Cheaper than each game
+# defining a local `_p()` closure with the same try/except + bounds check.
 
 def at_safe(scr: curses.window, H: int, W: int, row: int, col: int, s: str, attr: int = 0) -> None:
     """Bounds-safe addstr: silently no-ops outside the terminal."""

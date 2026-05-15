@@ -1,5 +1,5 @@
 """Main game loop and state machine for Final Claudesy."""
-import curses, time, json, os, random
+import curses, time, json, os
 
 from .          import SAVE_PATH
 from .data      import STORY

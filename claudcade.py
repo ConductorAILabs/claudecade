@@ -1021,17 +1021,12 @@ def draw_main(scr, H, W, tick, cursor, welcome_ticks_left=0):
         gy = PANEL_Y + 2 + i
         if gy >= H-4: break
         sel = (i == cursor)
-        cs  = g.get('coming_soon')
         prefix = '▶ ' if sel else '  '
         gcp = g['color']
         name_a  = (P(gcp)|curses.A_BOLD|curses.A_REVERSE) if sel else (P(gcp)|curses.A_BOLD)
         genre_a = P(7) if sel else (P(5)|curses.A_DIM)
         _p(scr, H, W, gy,   2, prefix + g['name'][:17], name_a)
-        # Coming-soon games get a small ✦ marker in the genre column to flag them.
-        genre_text = f'[{g["genre"]:7}]'
-        if cs:
-            _p(scr, H, W, gy, 19, '✦', P(gcp)|curses.A_BOLD)
-        _p(scr, H, W, gy,  21, genre_text, genre_a)
+        _p(scr, H, W, gy,  21, f'[{g["genre"]:7}]', genre_a)
 
     # ── Game detail (right panel) ────────────────────────────────────────────
     g   = GAMES[cursor]
@@ -1083,7 +1078,6 @@ def draw_main(scr, H, W, tick, cursor, welcome_ticks_left=0):
     else:
         frames = g.get('frames') or [g.get('art', [])]
         art    = frames[(tick // 6) % len(frames)] if frames else []
-    cs     = g.get('coming_soon')
     if art:
         aw    = max(len(l) for l in art) + 2
         ah    = len(art) + 2
@@ -1097,16 +1091,11 @@ def draw_main(scr, H, W, tick, cursor, welcome_ticks_left=0):
             for r in range(1, ah-1):
                 _p(scr, H, W, ART_Y+r, box_x,        '│', P(5)|curses.A_DIM)
                 _p(scr, H, W, ART_Y+r, box_x+aw+1,   '│', P(5)|curses.A_DIM)
-            sprite_attr = (P(5)|curses.A_DIM) if cs else (P(gcp)|curses.A_BOLD)
+            sprite_attr = P(gcp)|curses.A_BOLD
             for i, line in enumerate(art):
                 _p(scr, H, W, ART_Y+1+i, ART_X, line, sprite_attr)
-            if cs:
-                badge = ' ✦ LOCKED ✦ '
-                bx = box_x + 1 + (aw - len(badge)) // 2
-                by = ART_Y + ah // 2
-                _p(scr, H, W, by, bx, badge, P(5)|curses.A_BOLD|curses.A_REVERSE)
-            # CRITICAL: advance ART_Y past the box so the description below
-            # doesn't overdraw it (was the cause of "demos not showing up").
+            # Advance ART_Y past the demo box so description below
+            # doesn't overdraw it.
             ART_Y += ah + 1
 
     # Description
@@ -1130,14 +1119,10 @@ def draw_main(scr, H, W, tick, cursor, welcome_ticks_left=0):
             pad = 14 - len(ky)
             _p(scr, H, W, cy, DET_X+4+len(ky)+max(1,pad), rest, P(5))
 
-    # Launch prompt (blinking) — different message for coming-soon games
+    # Launch prompt (blinking)
     if (tick // 15) % 2 == 0:
-        if g.get('coming_soon'):
-            lp = f'★ COMING SOON ★  {g["name"]}'
-            attr = P(5)|curses.A_BOLD|curses.A_REVERSE
-        else:
-            lp = f'[ ENTER ]  Launch  {g["name"]}'
-            attr = P(gcp)|curses.A_BOLD|curses.A_REVERSE
+        lp = f'[ ENTER ]  Launch  {g["name"]}'
+        attr = P(gcp)|curses.A_BOLD|curses.A_REVERSE
         lx = DET_X + (DET_W - len(lp)) // 2
         _p(scr, H, W, H-4, lx, lp, attr)
 
@@ -1199,8 +1184,6 @@ def arcade_main(scr):
         if DOWN: cursor = (cursor+1) % len(GAMES)
         if QUIT: _launch_script = None; break
         if OK:
-            if GAMES[cursor].get('coming_soon'):
-                continue   # not yet playable — selection no-ops
             _launch_script = GAMES[cursor]['script']
             break
 

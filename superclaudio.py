@@ -369,7 +369,6 @@ class World:
         self.coins_collected = 0
         self.lives = START_LIVES
         self.level_won = False
-        self.death_overlay = 0   # frames remaining to show death banner
         self.win_timer = 0
         self.time_left = float(TIME_LIMIT)
         self.checkpoint_x = 2.0
@@ -499,15 +498,6 @@ class World:
 # ── Drawing ──────────────────────────────────────────────────────────────────
 
 _p = at_safe
-
-
-def _color_at(ch: str) -> tuple[int, str]:
-    """Map level glyph to (color_pair, render_char)."""
-    if ch == '#': return (3, '▓')     # green ground
-    if ch == 'B': return (4, '▒')     # gold brick
-    if ch == '?': return (4, '?')     # gold ?-block
-    if ch == '=': return (3, '=')     # green platform
-    return (5, ' ')
 
 
 def draw_game(scr, world: World, cam: Camera, H: int, W: int, tick: int) -> None:

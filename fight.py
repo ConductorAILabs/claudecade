@@ -482,8 +482,7 @@ class Game:
         if self.p1w>=NEED or self.p2w>=NEED: return False
         self.rnd+=1; self._new(); self.show(f'  ROUND {self.rnd}  ',90); return True
 def make_put(scr, H, W):
-    # Bounds-safe addstr closure. Delegates to engine's at_safe so behaviour
-    # matches ctype/claudtra/finalclaudesy.
+    # Bounds-safe addstr closure delegating to engine.at_safe.
     def put(r, c, s, a=0):
         at_safe(scr, H, W, r, c, s, a)
     return put

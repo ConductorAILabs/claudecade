@@ -184,8 +184,7 @@ def build_map() -> list[list[str]]:
     return g
 
 
-GRASS_TILES   = {TILE_GRASS}
-WALKABLE      = {TILE_PATH, TILE_GRASS, TILE_HOME, TILE_BOSS}
+WALKABLE = {TILE_PATH, TILE_GRASS, TILE_HOME, TILE_BOSS}
 
 
 # ── Game state ────────────────────────────────────────────────────────────────
@@ -201,7 +200,6 @@ class Game:
     boss_defeated:  bool                       = False
     boss_present:   bool                       = True
     last_msg: str                              = 'Welcome to Claudemon. Step in tall grass!'
-    step_count: int                            = 0
     rng:      random.Random                    = field(default_factory=lambda: random.Random())
 
     @property
@@ -244,7 +242,6 @@ class Game:
         if tile == TILE_BOSS and not self.boss_present:
             pass
         self.px, self.py = nx, ny
-        self.step_count += 1
         return True
 
     def maybe_encounter(self) -> Species | None:
@@ -404,7 +401,6 @@ class PlayScene(Scene):
         self.battle: Battle | None = None
         self.menu_open: bool = False
         self.menu_cursor: int = 0
-        self.last_step_msg: str = ''
         self._move_cd: int = 0   # frames before next allowed step
 
     # ── Update ──

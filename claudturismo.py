@@ -725,12 +725,9 @@ class RaceScene(Scene):
     finished_pending: int
 
     def on_enter(self):
-        # Engine RNG is shared with us; seed-equiv via random for now.
         self.race = Race()
         self.paused = False
-        # Frames remaining to display the finish toast on the race screen
-        # before transitioning to the finish summary scene.
-        self.finished_pending = 0
+        self.finished_pending = 0   # finish-toast frames before scene switch
         self.submit_box: list = [None]
         self._submitted = False
 
@@ -812,8 +809,8 @@ class FinishScene(Scene):
 def main():
     # Independent RNG seed each run.
     random.seed()
-    # Suppress unused-import linter complaints for engine semantic constants
-    # that we keep around for future extensions.
+    # Re-export keeps ruff from flagging WATER/SELECT as unused; both are
+    # part of the engine palette and used in draw helpers above.
     _ = (WATER, SELECT)
     (
         Engine('Claudturismo', fps=FPS)
