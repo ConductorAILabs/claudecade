@@ -8,6 +8,7 @@ import sys
 import time
 
 from claudcade_engine import at_safe, setup_colors
+from claudcade_scores import consume_new_registration, get_player_id, register_async
 
 # ── TITLE ART (CLAUDECADE in block font) ───────────────────────────────────────
 TITLE = [
@@ -950,7 +951,7 @@ def _bg_stars(H: int, W: int) -> list[tuple[int, int, str]]:
         ]
     return _STAR_CACHE[key]
 
-def draw_main(scr, H, W, tick, cursor):
+def draw_main(scr, H, W, tick, cursor, welcome_ticks_left=0):
     P = curses.color_pair
     scr.erase()
 
@@ -1142,8 +1143,17 @@ def draw_main(scr, H, W, tick, cursor):
 
     # ── Footer ──────────────────────────────────────────────────────────────
     _p(scr, H, W, H-3, 0, '╠'+'═'*(W-2)+'╣', P(5)|curses.A_BOLD)
-    foot = f'  ↑↓  Select     ENTER  Launch     Q  Quit              {len(GAMES)} GAMES  ·  Claudcade v1.0'
+    pid = get_player_id()
+    who = f'Player #{pid}' if pid else 'Offline'
+    foot = f'  ↑↓  Select     ENTER  Launch     Q  Quit              {who}  ·  {len(GAMES)} GAMES  ·  Claudcade v1.0'
     _p(scr, H, W, H-2, 2, foot, P(5))
+
+    # One-time welcome banner for brand-new player IDs. Slot it into the
+    # subtitle row so it's prominent without redrawing existing chrome.
+    if welcome_ticks_left > 0 and pid is not None:
+        banner = f'  ★ WELCOME, PLAYER #{pid} — YOU ARE NOW ON THE GLOBAL LEADERBOARD ★  '
+        bx = max(1, (W - len(banner)) // 2)
+        _p(scr, H, W, 2 + len(TITLE) + 1, bx, banner[:W-2], P(4)|curses.A_BOLD|curses.A_REVERSE)
 
     scr.refresh()
 
@@ -1158,9 +1168,15 @@ def arcade_main(scr):
     try: curses.mousemask(0)  # disable mouse for the launcher
     except curses.error: pass
 
+    # Pre-register the player in the background so a first-time visitor sees
+    # their ID + a welcome banner without ever having to play a game. No-op
+    # for repeat visits (ID is cached on disk).
+    register_async()
+
     cursor = 0
     nxt    = time.perf_counter()
     tick   = 0
+    welcome_ticks_left = 0   # >0 → draw_main shows the WELCOME banner
 
     while True:
         now = time.perf_counter()
@@ -1189,7 +1205,15 @@ def arcade_main(scr):
             _launch_script = GAMES[cursor]['script']
             break
 
-        draw_main(scr, H, W, tick, cursor)
+        # If the background register_async() just minted a new ID, show the
+        # welcome banner for ~6 seconds. consume_new_registration() returns
+        # non-None at most once per process, so the banner won't re-appear.
+        if welcome_ticks_left == 0 and consume_new_registration() is not None:
+            welcome_ticks_left = 60 * 6
+        if welcome_ticks_left > 0:
+            welcome_ticks_left -= 1
+
+        draw_main(scr, H, W, tick, cursor, welcome_ticks_left)
 
 def run():
     global _launch_script

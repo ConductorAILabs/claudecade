@@ -39,11 +39,14 @@ SCORES_FILE = os.path.expanduser("~/.claudcade_scores.json")
 _player_id: int | None = None
 _id_lock   = threading.Lock()
 _pb_lock   = threading.Lock()
+# True only for the registration that creates the ID file (vs reading it back
+# from disk). Consumers call consume_new_registration() to read-and-clear.
+_new_registration = False
 
 # ── Player registration ────────────────────────────────────────────────────────
 
 def get_player_id() -> int | None:
-    global _player_id
+    global _player_id, _new_registration
     with _id_lock:
         if _player_id is not None:
             return _player_id
@@ -64,9 +67,30 @@ def get_player_id() -> int | None:
             with open(ID_FILE, "w") as f:
                 f.write(str(pid))
             _player_id = pid
+            _new_registration = True
             return _player_id
         except (urllib.error.URLError, OSError, ValueError, KeyError):
             return None  # offline / server down → caller falls back to "Anonymous"
+
+
+def consume_new_registration() -> int | None:
+    """If this process just registered a brand-new player ID (rather than
+    reading one from disk), return that id and clear the flag — so the caller
+    can show a one-time welcome. Returns None on repeat calls."""
+    global _new_registration
+    with _id_lock:
+        if _new_registration and _player_id is not None:
+            _new_registration = False
+            return _player_id
+        return None
+
+
+def register_async() -> threading.Thread:
+    """Kick off get_player_id() in a daemon thread. Useful for the launcher to
+    pre-register on startup without blocking the UI on slow networks."""
+    t = threading.Thread(target=get_player_id, daemon=True)
+    t.start()
+    return t
 
 def player_label() -> str:
     pid = get_player_id()
