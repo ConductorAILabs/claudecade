@@ -1278,17 +1278,49 @@ def sign(x: float) -> float:
 # ── Engine helpers ─────────────────────────────────────────────────────────────
 
 def setup_colors() -> None:
-    """Initialise the standard Claudecade color pairs. Call once inside curses.wrapper."""
+    """Initialise the standard Claudecade color pairs. Call once inside curses.wrapper.
+
+    On 256-color terminals (Ghostty, iTerm2, modern xterm, etc.) we bind to
+    fixed indices in the 6x6x6 RGB cube so the arcade palette stays vibrant
+    regardless of the user's terminal theme. The named curses colors
+    (COLOR_CYAN etc.) are re-mapped by themes — Ghostty's default in
+    particular renders them pastel, which is what the arcade is *not*.
+
+    On 8-color terminals we fall back to the named pairs so legacy
+    setups still get something readable.
+    """
     curses.start_color()
     curses.use_default_colors()
-    curses.init_pair(CYAN,      curses.COLOR_CYAN,    -1)
-    curses.init_pair(RED,       curses.COLOR_RED,     -1)
-    curses.init_pair(GREEN,     curses.COLOR_GREEN,   -1)
-    curses.init_pair(YELLOW,    curses.COLOR_YELLOW,  -1)
-    curses.init_pair(WHITE,     curses.COLOR_WHITE,   -1)
-    curses.init_pair(MAGENTA,   curses.COLOR_MAGENTA, -1)
-    curses.init_pair(HIGHLIGHT, curses.COLOR_BLACK, curses.COLOR_WHITE)
-    curses.init_pair(BLUE,      curses.COLOR_BLUE,    -1)
+
+    if curses.COLORS >= 256:
+        # 6x6x6 RGB cube: 16 + 36*r + 6*g + b   where r,g,b in 0..5
+        # Picked for high saturation against a black background.
+        VIBRANT_CYAN    = 51    # #00ffff
+        VIBRANT_RED     = 196   # #ff0000
+        VIBRANT_GREEN   = 46    # #00ff00
+        VIBRANT_YELLOW  = 226   # #ffff00
+        VIBRANT_WHITE   = 231   # #ffffff
+        VIBRANT_MAGENTA = 201   # #ff00ff
+        VIBRANT_BLUE    = 33    # #0087ff (royal — pure 21 #0000ff is too dim)
+        VIBRANT_BLACK   = 16    # #000000
+
+        curses.init_pair(CYAN,      VIBRANT_CYAN,    -1)
+        curses.init_pair(RED,       VIBRANT_RED,     -1)
+        curses.init_pair(GREEN,     VIBRANT_GREEN,   -1)
+        curses.init_pair(YELLOW,    VIBRANT_YELLOW,  -1)
+        curses.init_pair(WHITE,     VIBRANT_WHITE,   -1)
+        curses.init_pair(MAGENTA,   VIBRANT_MAGENTA, -1)
+        curses.init_pair(HIGHLIGHT, VIBRANT_BLACK,   VIBRANT_WHITE)
+        curses.init_pair(BLUE,      VIBRANT_BLUE,    -1)
+    else:
+        curses.init_pair(CYAN,      curses.COLOR_CYAN,    -1)
+        curses.init_pair(RED,       curses.COLOR_RED,     -1)
+        curses.init_pair(GREEN,     curses.COLOR_GREEN,   -1)
+        curses.init_pair(YELLOW,    curses.COLOR_YELLOW,  -1)
+        curses.init_pair(WHITE,     curses.COLOR_WHITE,   -1)
+        curses.init_pair(MAGENTA,   curses.COLOR_MAGENTA, -1)
+        curses.init_pair(HIGHLIGHT, curses.COLOR_BLACK, curses.COLOR_WHITE)
+        curses.init_pair(BLUE,      curses.COLOR_BLUE,    -1)
 
 
 def _init_curses(scr: curses.window) -> None:
@@ -1308,7 +1340,14 @@ def draw_how_to_play(scr: curses.window, H: int, W: int, tick: int,
                      goal: list[str],
                      tips: list[str],
                      controls: list[str] | None = None) -> None:
-    """Standard HOW TO PLAY screen shared by all games."""
+    """Standard HOW TO PLAY screen shared by all games.
+
+    Content is assembled into a single list, vertically centered inside the
+    panel, and horizontally centered within the box. The PRESS SPACE prompt
+    is reserved its own row at the bottom; the content block above it can
+    never overlap the prompt or run off the box (it scales down or clips
+    earlier sections if the terminal is too short).
+    """
     P  = curses.color_pair
     BW = min(70, W - 4)
     lm = (W - BW) // 2
@@ -1320,6 +1359,7 @@ def draw_how_to_play(scr: curses.window, H: int, W: int, tick: int,
         except curses.error:
             pass
 
+    # ── Frame ──────────────────────────────────────────────────────────────
     scr.erase()
     _put(0,   lm, '╔' + '═' * (BW - 2) + '╗', P(NEUTRAL) | curses.A_BOLD)
     _put(H-1, lm, '╚' + '═' * (BW - 2) + '╝', P(NEUTRAL) | curses.A_BOLD)
@@ -1332,31 +1372,56 @@ def draw_how_to_play(scr: curses.window, H: int, W: int, tick: int,
     _put(1, lm + 1, hdr, P(GOLD) | curses.A_BOLD)
     _put(2, lm, '╠' + '═' * (BW - 2) + '╣', P(NEUTRAL) | curses.A_BOLD)
 
-    row = [4]
-
-    def ln(text: str = '', color: int = NEUTRAL, bold: bool = False) -> None:
-        _put(row[0], lm + 2, text[:BW - 4],
-             P(color) | (curses.A_BOLD if bold else 0))
-        row[0] += 1
-
-    ln('GOAL', GOLD, True)
-    ln('────')
+    # ── Build the content block as (text, color, bold) tuples ──────────────
+    Line = tuple[str, int, bool]
+    lines: list[Line] = []
+    lines.append(('GOAL',  GOLD, True))
+    lines.append(('────',  NEUTRAL, False))
     for line in goal:
-        ln(line)
-    ln()
+        lines.append((line, NEUTRAL, False))
+    lines.append(('', NEUTRAL, False))
 
     if controls is not None:
-        ln('CONTROLS', GOLD, True)
-        ln('────────')
+        lines.append(('CONTROLS', GOLD, True))
+        lines.append(('────────', NEUTRAL, False))
         for ctrl in controls:
-            ln(ctrl)
-        ln()
+            lines.append((ctrl, NEUTRAL, False))
+        lines.append(('', NEUTRAL, False))
 
-    ln('TIPS', GOLD, True)
-    ln('────')
+    lines.append(('TIPS', GOLD, True))
+    lines.append(('────', NEUTRAL, False))
     for line in tips:
-        ln(line)
+        lines.append((line, NEUTRAL, False))
 
+    # Strip trailing blank rows so vertical centering doesn't pad on both
+    # sides of empty space at the end.
+    while lines and lines[-1][0] == '':
+        lines.pop()
+
+    # ── Vertical centering ─────────────────────────────────────────────────
+    # Inner panel runs rows 3..H-4 inclusive; H-3 is reserved for the
+    # PRESS SPACE prompt. So the content has (H - 3) - 3 = H - 6 rows.
+    top_inner = 3
+    bot_inner = H - 4         # last writable row above the SPACE prompt
+    inner_h   = max(0, bot_inner - top_inner + 1)
+    if len(lines) > inner_h:
+        # Too tall for this terminal — clip trailing lines so the prompt
+        # still has its row. Better than overrunning the box border.
+        lines = lines[:inner_h]
+    start = top_inner + max(0, (inner_h - len(lines)) // 2)
+
+    # ── Horizontal centering of the whole content column ───────────────────
+    # Compute the widest line so the column sits centered as a block, not
+    # so each line is independently centered (preserves CONTROLS alignment).
+    col_w = max((len(text) for text, _, _ in lines), default=0)
+    col_w = min(col_w, BW - 4)
+    col_x = lm + (BW - col_w) // 2
+
+    for i, (text, color, bold) in enumerate(lines):
+        attr = P(color) | (curses.A_BOLD if bold else 0)
+        _put(start + i, col_x, text[:col_w], attr)
+
+    # ── Blinking prompt (always on its reserved row) ───────────────────────
     if (tick // 15) % 2 == 0:
         msg = 'PRESS SPACE TO START'
         _put(H - 3, lm + (BW - len(msg)) // 2, msg, P(GOLD) | curses.A_BOLD)
