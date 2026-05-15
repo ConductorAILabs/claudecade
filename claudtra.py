@@ -43,7 +43,9 @@ def draw_how_to_play(scr, H, W, tick):
     )
 FPS       = 30
 SW, SH    = 7, 5
-WALK      = 1.3
+WALK      = 0.85       # cells/tick; lowered from 1.3 because the engine's
+                       # 20-frame held-key grace meant a single tap swept
+                       # ~26 cells, which felt twitchy for precise platforming.
 JV0       = 6.0
 GRAV      = 0.8
 B_SPD     = 4.0

@@ -44,7 +44,10 @@ def draw_how_to_play(scr, H, W, tick):
     )
 FPS        = 30
 AT         = 3          # arena top row
-P_SPD      = 2.0        # player speed (rows/cols per tick)
+P_SPD      = 1.2        # player speed (rows/cols per tick).
+                        # Combined with the engine's 20-frame held-key grace,
+                        # a single tap moves ~24 cells; higher than this
+                        # felt twitchy because taps swept the whole screen.
 PB_SPD     = 5.0        # player bullet speed
 EB_SPD     = 1.4        # enemy bullet speed
 SHOOT_CD   = 7
