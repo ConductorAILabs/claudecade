@@ -6,9 +6,23 @@ import random
 import subprocess
 import sys
 import time
+from typing import TypedDict
 
 from claudcade_engine import at_safe, setup_colors
 from claudcade_scores import consume_new_registration, get_player_id, register_async
+
+
+class GameMeta(TypedDict):
+    """One entry in the GAMES list — metadata for a launchable arcade title."""
+    name:      str
+    subtitle:  str
+    script:    str
+    genre:     str
+    color:     int
+    title_key: str
+    desc:      list[str]
+    controls:  list[str]
+    frames:    list[list[str]]
 
 # ── TITLE ART (CLAUDECADE in block font) ───────────────────────────────────────
 TITLE = [
@@ -84,7 +98,7 @@ GAME_TITLES = {
 # Each game has 'frames' (list of frame-art for animation) instead of static 'art'.
 # Animation cycles every ~6 ticks via frames[(tick // 6) % len(frames)].
 
-GAMES = [
+GAMES: list[GameMeta] = [
     {
         'name':     'C-TYPE',
         'subtitle': 'SPACE SHOOTER',
@@ -951,7 +965,8 @@ def _bg_stars(H: int, W: int) -> list[tuple[int, int, str]]:
         ]
     return _STAR_CACHE[key]
 
-def draw_main(scr, H, W, tick, cursor, welcome_ticks_left=0):
+def draw_main(scr: "curses.window", H: int, W: int, tick: int,
+              cursor: int, welcome_ticks_left: int = 0) -> None:
     P = curses.color_pair
     scr.erase()
 
@@ -1145,7 +1160,7 @@ def draw_main(scr, H, W, tick, cursor, welcome_ticks_left=0):
 # ── ARCADE MAIN ────────────────────────────────────────────────────────────────
 _launch_script = None
 
-def arcade_main(scr):
+def arcade_main(scr: "curses.window") -> None:
     global _launch_script
     curses.cbreak(); curses.noecho(); scr.keypad(True)
     scr.nodelay(True); curses.curs_set(0)
@@ -1197,7 +1212,7 @@ def arcade_main(scr):
 
         draw_main(scr, H, W, tick, cursor, welcome_ticks_left)
 
-def run():
+def run() -> None:
     global _launch_script
     script_dir = os.path.dirname(os.path.abspath(__file__))
     while True:

@@ -877,8 +877,8 @@ class PlayScene(Scene):
                     r.text(row, mx + 2, '  ' + opt, NEUTRAL)
             # Show catch hint
             if BATTLE_ACTIONS[b.cursor] == 'CATCH':
-                c = int(catch_chance(b.enemy) * 100)
-                r.text(my + mh - 1, mx + 2, f'catch ~{c}%', GOLD)
+                cpct = int(catch_chance(b.enemy) * 100)
+                r.text(my + mh - 1, mx + 2, f'catch ~{cpct}%', GOLD)
         elif b.phase == 'submenu' and b.submenu == 'switch':
             r.text(my + 1, mx + 2, 'SWITCH TO:', GOLD, bold=True)
             for i, c in enumerate(self.game.party[:mh - 2]):

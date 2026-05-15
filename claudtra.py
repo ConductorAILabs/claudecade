@@ -7,7 +7,7 @@ import random
 
 from claudcade_engine import BulletDict, Engine, PlatformDict, Renderer, Scene, at_safe
 from claudcade_engine import draw_how_to_play as _engine_how_to_play
-from claudcade_scores import player_label, submit_async
+from claudcade_scores import SubmitResult, player_label, submit_async
 
 CONTROLS = [
     'A / D           Move left / right',
@@ -294,7 +294,7 @@ def biome_for(wx: float) -> tuple[int, str, int]:
 
 
 class World:
-    def __init__(self):
+    def __init__(self) -> None:
         self.cam_x = 0.0
         self.player = Player()
         self.enemies = []
@@ -821,7 +821,7 @@ class PlayScene(Scene):
         p = self.world.player
         if p.state == 'dead' and p.dead_timer <= 0:
             if p.lives <= 0:
-                sub: list = [None]
+                sub: list[SubmitResult | None] = [None]
                 submit_async('claudtra', self.world.score, f'Dist {int(p.wx)}', sub)
                 return ('gameover', (self.world.score, sub))
             # Respawn at next checkpoint (or +12 forward if no checkpoint set yet)

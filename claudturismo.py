@@ -22,7 +22,7 @@ from claudcade_engine import (
     clamp,
 )
 from claudcade_engine import draw_how_to_play as _engine_how_to_play
-from claudcade_scores import player_label, submit_async
+from claudcade_scores import SubmitResult, player_label, submit_async
 
 # ── Tunables ──────────────────────────────────────────────────────────────────
 FPS              = 30
@@ -728,7 +728,7 @@ class RaceScene(Scene):
         self.race = Race()
         self.paused = False
         self.finished_pending = 0   # finish-toast frames before scene switch
-        self.submit_box: list = [None]
+        self.submit_box: list[SubmitResult | None] = [None]
         self._submitted = False
 
     def update(self, inp, tick, dt):

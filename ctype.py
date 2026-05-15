@@ -8,7 +8,7 @@ import random
 
 from claudcade_engine import Engine, Renderer, Scene, StarDict, at_safe
 from claudcade_engine import draw_how_to_play as _engine_how_to_play
-from claudcade_scores import player_label, submit_async
+from claudcade_scores import SubmitResult, player_label, submit_async
 
 CONTROLS = [
     'WASD / Arrows   Move',
@@ -1014,7 +1014,7 @@ class PlayScene(Scene):
         self.game.update(inp.keys, mshoot)
         p = self.game.player
         if p.lives <= 0 and p.invuln == 0:
-            sub: list = [None]
+            sub: list[SubmitResult | None] = [None]
             submit_async('ctype', self.game.score, f'Wave {self.game.wave}', sub)
             return ('gameover', (self.game.score, self.game.wave, sub))
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import curses
+from typing import TypedDict
 
 from claudcade_engine import (
     Camera,
@@ -14,7 +15,7 @@ from claudcade_engine import (
     clamp,
 )
 from claudcade_engine import draw_how_to_play as _engine_how_to_play
-from claudcade_scores import player_label, submit_async
+from claudcade_scores import SubmitResult, player_label, submit_async
 
 # ── Tuning constants ─────────────────────────────────────────────────────────
 FPS         = 30
@@ -31,6 +32,15 @@ COIN_PTS    = 100
 STOMP_PTS   = 200
 FLAG_PTS    = 1000
 TIME_LIMIT  = 300       # seconds for level — counts down
+
+
+class PopupDict(TypedDict):
+    """Score-popup floater (e.g. +100 on coin pickup)."""
+    x:   float
+    y:   float
+    txt: str
+    ttl: int
+
 
 # Title art (block font)
 TITLE_ART = [
@@ -364,7 +374,7 @@ class World:
         self.bonked: dict[tuple[int, int], int] = {}  # (col,row) -> frames showing pop
         self.enemies = [Walker(c, r) for (c, r) in ENEMY_SPAWNS]
         self.particles = Particles()
-        self.popups = []   # list of {x,y,txt,ttl}
+        self.popups: list[PopupDict] = []
         self.score = 0
         self.coins_collected = 0
         self.lives = START_LIVES
@@ -957,7 +967,7 @@ class PlayScene(Scene):
         if self.world.level_won:
             self.world.win_timer -= 1
             if self.world.win_timer <= 0:
-                sub: list = [None]
+                sub: list[SubmitResult | None] = [None]
                 extra = f'Win coins={self.world.coins_collected}'
                 submit_async('superclaudio', self.world.score, extra, sub)
                 return ('win', (self.world.score, sub))
@@ -969,7 +979,7 @@ class PlayScene(Scene):
                 if self.world.respawn():
                     return None
                 # out of lives
-                sub2: list = [None]
+                sub2: list[SubmitResult | None] = [None]
                 extra2 = f'Loss coins={self.world.coins_collected}'
                 submit_async('superclaudio', self.world.score, extra2, sub2)
                 return ('gameover', (self.world.score, sub2))
