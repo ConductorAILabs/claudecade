@@ -15,7 +15,7 @@ from claudcade_engine import (
     clamp,
 )
 from claudcade_engine import draw_how_to_play as _engine_how_to_play
-from claudcade_scores import SubmitResult, player_label, submit_async
+from claudcade_scores import SubmitResult, player_label, rank_badge, submit_async
 
 # ── Tuning constants ─────────────────────────────────────────────────────────
 FPS         = 30
@@ -868,17 +868,9 @@ def draw_endscreen(scr, H, W, score, tick, sub_result, *, victory: bool) -> None
     if sub_result and sub_result[0]:
         rank = sub_result[0].get('rank')
         if rank:
-            if rank <= 10:
-                badge = '★ ELITE ★'
-                badge_color = P(3) | curses.A_BOLD
-            elif rank <= 50:
-                badge = '▲ TOP 50 ▲'
-                badge_color = P(4) | curses.A_BOLD
-            else:
-                badge = '◆ RANKED ◆'
-                badge_color = P(6) | curses.A_BOLD
+            badge, cp = rank_badge(rank)
             rm = f'  {badge}  Global rank: #{rank}  '
-            p(mr2 + 5, max(1, (W - len(rm)) // 2), rm, badge_color)
+            p(mr2 + 5, max(1, (W - len(rm)) // 2), rm, P(cp) | curses.A_BOLD)
         elif sub_result[0].get('is_new_pb'):
             msg = '  NEW PERSONAL BEST  '
             p(mr2 + 5, max(1, (W - len(msg)) // 2), msg, P(3) | curses.A_BOLD)

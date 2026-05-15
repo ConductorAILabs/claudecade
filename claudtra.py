@@ -7,7 +7,7 @@ import random
 
 from claudcade_engine import BulletDict, Engine, PlatformDict, Renderer, Scene, at_safe
 from claudcade_engine import draw_how_to_play as _engine_how_to_play
-from claudcade_scores import SubmitResult, player_label, submit_async
+from claudcade_scores import SubmitResult, player_label, rank_badge, submit_async
 
 CONTROLS = [
     'A / D           Move left / right',
@@ -761,18 +761,9 @@ def draw_gameover(scr, H, W, score, tick, sub_result=None):
     if sub_result and sub_result[0]:
         rank = sub_result[0].get('rank')
         if rank:
-            # Award visual based on rank
-            if rank <= 10:
-                badge = '★ ELITE ★'
-                badge_color = P(3)|curses.A_BOLD
-            elif rank <= 50:
-                badge = '▲ TOP 50 ▲'
-                badge_color = P(4)|curses.A_BOLD
-            else:
-                badge = '◆ RANKED ◆'
-                badge_color = P(6)|curses.A_BOLD
+            badge, cp = rank_badge(rank)
             rm = f'  {badge}  Global rank: #{rank}  '
-            p(mr+5, (W-len(rm))//2, rm, badge_color)
+            p(mr+5, (W-len(rm))//2, rm, P(cp)|curses.A_BOLD)
     elif sub_result and sub_result[0] is None:
         p(mr+5, (W-26)//2, '  Submitting score...  ', P(5)|curses.A_DIM)
 

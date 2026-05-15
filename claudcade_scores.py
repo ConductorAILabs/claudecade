@@ -96,6 +96,21 @@ def player_label() -> str:
     pid = get_player_id()
     return f"Player #{pid}" if pid else "Anonymous"
 
+
+def rank_badge(rank: int) -> tuple[str, int]:
+    """Return (badge_text, color_pair) for a global rank.
+
+    Tiers: <=10 ELITE, <=50 TOP 50, otherwise RANKED. Color-pair
+    indices line up with claudcade_engine (GREEN=3, YELLOW=4,
+    MAGENTA=6). Shared by the game-over screens in claudtra and
+    superclaudio so the tier thresholds cannot drift between games.
+    """
+    if rank <= 10:
+        return ('★ ELITE ★', 3)
+    if rank <= 50:
+        return ('▲ TOP 50 ▲', 4)
+    return ('◆ RANKED ◆', 6)
+
 # ── Local personal-best cache ──────────────────────────────────────────────────
 
 def _load_pb() -> dict[str, _PBEntry]:
