@@ -90,9 +90,21 @@ function buildTable(scores) {
  *
  * @returns {Promise<void>}
  */
+function updatePrompt() {
+  const el = document.getElementById('lb-prompt-text');
+  if (!el) return;
+  const parts = ['claudecade scores'];
+  parts.push(currentGame ? `--game ${currentGame}` : '--all');
+  if (currentRange !== 'all') parts.push(`--range ${currentRange}`);
+  if (currentQuery)           parts.push(`--player "${currentQuery}"`);
+  parts.push(`--limit ${PAGE_SIZE}`);
+  el.textContent = parts.join(' ');
+}
+
 async function loadLeaderboard() {
   const el = document.getElementById('lb-main');
   if (!el) return;
+  updatePrompt();
 
   const loading = document.createElement('p');
   loading.className = 'loading';

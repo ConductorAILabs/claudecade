@@ -42,8 +42,6 @@ const pool = new Pool({
 
 const VALID_GAMES = [
   'ctype', 'claudtra', 'fight', 'finalclaudesy',
-  // Placeholder card IDs on the site — Python implementations not built yet,
-  // but the API accepts them so future builds can submit scores immediately.
   'superclaudio', 'claudturismo', 'claudemon',
 ];
 
