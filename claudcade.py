@@ -1200,8 +1200,7 @@ def arcade_main(scr):
         if QUIT: _launch_script = None; break
         if OK:
             if GAMES[cursor].get('coming_soon'):
-                # Don't launch; just buzz visually next loop
-                continue
+                continue   # not yet playable — selection no-ops
             _launch_script = GAMES[cursor]['script']
             break
 
