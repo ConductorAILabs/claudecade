@@ -305,13 +305,19 @@ class Battle:
             del self.log[0]
 
 
-def calc_damage(attacker: Creature, defender: Creature, rng: random.Random) -> tuple[int, float]:
+CRIT_CHANCE = 1 / 16   # classic monster-battler odds (~6%)
+CRIT_MULT   = 1.5
+
+
+def calc_damage(attacker: Creature, defender: Creature,
+                rng: random.Random) -> tuple[int, float, bool]:
     mult = MATCHUP[attacker.species.type][defender.species.type]
     base = attacker.damage
     # +/- 15% randomisation
     roll = 0.85 + rng.random() * 0.30
-    dmg = max(1, int(base * mult * roll))
-    return dmg, mult
+    crit = rng.random() < CRIT_CHANCE
+    dmg = max(1, int(base * mult * roll * (CRIT_MULT if crit else 1.0)))
+    return dmg, mult, crit
 
 
 def catch_chance(enemy: Creature) -> float:
@@ -575,11 +581,12 @@ class PlayScene(Scene):
         b = self.battle
         if b is None: return
         rng = self.game.rng
-        dmg, mult = calc_damage(active, b.enemy, rng)
+        dmg, mult, crit = calc_damage(active, b.enemy, rng)
         b.enemy.hp = max(0, b.enemy.hp - dmg)
         b.flash = 6
         b.log_push(
             f'{active.species.name} hits for {dmg}'
+            + (' CRIT!' if crit else '')
             + (' (super!)' if mult > 1.1 else '')
             + (' (resisted)' if mult < 0.9 else '')
         )
@@ -639,10 +646,11 @@ class PlayScene(Scene):
     def _enemy_turn(self, active: Creature, rng: random.Random) -> None:
         b = self.battle
         if b is None or not b.enemy.alive: return
-        dmg, mult = calc_damage(b.enemy, active, rng)
+        dmg, mult, crit = calc_damage(b.enemy, active, rng)
         active.hp = max(0, active.hp - dmg)
         b.log_push(
             f'{b.enemy.species.name} strikes {active.species.name} for {dmg}'
+            + (' CRIT!' if crit else '')
             + (' (super!)' if mult > 1.1 else '')
             + (' (resisted)' if mult < 0.9 else '')
         )

@@ -115,12 +115,24 @@ class Rival:
     def __init__(self, distance: float, lateral: float, speed: float) -> None:
         self.distance = distance          # how far into the lap (world units)
         self.lateral  = lateral           # offset from track center (-ROAD..+ROAD)
-        self.speed    = speed             # forward speed
+        self.base_speed = speed           # personality (e.g. ~0.65 * MAX)
+        self.speed   = speed              # current speed after rubberband
         # Slight steering personality: drifts toward this lateral target.
         self._target  = lateral
         self._target_age = 0.0
 
     def update(self, dt: float, player_distance: float) -> None:
+        # Rubberband: nudge speed toward base, biased by gap to player. Trailing
+        # rivals push +25%; leading rivals throttle back -20%. Capped so the
+        # race stays fair — no warp-speed catch-up.
+        gap = self.distance - player_distance
+        if gap < 0:
+            rb = clamp(1.0 + (-gap) * 0.004, 1.0, 1.25)
+        else:
+            rb = clamp(1.0 - gap * 0.003, 0.80, 1.0)
+        target = self.base_speed * rb
+        self.speed += clamp(target - self.speed, -8.0 * dt, 8.0 * dt)
+
         self.distance += self.speed * dt
         # Periodically pick a new lateral target so rivals weave a little.
         self._target_age += dt
@@ -130,7 +142,6 @@ class Rival:
         self.lateral += clamp(self._target - self.lateral, -3.0, 3.0) * dt
         # Far-behind rivals teleport back into view so the road doesn't go
         # quiet. Player can still overtake — they don't get warped forward.
-        gap = self.distance - player_distance
         if gap < -120:
             self.distance = player_distance + random.uniform(50.0, 120.0)
             self.lateral  = random.uniform(-ROAD_HALF_WIDTH + 3, ROAD_HALF_WIDTH - 3)

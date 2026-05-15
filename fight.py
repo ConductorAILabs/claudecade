@@ -339,21 +339,48 @@ class Fighter:
         if self.state not in ('punch','kick','block'):
             if   dist>KR+4: self.velx=ws*0.65*(1 if dx>0 else -1); self.set('walk') if self.grounded else None
             elif dist>PR+3: self.velx=ws*0.3*(1 if dx>0 else -1)
+
+        # Reactive defense: if opp is currently attacking and within their hit
+        # range, block before the strike lands. Bypasses the decision cooldown
+        # so the AI feels responsive instead of psychic-or-asleep. The check
+        # only fires on the attack's startup frame so the AI can't see ahead.
+        atk_range = KR if opp.state=='kick' else PR
+        opp_threatens = (opp.state in ('punch','kick') and opp.af==0
+                         and dist <= atk_range + 1)
+        if (opp_threatens and self.state not in ('punch','kick','block','hurt','ko')
+                and self.grounded and random.random() < 0.55):
+            self.set('block'); self.velx=0
+            self.ai_cd=max(self.ai_cd, 8)  # hold the block briefly
+            return
+
+        # Whiff punish: opp is in recovery (past the hit-active frame) and in
+        # melee range — chase with a quick poke. No cooldown bypass needed
+        # beyond the existing decision tick, but we lower the bar to attack.
+        opp_whiffing = (opp.state in ('punch','kick') and opp.af >= 2
+                        and dist <= PR)
+
         if self.ai_cd<=0:
             # Slower reaction: 18-32 frames (0.6–1.1 s) between decisions
             self.ai_cd=random.randint(18,32)
             if self.state in ('punch','kick'): return
             r=random.random()
-            if dist<=PR:
+            if opp_whiffing:
+                # Free hit on recovery — heavily favour an attack
+                if r<0.55: self.set('punch'); self.velx=0
+                elif r<0.85: self.set('kick'); self.velx=0
+                else:        self.set('idle')
+            elif dist<=PR:
                 # punch 22%, kick 18%, block 15%, idle the rest
                 if   r<0.22: self.set('punch'); self.velx=0
                 elif r<0.40: self.set('kick');  self.velx=0
                 elif r<0.55: self.set('block')
                 else:        self.set('idle')
             elif dist<=KR+3:
-                # Only kick or jump 25% of the time at medium range
-                if r<0.18: self.set('kick'); self.velx=0
-                elif r<0.25 and self.grounded:
+                # Mid-range: kick, occasional block (covers incoming kicks),
+                # rare jump-in. The rest of the time, keep closing.
+                if   r<0.18: self.set('kick'); self.velx=0
+                elif r<0.28: self.set('block')
+                elif r<0.34 and self.grounded:
                     self.vy=JV0; self.grounded=False; self.set('jump')
 
     def update(self, other, keys=None, mp=False, mk=False):
