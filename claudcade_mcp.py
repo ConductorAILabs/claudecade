@@ -33,8 +33,6 @@ GAMES: dict[str, str] = {
     "claudtra":       "Claudtra (Action Platformer)",
     "fight":          "Claude Fighter (Fighting)",
     "finalclaudesy":  "Final Claudesy (JRPG)",
-    # Placeholder cards on the site — not yet implemented in Python, but the
-    # API accepts these IDs so future builds can submit scores immediately.
     "superclaudio":   "Super Claudio (Platformer)",
     "claudturismo":   "Claude Turismo (Racing)",
     "claudemon":      "Claudemon (Creature RPG)",
