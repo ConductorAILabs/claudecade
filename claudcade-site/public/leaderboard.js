@@ -1,18 +1,12 @@
 /**
- * Mirrors the shape returned by /api/leaderboard. The server lives in
- * netlify/functions/_db.js — keep these typedefs aligned with ScoreRow there.
+ * Types come from the server's _db.js so this file can never drift from
+ * the schema the API actually returns. Editor tooling resolves the
+ * `import()` form across the static/server boundary.
  *
- * @typedef {'ctype'|'claudtra'|'fight'|'finalclaudesy'|'superclaudio'|'claudemon'|'claudturismo'} GameId
- *
- * @typedef {{
- *   game?:        GameId,
- *   player_name:  string,
- *   score:        number,
- *   extra:        string,
- *   created_at:   string
- * }} ScoreRow
- *
- * @typedef {{ scores: ScoreRow[], stats?: Array<{game: GameId, entries: string, top_score: string}> }} LeaderboardResponse
+ * @typedef {import('../netlify/functions/_db').GameId}                GameId
+ * @typedef {import('../netlify/functions/_db').ScoreRow}              ScoreRow
+ * @typedef {import('../netlify/functions/_db').StatRow}               StatRow
+ * @typedef {import('../netlify/functions/_db').LeaderboardResponse}   LeaderboardResponse
  */
 
 /** @type {Record<string, string>} */
