@@ -594,11 +594,15 @@ class PartyMenu:
                 self._item_state = 'ITEM'
 
     def _do_save(self):
-        import json, os
-        path = os.path.expanduser('~/finalclaudesy_save.json')
-        with open(path, 'w') as f:
-            json.dump(self.party.save_dict(), f, indent=2)
-        self._msg = f'Saved to {path}'; self._msg_t = 90
+        import json
+        from . import SAVE_PATH
+        try:
+            with open(SAVE_PATH, 'w') as f:
+                json.dump(self.party.save_dict(), f, indent=2)
+            self._msg = f'Saved to {SAVE_PATH}'
+        except OSError as e:
+            self._msg = f'Save failed: {e}'
+        self._msg_t = 90
 
     def draw(self, scr, H, W, tick):
         P = curses.color_pair

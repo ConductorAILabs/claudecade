@@ -1,15 +1,15 @@
 """Main game loop and state machine for Final Claudesy."""
 import curses, time, json, os, random
 
-from .data     import STORY
-from .entities import Party
-from .battle   import Battle
-from .explore  import WorldMap, TownScreen, DungeonScreen, PartyMenu
-from .ui       import safe_add, center, setup_colors
+from .          import SAVE_PATH
+from .data      import STORY
+from .entities  import Party
+from .battle    import Battle
+from .explore   import WorldMap, TownScreen, DungeonScreen, PartyMenu
+from .ui        import safe_add, center, setup_colors
 from claudcade_scores import submit_async
 
-FPS      = 30
-SAVE_PATH = os.path.expanduser('~/finalclaudesy_save.json')
+FPS = 30
 
 # ── Title screen ───────────────────────────────────────────────────────────────
 # "CLAUDESY" rendered as box-drawing block letters (6 rows tall, 66 cols wide).
