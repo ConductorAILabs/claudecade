@@ -109,55 +109,35 @@ pre {
 .game-card[data-game="claudemon"]     { --game-color: #88ff00; }
 .game-card[data-game="finalclaudesy"] { --game-color: #ff00ff; }
 
-/* Title — always-on shimmering rainbow that radiates outward from the
-   center of the marquee. The gradient is a tight stack of saturated
-   stops with a hot white core; an infinite animation rescales the
-   background size so the inner colors appear to expand outward while
-   the outer hues compress back in, looping. A drop-shadow + filter
-   pulse adds the shimmer pop. The element is text-only via
-   background-clip:text so the ASCII glyphs are the only thing painted. */
+/* Title — at rest the text is filled with a horizontal blue→cyan→
+   magenta→pink gradient (Claudecade palette). On hover the gradient's
+   background-position slides 100% across the title text over 1.8s,
+   so the colors visibly rush from one end of the marquee to the other.
+   No animations at rest; just the rollover. */
 .title {
   position: relative;
-  background:
-    radial-gradient(
-      ellipse 60% 100% at 50% 50%,
-      #ffffff 0%,
-      #ffe6ff 4%,
-      #ff44ff 12%,
-      #ff00ff 22%,
-      #aa44ff 32%,
-      #4488ff 44%,
-      #00d0ff 56%,
-      #00ffcc 68%,
-      #88ff44 78%,
-      #ffcc00 88%,
-      #ff44aa 100%
-    );
-  background-size: 150% 220%;
-  background-position: 50% 50%;
+  background: linear-gradient(
+    90deg,
+    #4488ff   0%,
+    #00d0ff  25%,
+    #ff44ff  50%,
+    #ff00ff  75%,
+    #4488ff 100%
+  );
+  background-size: 200% 100%;
+  background-position: 0% 50%;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
-  animation: title-radiate 4.5s ease-in-out infinite;
-  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.35));
+  transition: background-position 1.8s ease-out;
 }
 
-@keyframes title-radiate {
-  0%, 100% {
-    background-size: 110% 160%;
-    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.30))
-            brightness(1.05) saturate(1.3);
-  }
-  50% {
-    background-size: 280% 360%;
-    filter: drop-shadow(0 0 14px rgba(255, 200, 255, 0.65))
-            brightness(1.20) saturate(1.6);
-  }
+.title:hover {
+  background-position: -100% 50%;
 }
 
-/* Skip the gray-desat overlay on the title -- the radiating shimmer is
-   already the showpiece, no need to grey it out at rest. */
+/* Skip the gray-desat overlay on the title -- it has its own gradient. */
 .title::before { display: none; }
 
 /* Desaturating overlay — sits above the text/background and uses
@@ -212,6 +192,10 @@ pre {
 .game-card.expanded {
   margin-bottom: 0;
   border-bottom-color: transparent;
+  /* Unfurled cards keep their accent color -- shrink the desat overlay
+     to 0 so the card stops reading grayscale once it's been clicked open. */
+  --bloom-r: 0%;
+  border-color: var(--game-color);
 }
 
 .game-card.expanded + .game-detail {
