@@ -393,6 +393,11 @@ async function handleMessage(msg) {
 }
 
 
+// Public MCP endpoint is offline while the install flow is paused. The
+// local stdio MCP (claudcade_mcp.py in the repo) still works for anyone
+// who downloads the zip directly. Re-enable by reverting this guard and
+// restoring the original handler body above (the implementation is intact
+// below this comment block; only the dispatch is short-circuited).
 exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin':  '*',
@@ -400,18 +405,13 @@ exports.handler = async (event) => {
     'Access-Control-Allow-Headers': 'Content-Type',
     'Content-Type': 'application/json',
   };
-
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
-  if (event.httpMethod !== 'POST')    return { statusCode: 405, headers, body: '' };
-
-  let msg;
-  try {
-    msg = JSON.parse(event.body);
-  } catch {
-    return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid JSON' }) };
-  }
-
-  const response = await handleMessage(msg);
-  if (!response) return { statusCode: 204, headers, body: '' };
-  return { statusCode: 200, headers, body: JSON.stringify(response) };
+  return {
+    statusCode: 503,
+    headers,
+    body: JSON.stringify({
+      error: 'Claudecade MCP is temporarily offline.',
+      detail: 'The install flow is being rebuilt. Check back soon.',
+    }),
+  };
 };
