@@ -5,12 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CLAUDECADE — www.claudecade.games</title>
   <style>
-    @font-face {
-      font-family: 'Claudecade';
-      src: url('/Claudecade-Regular.ttf') format('truetype');
-      font-display: swap;
-    }
-
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     html, body { height: 100%; }
@@ -18,14 +12,13 @@
     body {
       background: #0a0a0a;
       color: #d8d8d8;
-      font-family: 'Claudecade', 'Monaco', 'Courier New', monospace;
+      font-family: 'Monaco', 'Courier New', monospace;
       display: grid;
       place-items: center;
       overflow: hidden;
-      letter-spacing: 0.04em;
     }
 
-    /* Subtle scanline texture so the page reads as an arcade marquee */
+    /* Subtle scanline texture, same as the in-game arcade chrome */
     body::before {
       content: '';
       position: fixed;
@@ -44,37 +37,64 @@
     .marquee {
       position: relative;
       z-index: 2;
-      text-align: center;
       padding: 0 2rem;
     }
 
-    .url {
-      font-family: 'Claudecade', monospace;
-      font-size: clamp(2.5rem, 9vw, 8rem);
-      line-height: 1;
+    /* ASCII block lettering -- rendered exactly like the home-page
+       CLAUDECADE title (ANSI Shadow figlet, Monaco mono, gradient
+       sweep via background-clip:text). The pre is fluid: font-size
+       scales to viewport so the whole URL stays on one line. */
+    pre.url {
+      font-family: 'Monaco', 'Courier New', monospace;
+      white-space: pre;
+      line-height: 1.05;
+      margin: 0;
+      /* 161 glyphs wide; the clamp keeps the block on one line at 1280+
+         viewports while staying readable on smaller screens. */
+      font-size: clamp(5px, 0.62vw, 14px);
+      /* Pink/blue wave palette. Deep blue cools the edges, hot pink and
+         magenta swell in the middle; cyan is just a transition tone so
+         the wave never feels like a hard color break. */
       background: linear-gradient(
         90deg,
-        #4488ff 0%, #00d0ff 25%, #ff44ff 50%, #ff00ff 75%, #4488ff 100%
+        #1a4fff  0%,   /* deep blue */
+        #4488ff 12%,   /* royal blue */
+        #5fb0ff 22%,   /* sky blue */
+        #b870ff 36%,   /* violet */
+        #ff5fcc 50%,   /* hot pink */
+        #b870ff 64%,   /* violet */
+        #5fb0ff 78%,   /* sky blue */
+        #4488ff 88%,   /* royal blue */
+        #1a4fff 100%   /* deep blue */
       );
-      background-size: 200% 100%;
+      background-size: 220% 100%;
+      background-position: 0% 50%;
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
       color: transparent;
-      animation: marquee-sweep 8s linear infinite;
-      filter: drop-shadow(0 0 18px rgba(255, 100, 255, 0.25));
+      /* Slow ease-in-out sway that alternates direction -- the gradient
+         pulses back and forth across the marquee like an ocean wave
+         instead of looping in one fixed direction. */
+      animation: marquee-wave 9s cubic-bezier(0.55, 0, 0.45, 1) infinite alternate;
+      filter: drop-shadow(0 0 18px rgba(255, 100, 220, 0.28));
       user-select: all;
     }
 
-    @keyframes marquee-sweep {
+    @keyframes marquee-wave {
       from { background-position:   0% 50%; }
-      to   { background-position: 200% 50%; }
+      to   { background-position: 120% 50%; }
     }
   </style>
 </head>
 <body>
   <div class="marquee">
-    <div class="url">www.claudecade.games</div>
+<pre class="url">██╗    ██╗██╗    ██╗██╗    ██╗    ██████╗██╗      █████╗ ██╗   ██╗██████╗ ███████╗ ██████╗ █████╗ ██████╗ ███████╗    ██████╗  █████╗ ███╗   ███╗███████╗███████╗
+██║    ██║██║    ██║██║    ██║   ██╔════╝██║     ██╔══██╗██║   ██║██╔══██╗██╔════╝██╔════╝██╔══██╗██╔══██╗██╔════╝   ██╔════╝ ██╔══██╗████╗ ████║██╔════╝██╔════╝
+██║ █╗ ██║██║ █╗ ██║██║ █╗ ██║   ██║     ██║     ███████║██║   ██║██║  ██║█████╗  ██║     ███████║██║  ██║█████╗     ██║  ███╗███████║██╔████╔██║█████╗  ███████╗
+██║███╗██║██║███╗██║██║███╗██║   ██║     ██║     ██╔══██║██║   ██║██║  ██║██╔══╝  ██║     ██╔══██║██║  ██║██╔══╝     ██║   ██║██╔══██║██║╚██╔╝██║██╔══╝  ╚════██║
+╚███╔███╔╝╚███╔███╔╝╚███╔███╔╝██╗╚██████╗███████╗██║  ██║╚██████╔╝██████╔╝███████╗╚██████╗██║  ██║██████╔╝███████╗██╗╚██████╔╝██║  ██║██║ ╚═╝ ██║███████╗███████║
+ ╚══╝╚══╝  ╚══╝╚══╝  ╚══╝╚══╝ ╚═╝ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═════╝ ╚══════╝╚═╝ ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝╚══════╝</pre>
   </div>
 </body>
 </html>
