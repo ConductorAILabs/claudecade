@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CLAUDECADE — www.claudecade.games</title>
+  <style>
+    @font-face {
+      font-family: 'Claudecade';
+      src: url('/Claudecade-Regular.ttf') format('truetype');
+      font-display: swap;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body { height: 100%; }
+
+    body {
+      background: #0a0a0a;
+      color: #d8d8d8;
+      font-family: 'Claudecade', 'Monaco', 'Courier New', monospace;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      letter-spacing: 0.04em;
+    }
+
+    /* Subtle scanline texture so the page reads as an arcade marquee */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(255, 255, 255, 0.025) 0px,
+        rgba(255, 255, 255, 0.025) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .marquee {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      padding: 0 2rem;
+    }
+
+    .url {
+      font-family: 'Claudecade', monospace;
+      font-size: clamp(2.5rem, 9vw, 8rem);
+      line-height: 1;
+      background: linear-gradient(
+        90deg,
+        #4488ff 0%, #00d0ff 25%, #ff44ff 50%, #ff00ff 75%, #4488ff 100%
+      );
+      background-size: 200% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+      animation: marquee-sweep 8s linear infinite;
+      filter: drop-shadow(0 0 18px rgba(255, 100, 255, 0.25));
+      user-select: all;
+    }
+
+    @keyframes marquee-sweep {
+      from { background-position:   0% 50%; }
+      to   { background-position: 200% 50%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="marquee">
+    <div class="url">www.claudecade.games</div>
+  </div>
+</body>
+</html>
