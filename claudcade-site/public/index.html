@@ -8,6 +8,8 @@
 </head>
 <body>
 
+<div id="phaser-overlay" aria-hidden="true"></div>
+
 <pre class="title">
  ██████╗██╗      █████╗ ██╗   ██╗██████╗ ███████╗ ██████╗ █████╗ ██████╗ ███████╗
 ██╔════╝██║     ██╔══██╗██║   ██║██╔══██╗██╔════╝██╔════╝██╔══██╗██╔══██╗██╔════╝
@@ -299,26 +301,144 @@ Three heroes (Knight, Mage, Healer), three regions, twenty-plus spells. Save the
 </pre>
 
 
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.87.0/dist/phaser.min.js"></script>
 <script>
 (() => {
-  // Radial color-bloom on hover.
-  // CSS owns the animation (clip-path transition on the ::before
-  // desaturation overlay); JS just publishes the cursor entry point
-  // as --bloom-x / --bloom-y CSS custom properties so the bloom
-  // expands from where the mouse actually came in. On leave the
-  // CSS rule resets --bloom-r to 150% and the overlay grows back.
+  // ─────────────────────────────────────────────────────────────────────
+  // Phaser shimmer ripple
+  // ─────────────────────────────────────────────────────────────────────
+  // One full-page transparent Phaser canvas. While the mouse is over a
+  // .game-card or .title, the page emits a ripple every ~90ms at the
+  // current cursor position. Each ripple is a stack of three concentric
+  // expanding rings -- outer rim in the element's accent color, inner
+  // shimmer in a lighter shimmer color that hue-shifts on each spawn,
+  // innermost a faint trail. Rings ease-out from radius 0 to ~280px
+  // over ~1100ms while alpha fades to 0.
+  // The CSS bloom on .game-card::before still handles the underlying
+  // color reveal of the card content; the Phaser layer is the
+  // shimmer ornament on top of that.
+  // ─────────────────────────────────────────────────────────────────────
+
+  const hexToInt = (s) => parseInt(s.replace('#', '').trim(), 16);
+  const accentOf = (el) =>
+    getComputedStyle(el).getPropertyValue('--game-color').trim() || '#ffffff';
+
+  // Shimmer palette for the inner ring -- cycled per-ripple so successive
+  // rings appear to iridesce instead of looking like clones.
+  const SHIMMER = ['#ffffff', '#ffe4ff', '#e4ffff', '#fffacd', '#ffd4ff'];
+
+  class RippleScene extends Phaser.Scene {
+    constructor() { super({ key: 'ripple' }); }
+
+    create() {
+      this.ripples = [];
+      this.g = this.add.graphics();
+      this.g.setBlendMode(Phaser.BlendModes.SCREEN);  // brightens layer beneath
+    }
+
+    spawn(x, y, accentHex) {
+      this.ripples.push({
+        x, y,
+        born: this.time.now,
+        life: 1100,
+        maxR: 280,
+        accent:  hexToInt(accentHex),
+        shimmer: hexToInt(SHIMMER[(this._n = (this._n || 0) + 1) % SHIMMER.length]),
+      });
+    }
+
+    update() {
+      const g = this.g;
+      g.clear();
+      const now = this.time.now;
+      // Drop expired ripples
+      this.ripples = this.ripples.filter(r => (now - r.born) < r.life);
+
+      for (const r of this.ripples) {
+        const t    = (now - r.born) / r.life;          // 0..1
+        const ease = 1 - Math.pow(1 - t, 3);           // ease-out cubic
+        const radius = ease * r.maxR;
+        const alpha  = (1 - t);
+
+        // Outer rim — accent color, thickest
+        g.lineStyle(3, r.accent, alpha * 0.75);
+        g.strokeCircle(r.x, r.y, radius);
+
+        // Middle shimmer — palette-cycled, slightly behind
+        const rMid = radius - 14;
+        if (rMid > 0) {
+          g.lineStyle(2, r.shimmer, alpha * 0.55);
+          g.strokeCircle(r.x, r.y, rMid);
+        }
+
+        // Inner trail — faint accent ghost
+        const rIn = radius - 28;
+        if (rIn > 0) {
+          g.lineStyle(1, r.accent, alpha * 0.3);
+          g.strokeCircle(r.x, r.y, rIn);
+        }
+      }
+    }
+  }
+
+  const game = new Phaser.Game({
+    type: Phaser.AUTO,
+    parent: 'phaser-overlay',
+    width: window.innerWidth,
+    height: window.innerHeight,
+    transparent: true,
+    scale: {
+      mode: Phaser.Scale.RESIZE,
+      autoCenter: Phaser.Scale.NO_CENTER,
+    },
+    scene: RippleScene,
+    banner: false,
+    audio: { noAudio: true },
+  });
+
+  // Wire hover targets to the ripple scene.
   const targets = document.querySelectorAll('.game-card, .title');
+  let mouseX = 0, mouseY = 0;
+  let activeTarget = null;
+  let spawnTimer = null;
+
+  const scene = () => game.scene.getScene('ripple');
+
+  const startEmit = (el) => {
+    activeTarget = el;
+    if (spawnTimer) return;
+    spawnTimer = setInterval(() => {
+      const s = scene();
+      if (s && activeTarget) s.spawn(mouseX, mouseY, accentOf(activeTarget));
+    }, 90);
+  };
+  const stopEmit = () => {
+    activeTarget = null;
+    if (spawnTimer) { clearInterval(spawnTimer); spawnTimer = null; }
+  };
+
   targets.forEach(el => {
     el.addEventListener('mouseenter', (e) => {
+      mouseX = e.clientX; mouseY = e.clientY;
+      // Seed an initial ripple so the effect is instant, not 90ms late.
+      const s = scene();
+      if (s) s.spawn(mouseX, mouseY, accentOf(el));
+      startEmit(el);
+
+      // Also publish to the CSS bloom variables for the underlying reveal.
       const r = el.getBoundingClientRect();
       el.style.setProperty('--bloom-x', (e.clientX - r.left) + 'px');
       el.style.setProperty('--bloom-y', (e.clientY - r.top) + 'px');
     });
+    el.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX; mouseY = e.clientY;
+    });
+    el.addEventListener('mouseleave', stopEmit);
   });
 
-  // Click a card to expand its detail panel. Clicking again, or
-  // clicking another card, collapses the previously open one so
-  // at most one detail panel is shown at a time.
+  // ─────────────────────────────────────────────────────────────────────
+  // Click-to-expand inline detail panel
+  // ─────────────────────────────────────────────────────────────────────
   let openCard = null;
   document.querySelectorAll('.game-card').forEach(card => {
     card.addEventListener('click', () => {

@@ -1,5 +1,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap');
 
+/* Phaser ripple overlay — full-page transparent canvas that paints
+   shimmery expanding rings from the cursor when hovering cards/title.
+   pointer-events: none so it never blocks clicks on the page beneath. */
+#phaser-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+}
+#phaser-overlay canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
 * {
   margin: 0;
   padding: 0;
