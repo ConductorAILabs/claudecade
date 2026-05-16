@@ -58,11 +58,28 @@
     line-height: 1.35;
   }
 
-  /* Hero subtitle paragraph reflows naturally; just tighten its
-     side padding so it never butts the viewport edge. */
+  /* The three widest cards (FIGHT, SUPER CLAUDIO, FINAL CLAUDESY)
+     run 100-110 chars in their block-font titles and were the only
+     ones spilling off the viewport. Shrink ~25% so they sit inside
+     the screen alongside the narrower cards staying their size. */
+  pre.game-card[data-game="fight"],
+  pre.game-card[data-game="superclaudio"],
+  pre.game-card[data-game="finalclaudesy"] {
+    font-size: clamp(4px, 1.13vw, 8.25px);
+  }
+
+  /* Body copy a touch larger so descriptive text reads comfortably. */
   .hero-sub {
+    font-size: 14px;
     padding: 0 0.25rem;
     margin-bottom: 1.5rem;
+  }
+
+  .game-detail {
+    font-size: 12px;
+  }
+  .game-detail li {
+    font-size: 11.5px;
   }
 }
 
@@ -95,6 +112,24 @@
     padding: 1rem 0.85rem;
     margin: 0.85rem 0;
     line-height: 1.35;
+  }
+
+  /* Widest three -- 25% smaller than the rest at this breakpoint too. */
+  pre.game-card[data-game="fight"],
+  pre.game-card[data-game="superclaudio"],
+  pre.game-card[data-game="finalclaudesy"] {
+    font-size: clamp(3px, 1.31vw, 6.75px);
+  }
+
+  .hero-sub {
+    font-size: 13px;
+  }
+
+  .game-detail {
+    font-size: 11.5px;
+  }
+  .game-detail li {
+    font-size: 11px;
   }
 
   /* Detail panel: single column already kicks in at 640px via
