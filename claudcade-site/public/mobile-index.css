@@ -64,6 +64,7 @@
      the screen alongside the narrower cards staying their size. */
   pre.game-card[data-game="fight"],
   pre.game-card[data-game="superclaudio"],
+  pre.game-card[data-game="claudturismo"],
   pre.game-card[data-game="finalclaudesy"] {
     font-size: clamp(4px, 1.13vw, 8.25px);
   }
@@ -117,6 +118,7 @@
   /* Widest three -- 25% smaller than the rest at this breakpoint too. */
   pre.game-card[data-game="fight"],
   pre.game-card[data-game="superclaudio"],
+  pre.game-card[data-game="claudturismo"],
   pre.game-card[data-game="finalclaudesy"] {
     font-size: clamp(3px, 1.31vw, 6.75px);
   }
