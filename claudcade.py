@@ -983,10 +983,7 @@ def draw_main(scr: "curses.window", H: int, W: int, tick: int,
         _p(scr, H, W, r, 0,   '║', P(5))
         _p(scr, H, W, r, W-1, '║', P(5))
 
-    # ── Header block (shaded depth) ─────────────────────────────────────────
-    shade_full = '▓▒░' + '░'*(W-8) + '░▒▓'
-    _p(scr, H, W, 1, 1, shade_full[:W-2], P(5)|curses.A_DIM)
-
+    # ── Header block ────────────────────────────────────────────────────────
     # Title art — gradient from blue → cyan → magenta → pink (top to bottom)
     # Standard 8-color palette: BLUE(8), CYAN(1), MAGENTA(6) approximate the gradient
     title_colors = [
@@ -1005,8 +1002,6 @@ def draw_main(scr: "curses.window", H: int, W: int, tick: int,
     TITLE_END = 2 + len(TITLE)  # title rows: 2..TITLE_END-1
     sub = '◈   T H E   C L A U D E   T E R M I N A L   A R C A D E   ◈'
     _p(scr, H, W, TITLE_END, max(1, (W-len(sub))//2), sub, P(6)|curses.A_BOLD)
-
-    _p(scr, H, W, TITLE_END+1, 1, shade_full[:W-2], P(5)|curses.A_DIM)
 
     # ── Section divider ─────────────────────────────────────────────────────
     DIV = TITLE_END + 2
