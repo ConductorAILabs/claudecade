@@ -68,6 +68,53 @@
       from { background-position:   0% 50%; }
       to   { background-position: 120% 50%; }
     }
+
+    /* Mobile fallback: the 161-glyph ASCII block can't fit a phone
+       viewport at a readable size (would need ~3.9px font-size at
+       375px). Below 768px we hide the figlet block and show a fluid
+       plain-text headline that inherits the exact same pink/blue wave
+       gradient and animation. Desktop/tablet keep the ASCII art. */
+    h1.url-fallback {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      pre.url { display: none; }
+
+      h1.url-fallback {
+        display: block;
+        font-family: 'Monaco', 'Courier New', monospace;
+        font-weight: 700;
+        line-height: 1.1;
+        letter-spacing: -0.01em;
+        margin: 0;
+        text-align: center;
+        /* Fluid type: ~36px at 375px, ~64px near the 768px breakpoint. */
+        font-size: clamp(2rem, 9vw, 4rem);
+        background: linear-gradient(
+          90deg,
+          #1a4fff  0%,
+          #4488ff 12%,
+          #5fb0ff 22%,
+          #b870ff 36%,
+          #ff5fcc 50%,
+          #b870ff 64%,
+          #5fb0ff 78%,
+          #4488ff 88%,
+          #1a4fff 100%
+        );
+        background-size: 220% 100%;
+        background-position: 0% 50%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        color: transparent;
+        animation: marquee-wave 9s cubic-bezier(0.55, 0, 0.45, 1) infinite alternate;
+        user-select: all;
+      }
+
+      .marquee { padding: 0 1rem; }
+    }
   </style>
 </head>
 <body>
@@ -78,6 +125,7 @@
 ██║███╗██║██║███╗██║██║███╗██║   ██║     ██║     ██╔══██║██║   ██║██║  ██║██╔══╝  ██║     ██╔══██║██║  ██║██╔══╝     ██║   ██║██╔══██║██║╚██╔╝██║██╔══╝  ╚════██║
 ╚███╔███╔╝╚███╔███╔╝╚███╔███╔╝██╗╚██████╗███████╗██║  ██║╚██████╔╝██████╔╝███████╗╚██████╗██║  ██║██████╔╝███████╗██╗╚██████╔╝██║  ██║██║ ╚═╝ ██║███████╗███████║
  ╚══╝╚══╝  ╚══╝╚══╝  ╚══╝╚══╝ ╚═╝ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═════╝ ╚══════╝╚═╝ ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝╚══════╝</pre>
+    <h1 class="url-fallback">www.claudecade.games</h1>
   </div>
 </body>
 </html>

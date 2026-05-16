@@ -1,0 +1,137 @@
+/* mobile-index.css
+   Mobile-only overrides for the Claudecade homepage. Loaded AFTER
+   ascii-style.css so these rules win the cascade. Goal: keep the
+   existing desktop layout intact and just stop the wide ASCII-art
+   blocks from spilling out of the viewport on phones and small
+   tablets. No redesign — only sizing, padding, and a viewport-tied
+   font scale on <pre> blocks.
+
+   Target viewports: 375px (iPhone), 414px (large phone), 768px (iPad
+   portrait). The widest ASCII blocks in index.html are ~110 chars
+   (game-card titles for Final Claudesy, Claude Fighter, Claudturismo).
+   At a monospace char width of ~0.6em, fitting 110 chars in ~330px of
+   usable width requires ~5px font-size, which is unreadable. The
+   compromise: scale font-size fluidly with viewport, and keep the
+   inherited `overflow-x: auto` from ascii-style.css as a fallback so
+   the very widest cards horizontal-scroll instead of pushing the
+   page wider than the screen. The hero title, divider, and coming-
+   soon box are <= 80 chars and DO fit without scroll. */
+
+/* ===========================================================
+   <= 768px (iPad portrait and phones)
+   =========================================================== */
+@media (max-width: 768px) {
+  /* Body padding tightened so the 1000px content column gives back
+     real estate to the ASCII content. */
+  body {
+    padding: 1rem 0.5rem;
+  }
+
+  /* Hero title (80 chars). Scale font with viewport so it fits at
+     375px without scroll. 0.9vw is calibrated so that at 375px we
+     land around 6.75px (clamped to min 5px). */
+  pre.title {
+    font-size: clamp(5px, 1.6vw, 12px);
+    line-height: 1.15;
+    padding: 1rem 0 0.5rem;
+  }
+
+  /* Divider (79 chars). Same scale family as the title. */
+  pre.divider {
+    font-size: clamp(5px, 1.6vw, 12px);
+    margin: 1.25rem 0;
+  }
+
+  /* Coming-soon ASCII box (75 chars). */
+  pre.coming-soon {
+    font-size: clamp(5px, 1.7vw, 12px);
+    margin: 1.5rem auto;
+  }
+
+  /* Game cards: the ASCII titles inside these are anywhere from
+     ~50 chars (C-TYPE) up to ~110 chars (Final Claudesy). Scale
+     down fluidly; the existing `overflow-x: auto` on pre handles
+     the very widest cases at 375px. */
+  pre.game-card {
+    font-size: clamp(5px, 1.5vw, 11px);
+    padding: 1.25rem 1rem;
+    line-height: 1.35;
+  }
+
+  /* Hero subtitle paragraph reflows naturally; just tighten its
+     side padding so it never butts the viewport edge. */
+  .hero-sub {
+    padding: 0 0.25rem;
+    margin-bottom: 1.5rem;
+  }
+}
+
+/* ===========================================================
+   <= 480px (phones)
+   =========================================================== */
+@media (max-width: 480px) {
+  body {
+    padding: 0.5rem 0.4rem;
+  }
+
+  pre.title {
+    font-size: clamp(4px, 1.85vw, 9px);
+    padding: 0.75rem 0 0.5rem;
+  }
+
+  pre.divider {
+    font-size: clamp(4px, 1.85vw, 9px);
+    margin: 1rem 0;
+  }
+
+  pre.coming-soon {
+    font-size: clamp(4px, 1.95vw, 9px);
+    margin: 1rem auto;
+  }
+
+  /* Tighten card padding to roughly 1rem at this breakpoint per spec. */
+  pre.game-card {
+    font-size: clamp(4px, 1.75vw, 9px);
+    padding: 1rem 0.85rem;
+    margin: 0.85rem 0;
+    line-height: 1.35;
+  }
+
+  /* Detail panel: single column already kicks in at 640px via
+     ascii-style.css. Reinforce + tighten side padding so the
+     CONTROLS / TIPS lists don't crowd the border. */
+  .game-card.expanded + .game-detail {
+    grid-template-columns: 1fr;
+    column-gap: 0;
+    padding: 0.5rem 1rem 0.85rem;
+    font-size: 11px;
+  }
+
+  .game-detail li {
+    /* Long control lines like "WASD / Arrows    Move" use runs of
+       spaces for alignment that don't reflow. Allow them to wrap
+       gracefully on the tightest screens. */
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  /* Expanded card keeps its accent color; just make sure it doesn't
+     pick up extra horizontal space from the desktop max-width rule. */
+  .game-card.expanded {
+    margin-bottom: 0;
+  }
+}
+
+/* ===========================================================
+   <= 380px (iPhone SE / iPhone 13 mini territory)
+   Final safety net for the very narrowest viewports.
+   =========================================================== */
+@media (max-width: 380px) {
+  body {
+    padding: 0.5rem 0.3rem;
+  }
+
+  pre.game-card {
+    padding: 0.85rem 0.7rem;
+  }
+}

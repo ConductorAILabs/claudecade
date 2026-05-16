@@ -1,0 +1,103 @@
+/* ── MOBILE LEADERBOARD ─────────────────────────────────────────────────────
+   Loaded after style.css so these rules win. Only narrows / re-flows the
+   existing leaderboard UI on small viewports — no redesign.
+   ──────────────────────────────────────────────────────────────────────── */
+
+/* ── <= 768px (iPad portrait and below) ─────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Section padding — overrides inline style on <section id="leaderboard"> */
+  #leaderboard {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  /* Nav: tighter horizontal padding so logo + links fit on phones */
+  nav { padding: 1rem 1rem; }
+  .nav-links { gap: 1.2rem; }
+
+  /* Tabs wrap, with tighter spacing. flex-wrap is already set in style.css. */
+  .lb-tabs { gap: 0; }
+  .tab {
+    font-size: 9px;
+    letter-spacing: .1em;
+    padding: .45rem .6rem;
+  }
+
+  /* Footer wraps cleanly */
+  footer { padding: 1.5rem 1rem; font-size: 10px; }
+}
+
+/* ── <= 640px: stack controls vertically (range + search) ───────────────── */
+@media (max-width: 640px) {
+  .lb-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: .6rem;
+  }
+  .lb-ranges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  #lb-search {
+    width: 100%;
+    min-width: 0;
+    flex: none;
+  }
+
+  /* Score table: smaller type, less vertical padding */
+  .lb-table th { font-size: 8px; letter-spacing: .18em; }
+  .lb-table td { padding: .55rem 0; }
+  .lb-table .rank   { font-size: 18px; width: 2.2rem; }
+  .lb-table .player { font-size: 12px; }
+  .lb-table .game   { font-size: 10px; }
+  .lb-table .score  { font-size: 20px; }
+  .lb-table .date   { font-size: 10px; color: var(--dim); }
+  .lb-table .extra  { font-size: 10px; color: var(--mid); }
+
+  /* Pager: smaller, allow wrap */
+  .lb-pager { flex-wrap: wrap; gap: .5rem; font-size: 9px; }
+  .lb-pager button { font-size: 9px; padding: .35rem .7rem; }
+}
+
+/* ── <= 480px: hide DATE column. Position 5 is DATE in both views. ──────── */
+@media (max-width: 480px) {
+  .lb-table th:nth-child(5),
+  .lb-table td.date {
+    display: none;
+  }
+
+  /* Even tighter section padding on phones */
+  #leaderboard {
+    padding-left: .75rem !important;
+    padding-right: .75rem !important;
+  }
+
+  /* Allow the page title block to breathe a bit less */
+  .section-title { font-size: 16px; margin-bottom: 1.4rem; }
+  .lb-prompt { font-size: 11px; word-break: break-all; }
+
+  /* Slightly tighter tabs at the smallest sizes */
+  .tab { padding: .4rem .5rem; font-size: 9px; }
+}
+
+/* ── <= 380px: also hide GAME column (only appears in all-games view).
+      Use :has() so we only hide column 3 when the GAME column exists;
+      otherwise column 3 is SCORE (single-game view) and must stay. ─────── */
+@media (max-width: 380px) {
+  .lb-table:has(td.game) th:nth-child(3),
+  .lb-table td.game {
+    display: none;
+  }
+
+  /* Tighter score readout when columns are scarce */
+  .lb-table .score { font-size: 18px; }
+  .lb-table .player { font-size: 11px; }
+  .lb-table .rank { font-size: 16px; width: 1.8rem; }
+}
+
+/* ── Safety: keep the leaderboard scroll-wrap from overflowing the page ─ */
+@media (max-width: 768px) {
+  .lb-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .lb-table { min-width: 0; }
+}
