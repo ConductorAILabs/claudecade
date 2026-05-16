@@ -1,5 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap');
 
+/* Coming-soon placeholder — centered as a block on the page. The
+   internal ASCII box keeps its left-aligned monospace content but the
+   <pre> itself is auto-margined to sit in the middle of the column. */
+.coming-soon {
+  display: block;
+  width: fit-content;
+  margin: 2rem auto;
+  color: #888;
+  text-align: left;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -87,14 +98,11 @@ pre {
      inside the card reads left-aligned. */
   text-align: left;
   cursor: pointer;
-  /* Color-bloom variables — JS sets bloom-x/bloom-y on mouseenter;
-     :hover swaps bloom-r to 0 to reveal full color from cursor outward. */
-  --bloom-x: 50%;
-  --bloom-y: 50%;
-  --bloom-r: 150%;
   --game-color: #ffffff;
-  color: var(--game-color);
-  transition: border-color 0.25s ease;
+  /* At rest every card reads the same slightly off-white. On hover or
+     once expanded, the text + border swap to the game's accent color. */
+  color: #d8d8d8;
+  transition: color 0.45s ease, border-color 0.45s ease;
 }
 
 /* Per-game accents — match the in-game vibrant 256-color palette
@@ -109,63 +117,40 @@ pre {
 .game-card[data-game="claudemon"]     { --game-color: #88ff00; }
 .game-card[data-game="finalclaudesy"] { --game-color: #ff00ff; }
 
-/* Title — at rest the text is filled with a horizontal blue→cyan→
-   magenta→pink gradient (Claudecade palette). On hover the gradient's
-   background-position slides 100% across the title text over 1.8s,
-   so the colors visibly rush from one end of the marquee to the other.
-   No animations at rest; just the rollover. */
+.game-card:hover {
+  color: var(--game-color);
+  border-color: var(--game-color);
+}
+
+/* Title — plain off-white at rest. On rollover the text fills with a
+   horizontal blue->cyan->magenta->pink gradient that slides 100% across
+   the marquee over 1.8s (the colors visibly rush across), then stays
+   in that final position until the mouse leaves. */
 .title {
   position: relative;
+  color: #d8d8d8;
+  -webkit-text-fill-color: #d8d8d8;
+  transition: -webkit-text-fill-color 0s linear 1.8s,
+              color 0s linear 1.8s;
+}
+
+.title:hover {
   background: linear-gradient(
     90deg,
-    #4488ff   0%,
-    #00d0ff  25%,
-    #ff44ff  50%,
-    #ff00ff  75%,
-    #4488ff 100%
+    #4488ff 0%, #00d0ff 25%, #ff44ff 50%, #ff00ff 75%, #4488ff 100%
   );
   background-size: 200% 100%;
-  background-position: 0% 50%;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
-  transition: background-position 1.8s ease-out;
+  animation: title-rush 1.8s ease-out forwards;
+  transition: none;
 }
 
-.title:hover {
-  background-position: -100% 50%;
-}
-
-/* Skip the gray-desat overlay on the title -- it has its own gradient. */
-.title::before { display: none; }
-
-/* Desaturating overlay — sits above the text/background and uses
-   mix-blend-mode: color (which takes the OVERLAY's hue+saturation
-   and applies it to the layer BELOW's luminance). A mid-gray top
-   with 0 saturation produces grayscale of whatever's underneath.
-   On hover the clip-path shrinks the overlay to nothing at the
-   cursor entry point — color blooms outward from that pixel. */
-.title::before,
-.game-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: #888;
-  mix-blend-mode: color;
-  pointer-events: none;
-  clip-path: circle(var(--bloom-r) at var(--bloom-x) var(--bloom-y));
-  transition: clip-path 0.55s cubic-bezier(0.16, 1, 0.3, 1);
-  z-index: 1;
-}
-
-.title:hover,
-.game-card:hover {
-  --bloom-r: 0%;
-}
-
-.game-card:hover {
-  border-color: var(--game-color);
+@keyframes title-rush {
+  from { background-position: 100% 50%; }
+  to   { background-position: -100% 50%; }
 }
 
 /* Click-to-expand inline detail panel. Each .game-card is paired with
@@ -191,11 +176,10 @@ pre {
 
 .game-card.expanded {
   margin-bottom: 0;
-  border-bottom-color: transparent;
-  /* Unfurled cards keep their accent color -- shrink the desat overlay
-     to 0 so the card stops reading grayscale once it's been clicked open. */
-  --bloom-r: 0%;
+  /* Unfurled cards stay in their accent color regardless of hover state. */
+  color: var(--game-color);
   border-color: var(--game-color);
+  border-bottom-color: transparent;
 }
 
 .game-card.expanded + .game-detail {

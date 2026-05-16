@@ -315,17 +315,6 @@ WASD MOVE | SPACE CONFIRM | M MENU
 
 <script>
 (() => {
-  // Radial color reveal on hover. CSS owns the animation
-  // (clip-path transition on the ::before desat overlay); JS just
-  // publishes the cursor entry point as --bloom-x / --bloom-y.
-  document.querySelectorAll('.game-card, .title').forEach(el => {
-    el.addEventListener('mouseenter', (e) => {
-      const r = el.getBoundingClientRect();
-      el.style.setProperty('--bloom-x', (e.clientX - r.left) + 'px');
-      el.style.setProperty('--bloom-y', (e.clientY - r.top) + 'px');
-    });
-  });
-
   // Click-to-expand inline detail panel — at most one open at a time.
   let openCard = null;
   document.querySelectorAll('.game-card').forEach(card => {
