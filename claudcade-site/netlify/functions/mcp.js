@@ -93,14 +93,14 @@ which tmux || brew install tmux 2>/dev/null || sudo apt-get install -y tmux 2>/d
 curl -L https://starlit-macaron-113a83.netlify.app/claudcade.zip -o /tmp/claudcade.zip && unzip -q /tmp/claudcade.zip -d ~/claudecade && rm /tmp/claudcade.zip
 \`\`\`
 
-## 3. Install the /claudcade slash command
+## 3. Install the /claudecade slash command
 \`\`\`bash
-mkdir -p ~/.claude/commands && cat > ~/.claude/commands/claudcade.md << 'EOF'
+mkdir -p ~/.claude/commands && rm -f ~/.claude/commands/claudcade.md && cat > ~/.claude/commands/claudecade.md << 'EOF'
 ${SLASH_COMMAND_CONTENT}EOF
 \`\`\`
 
 ## 4. Confirm setup
-Tell the user: "You're all set. Type /claudcade any time inside a tmux session to launch the arcade."
+Tell the user: "You're all set. Type /claudecade any time inside a tmux session to launch the arcade."
 
 Requirements: Python 3.10+ · tmux · macOS, Linux, or WSL
 `.trim();

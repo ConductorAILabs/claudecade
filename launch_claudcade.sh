@@ -27,7 +27,7 @@ else
       | sort -rn | head -1 | awk '{print $2}')
     if [ -z "$SESSION" ]; then
       echo "[ERROR] No tmux session found at all."
-      echo "  Quit Claude (Ctrl+C), then run: tmux ; claude ; /claudcade"
+      echo "  Quit Claude (Ctrl+C), then run: tmux ; claude ; /claudecade"
       exit 3
     fi
     echo "[INFO] No attached client, using most recent session: '$SESSION'"
