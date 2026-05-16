@@ -83,15 +83,141 @@ pre {
   position: relative;
   width: 100%;
   max-width: 900px;
-  transition: all 0.2s;
   /* Module rule: card is centered on the page (via grid), but content
      inside the card reads left-aligned. */
   text-align: left;
   cursor: pointer;
+  /* Color-bloom variables — JS sets bloom-x/bloom-y on mouseenter;
+     :hover swaps bloom-r to 0 to reveal full color from cursor outward. */
+  --bloom-x: 50%;
+  --bloom-y: 50%;
+  --bloom-r: 150%;
+  --game-color: #ffffff;
+  color: var(--game-color);
+  transition: border-color 0.25s ease;
+}
+
+/* Per-game accents — match the in-game vibrant 256-color palette
+   (engine setup_colors: cyan 51, red 196, green 46, yellow 226,
+   magenta 201). claudturismo doubles up on cyan with ctype; that's
+   intentional, ctype is row 0 and turismo is row 4 in the launcher. */
+.game-card[data-game="ctype"]         { --game-color: #00ffff; }
+.game-card[data-game="claudtra"]      { --game-color: #00ff66; }
+.game-card[data-game="fight"]         { --game-color: #ff4444; }
+.game-card[data-game="superclaudio"]  { --game-color: #ffd700; }
+.game-card[data-game="claudturismo"]  { --game-color: #00d0ff; }
+.game-card[data-game="claudemon"]     { --game-color: #88ff00; }
+.game-card[data-game="finalclaudesy"] { --game-color: #ff00ff; }
+
+/* Title gets the same hover bloom. To make the reveal visible (white
+   doesn't desaturate to anything new), the text fills with the same
+   blue-cyan-magenta-pink gradient used by the in-launcher CLAUDECADE
+   header. At rest the desat overlay greys it out; on hover the bloom
+   uncovers the gradient. */
+.title {
+  --bloom-x: 50%;
+  --bloom-y: 50%;
+  --bloom-r: 150%;
+  position: relative;
+  background: linear-gradient(180deg,
+    #4488ff 0%,
+    #4488ff 33%,
+    #00d0ff 50%,
+    #ff44ff 66%,
+    #ff00ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Desaturating overlay — sits above the text/background and uses
+   mix-blend-mode: color (which takes the OVERLAY's hue+saturation
+   and applies it to the layer BELOW's luminance). A mid-gray top
+   with 0 saturation produces grayscale of whatever's underneath.
+   On hover the clip-path shrinks the overlay to nothing at the
+   cursor entry point — color blooms outward from that pixel. */
+.title::before,
+.game-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #888;
+  mix-blend-mode: color;
+  pointer-events: none;
+  clip-path: circle(var(--bloom-r) at var(--bloom-x) var(--bloom-y));
+  transition: clip-path 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1;
+}
+
+.title:hover,
+.game-card:hover {
+  --bloom-r: 0%;
 }
 
 .game-card:hover {
-  border-color: #ffffff;
+  border-color: var(--game-color);
+}
+
+/* Click-to-expand inline detail panel. Each .game-card is paired with
+   a sibling .game-detail in the HTML; the adjacent-sibling selector
+   reveals it when the card has .expanded. */
+.game-detail {
+  display: none;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #cccccc;
+  margin: -1rem auto 1rem;
+  padding: 1.25rem 2rem 1.5rem;
+  max-width: 900px;
+  width: 100%;
+  background: #111;
+  border: 2px solid #444;
+  border-top: 0;
+  white-space: pre-wrap;
+}
+
+.game-card.expanded {
+  margin-bottom: 0;
+  border-bottom-color: transparent;
+}
+
+.game-card.expanded + .game-detail {
+  display: block;
+  border-color: var(--detail-color, #444);
+}
+
+/* Detail panel borders inherit the matching game's accent. */
+.game-detail[data-for="ctype"]         { --detail-color: #00ffff; }
+.game-detail[data-for="claudtra"]      { --detail-color: #00ff66; }
+.game-detail[data-for="fight"]         { --detail-color: #ff4444; }
+.game-detail[data-for="superclaudio"]  { --detail-color: #ffd700; }
+.game-detail[data-for="claudturismo"]  { --detail-color: #00d0ff; }
+.game-detail[data-for="claudemon"]     { --detail-color: #88ff00; }
+.game-detail[data-for="finalclaudesy"] { --detail-color: #ff00ff; }
+
+.game-detail .gd-title {
+  font-weight: bold;
+  letter-spacing: 0.15em;
+  margin-bottom: 0.5rem;
+  color: var(--detail-color, #ffffff);
+}
+
+.game-detail .gd-section {
+  margin-top: 1rem;
+  color: #888;
+  letter-spacing: 0.1em;
+  font-size: 11px;
+}
+
+.game-detail ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.25rem 0 0;
+}
+
+.game-detail li {
+  padding: 0.1rem 0;
 }
 
 #lb-live {
