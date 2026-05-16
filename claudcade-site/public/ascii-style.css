@@ -191,19 +191,22 @@ pre {
 /* Click-to-expand inline detail panel. Each .game-card is paired with
    a sibling .game-detail in the HTML; the adjacent-sibling selector
    reveals it when the card has .expanded. */
+/* Detail panel sits flush against the bottom of its card; the card's
+   bottom border goes transparent on expand so the seam reads as a
+   single continuous frame. Internal layout is a 2-col grid: title +
+   summary span both columns, CONTROLS lives in col 1, TIPS in col 2. */
 .game-detail {
   display: none;
   font-size: 11px;
   line-height: 1.4;
   color: #bbbbbb;
-  margin: -1rem auto 1rem;
-  padding: 0.75rem 1.5rem 0.9rem;
+  margin: -2px auto 1rem;     /* sit on top of card's transparent bottom border */
+  padding: 0.5rem 1.5rem 0.85rem;
   max-width: 900px;
   width: 100%;
   background: #111;
   border: 2px solid #444;
   border-top: 0;
-  white-space: pre-wrap;
 }
 
 .game-card.expanded {
@@ -214,8 +217,19 @@ pre {
 .game-card.expanded + .game-detail {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  column-gap: 1.5rem;
+  column-gap: 2rem;
+  row-gap: 0.25rem;
   border-color: var(--detail-color, #444);
+}
+
+.game-detail .gd-summary {
+  grid-column: 1 / -1;
+  margin: 0.15rem 0 0.35rem;
+  color: #cccccc;
+}
+
+.game-detail .gd-col > :first-child {
+  margin-top: 0;
 }
 
 /* Detail panel borders inherit the matching game's accent. */
@@ -231,7 +245,7 @@ pre {
   grid-column: 1 / -1;
   font-weight: bold;
   letter-spacing: 0.15em;
-  margin: 0 0 0.4rem;
+  margin: 0 0 0.25rem;
   font-size: 11px;
   color: var(--detail-color, #ffffff);
 }
