@@ -10,28 +10,12 @@
     html, body { height: 100%; }
 
     body {
-      background: #0a0a0a;
+      background: #181819;
       color: #d8d8d8;
       font-family: 'Monaco', 'Courier New', monospace;
       display: grid;
       place-items: center;
       overflow: hidden;
-    }
-
-    /* Subtle scanline texture, same as the in-game arcade chrome */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background: repeating-linear-gradient(
-        0deg,
-        rgba(255, 255, 255, 0.025) 0px,
-        rgba(255, 255, 255, 0.025) 1px,
-        transparent 1px,
-        transparent 3px
-      );
-      pointer-events: none;
-      z-index: 1;
     }
 
     .marquee {
